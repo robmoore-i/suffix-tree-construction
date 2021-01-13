@@ -12,8 +12,11 @@
 - Create a small performance test suite which evaluates the library's execution
   speed, using some not-too-large datasets. :white_check_mark: (13/01)
 
-- Parallel index building. Load the files into memory in separate coroutines
-  which run in parallel.
+- Parallel index building. Load the files into memory using coroutines which run
+  in parallel. :white_check_mark: (13/01)
+
+- Query indexed files in parallel. Search the indexes of different files in
+  parallel using coroutines. :white_check_mark: (13/01)
 
 - Parallel queries. Update the application so that there is a way to execute
   queries in parallel. Make sure that there are automated tests which cover this
