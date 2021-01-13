@@ -3,7 +3,7 @@ plugins {
     id 'java-library'
 }
 
-group 'org.search'
+group 'org.jetbrains'
 version '1.0'
 
 repositories {

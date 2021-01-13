@@ -1,4 +1,4 @@
-package fulltextsearch
+package org.jetbrains.fulltextsearch
 
 import kotlinx.coroutines.runBlocking
 import org.hamcrest.CoreMatchers.hasItem
@@ -11,7 +11,7 @@ class FullTextSearchTest {
     @Test
     fun `can search for a unique match in one file`() = runBlocking {
         val indexedDirectory: IndexedDirectory = Indexer()
-            .buildIndex(Directory(Paths.get("/Users/romo/IdeaProjects/FullTextSearch/src/test/resources/one-file")))
+            .buildIndex(Directory(Paths.get("src/test/resources/one-file")))
 
         val queryMatches = indexedDirectory.queryCaseSensitive("abracadabra")
 
@@ -22,7 +22,7 @@ class FullTextSearchTest {
     @Test
     fun `can search for multiple matches in one file`() = runBlocking {
         val indexedDirectory: IndexedDirectory = Indexer()
-            .buildIndex(Directory(Paths.get("/Users/romo/IdeaProjects/FullTextSearch/src/test/resources/one-file")))
+            .buildIndex(Directory(Paths.get("src/test/resources/one-file")))
 
         val queryMatches = indexedDirectory.queryCaseSensitive("co")
 
@@ -35,7 +35,7 @@ class FullTextSearchTest {
     @Test
     fun `can search for multiple matches in multiple files`() = runBlocking {
         val indexedDirectory: IndexedDirectory = Indexer()
-            .buildIndex(Directory(Paths.get("/Users/romo/IdeaProjects/FullTextSearch/src/test/resources/two-files")))
+            .buildIndex(Directory(Paths.get("src/test/resources/two-files")))
 
         val queryMatches = indexedDirectory.queryCaseSensitive("this")
 

@@ -1,4 +1,4 @@
-package fulltextsearch
+package org.jetbrains.fulltextsearch
 
 class IndexedDirectory(private val indexedFiles: List<IndexedFile>) {
     fun queryCaseSensitive(s: String): List<QueryMatch> {

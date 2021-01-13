@@ -1,4 +1,4 @@
-package fulltextsearch
+package org.jetbrains.fulltextsearch
 
 import java.io.File
 import java.lang.IllegalArgumentException
