@@ -10,7 +10,7 @@
   library to provide a CLI text search tool. :white_check_mark: (13/01)
 
 - Create a small performance test suite which evaluates the library's execution
-  speed, using some not-too-large datasets from my GitHub.
+  speed, using some not-too-large datasets. :white_check_mark: (13/01)
 
 - Parallel index building. Load the files into memory in separate coroutines
   which run in parallel.

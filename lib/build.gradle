@@ -24,3 +24,21 @@ dependencies {
 test {
     useJUnitPlatform()
 }
+
+tasks.withType(Test) {
+    useJUnitPlatform {
+        excludeTags "performance-test"
+    }
+}
+
+task performanceTest(type: Test) {
+    useJUnitPlatform {
+        includeTags "performance-test"
+    }
+    testLogging {
+        events "passed", "skipped", "failed", "standardOut", "standardError"
+    }
+
+    description = "Runs performance tests"
+    group = "verification"
+}

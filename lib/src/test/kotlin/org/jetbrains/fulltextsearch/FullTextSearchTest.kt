@@ -9,7 +9,7 @@ import java.nio.file.Paths
 
 class FullTextSearchTest {
     @Test
-    fun `can search for a unique match in one file`() = runBlocking {
+    internal fun `can search for a unique match in one file`() = runBlocking {
         val indexedDirectory: IndexedDirectory = Indexer()
             .buildIndex(Directory(Paths.get("src/test/resources/one-file")))
 
@@ -20,7 +20,7 @@ class FullTextSearchTest {
     }
 
     @Test
-    fun `can search for multiple matches in one file`() = runBlocking {
+    internal fun `can search for multiple matches in one file`() = runBlocking {
         val indexedDirectory: IndexedDirectory = Indexer()
             .buildIndex(Directory(Paths.get("src/test/resources/one-file")))
 
@@ -33,7 +33,7 @@ class FullTextSearchTest {
     }
 
     @Test
-    fun `can search for multiple matches in multiple files`() = runBlocking {
+    internal fun `can search for multiple matches in multiple files`() = runBlocking {
         val indexedDirectory: IndexedDirectory = Indexer()
             .buildIndex(Directory(Paths.get("src/test/resources/two-files")))
 
