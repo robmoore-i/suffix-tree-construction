@@ -7,7 +7,7 @@
   :white_check_mark: (12/01)
 
 - Create an application under the same Gradle root project, which utilises the
-  library to provide a CLI text search tool.
+  library to provide a CLI text search tool. :white_check_mark: (13/01)
 
 - Create a small performance test suite which evaluates the library's execution
   speed, using some not-too-large datasets from my GitHub.

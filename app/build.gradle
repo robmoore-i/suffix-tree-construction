@@ -1,0 +1,34 @@
+plugins {
+    id 'org.jetbrains.kotlin.jvm' version '1.4.21'
+    id 'application'
+}
+
+group 'org.jetbrains'
+version '1.0'
+
+repositories {
+    jcenter()
+}
+
+dependencies {
+    implementation platform('org.jetbrains.kotlin:kotlin-bom')
+    implementation project(':lib')
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.2'
+}
+
+application {
+    //noinspection GroovyAssignabilityCheck, GroovyAccessibility
+    mainClass = 'org.jetbrains.fulltextsearch.Main'
+}
+
+run {
+    // See: https://github.com/gradle/gradle/issues/1251
+    print "\nNot running the application from Gradle on the CLI. " +
+            "You need to run this program from Intellij, rather than " +
+            "using Gradle from the command line. This is because " +
+            "running CLI programs from Gradle directly doesn't " +
+            "currently work.\n\n" +
+            "--> See this open issue for more information: https://github.com/gradle/gradle/issues/1251 <--\n"
+    enabled(false)
+}
+

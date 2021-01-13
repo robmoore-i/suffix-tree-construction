@@ -8,4 +8,5 @@
  */
 
 rootProject.name = 'full-text-search'
+include('app')
 include('lib')
