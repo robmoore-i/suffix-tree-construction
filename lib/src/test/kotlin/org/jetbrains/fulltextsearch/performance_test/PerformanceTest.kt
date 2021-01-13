@@ -1,7 +1,7 @@
 package org.jetbrains.fulltextsearch.performance_test
 
 import org.jetbrains.fulltextsearch.Directory
-import org.jetbrains.fulltextsearch.Indexer
+import org.jetbrains.fulltextsearch.indexer.Indexer
 import org.junit.jupiter.api.Tag
 import java.nio.file.Paths
 import kotlin.system.measureTimeMillis
@@ -23,7 +23,10 @@ fun collectAndPrintExecutionTimeData(
     val executionTimes = mutableListOf<Long>()
     repeat(n) {
         executionTimes.add(measureTimeMillis {
-            Indexer().buildIndex(Directory(Paths.get("../$directoryPathFromSourceRoot")))
+            // Note that we are testing the default indexer.
+            val defaultIndexer: Indexer = Indexer.defaultIndexer()
+            defaultIndexer
+                .buildIndex(Directory(Paths.get("../$directoryPathFromSourceRoot")))
         })
     }
     val maxExecutionTime = executionTimes.maxOrNull()!!

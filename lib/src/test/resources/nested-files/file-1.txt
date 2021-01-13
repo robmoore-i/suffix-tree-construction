@@ -1,0 +1,3 @@
+This file contains some text such as 'abracadabra' and other interesting
+strings like it. It also contains plenty of whitespace, and words with common
+prefixes, such as this and that.

@@ -2,6 +2,7 @@
 
 package org.jetbrains.fulltextsearch
 
+import org.jetbrains.fulltextsearch.indexer.Indexer
 import java.nio.file.Paths
 import java.util.*
 
@@ -13,7 +14,7 @@ class Main {
             val userInput = UserInputSource()
             val directory: Directory = chooseSearchDirectory(userInput)
 
-            val indexer = Indexer()
+            val indexer = Indexer.defaultIndexer()
             println("Indexing...")
             val indexedDirectory: IndexedDirectory =
                 indexer.buildIndex(directory)
