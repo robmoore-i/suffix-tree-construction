@@ -8,7 +8,6 @@ import org.hamcrest.Matchers.hasSize
 import org.jetbrains.fulltextsearch.Directory
 import org.jetbrains.fulltextsearch.IndexedFile
 import org.jetbrains.fulltextsearch.QueryMatch
-import org.jetbrains.fulltextsearch.index.IndexingProgressListener
 import org.jetbrains.fulltextsearch.search.IndexedDirectory
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -108,7 +107,7 @@ abstract class AsyncFullTextSearchTest {
         val indexedFileNames = synchronizedList(mutableListOf<String>())
         indexerUnderTest()
             .buildIndexAsync(Directory(Paths.get("src/test/resources/nested-files")),
-                object : IndexingProgressListener {
+                object : AsyncIndexingProgressListener {
                     override fun onNewFileIndexed(indexedFile: IndexedFile) {
                         indexedFileNames.add(indexedFile.path())
                     }
@@ -136,7 +135,7 @@ abstract class AsyncFullTextSearchTest {
         var indexingCompleted = false
         indexerUnderTest()
             .buildIndexAsync(Directory(Paths.get("src/test/resources/nested-files")),
-                object : IndexingProgressListener {
+                object : AsyncIndexingProgressListener {
                     override fun onNewFileIndexed(indexedFile: IndexedFile) {
                     }
 
@@ -148,12 +147,13 @@ abstract class AsyncFullTextSearchTest {
         assertTrue(indexingCompleted)
     }
 
-    private fun indexingProgressListener() = object : IndexingProgressListener {
-        override fun onNewFileIndexed(indexedFile: IndexedFile) {
-        }
+    private fun indexingProgressListener() =
+        object : AsyncIndexingProgressListener {
+            override fun onNewFileIndexed(indexedFile: IndexedFile) {
+            }
 
-        override fun onIndexingCompleted(indexedDirectory: IndexedDirectory) {
-            this@AsyncFullTextSearchTest.indexedDirectory = indexedDirectory
+            override fun onIndexingCompleted(indexedDirectory: IndexedDirectory) {
+                this@AsyncFullTextSearchTest.indexedDirectory = indexedDirectory
+            }
         }
-    }
 }

@@ -1,9 +1,9 @@
-package org.jetbrains.fulltextsearch.index
+package org.jetbrains.fulltextsearch.index.async
 
 import org.jetbrains.fulltextsearch.IndexedFile
 import org.jetbrains.fulltextsearch.search.IndexedDirectory
 
-interface IndexingProgressListener {
+interface AsyncIndexingProgressListener {
     fun onNewFileIndexed(indexedFile: IndexedFile)
 
     fun onIndexingCompleted(indexedDirectory: IndexedDirectory)

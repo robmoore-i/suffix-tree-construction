@@ -4,8 +4,8 @@ package org.jetbrains.fulltextsearch
 
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
-import org.jetbrains.fulltextsearch.index.IndexingProgressListener
 import org.jetbrains.fulltextsearch.index.async.AsyncIndexer
+import org.jetbrains.fulltextsearch.index.async.AsyncIndexingProgressListener
 import org.jetbrains.fulltextsearch.search.IndexedDirectory
 import java.nio.file.Paths
 import java.util.*
@@ -27,7 +27,7 @@ class Main {
                     var theIndexedDirectory: IndexedDirectory? = null
                     indexer.buildIndexAsync(
                         directory,
-                        object : IndexingProgressListener {
+                        object : AsyncIndexingProgressListener {
                             override fun onNewFileIndexed(indexedFile: IndexedFile) {
                                 println("Index built for ${indexedFile.path()}")
                             }
