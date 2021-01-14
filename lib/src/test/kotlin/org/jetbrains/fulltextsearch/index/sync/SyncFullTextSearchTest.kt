@@ -1,19 +1,22 @@
-package org.jetbrains.fulltextsearch.index
+package org.jetbrains.fulltextsearch.index.sync
 
 import kotlinx.coroutines.runBlocking
 import org.hamcrest.CoreMatchers
 import org.hamcrest.CoreMatchers.hasItems
-import org.hamcrest.MatcherAssert
+import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.hasSize
 import org.jetbrains.fulltextsearch.Directory
+import org.jetbrains.fulltextsearch.IndexedFile
 import org.jetbrains.fulltextsearch.QueryMatch
+import org.jetbrains.fulltextsearch.index.IndexingProgressListener
 import org.jetbrains.fulltextsearch.search.IndexedDirectory
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.nio.file.Paths
 import java.util.Collections.synchronizedList
 
-abstract class FullTextSearchTest {
-    abstract fun indexerUnderTest(): Indexer
+abstract class SyncFullTextSearchTest {
+    abstract fun indexerUnderTest(): SyncIndexer
 
     @Test
     internal fun `can search for a unique match in one file`() = runBlocking {
@@ -22,8 +25,8 @@ abstract class FullTextSearchTest {
 
         val queryMatches = indexedDirectory.queryCaseSensitive("abracadabra")
 
-        MatcherAssert.assertThat(queryMatches, hasSize(1))
-        MatcherAssert.assertThat(
+        assertThat(queryMatches, hasSize(1))
+        assertThat(
             queryMatches,
             CoreMatchers.hasItem(QueryMatch("file.txt", 38))
         )
@@ -36,8 +39,8 @@ abstract class FullTextSearchTest {
 
         val queryMatches = indexedDirectory.queryCaseSensitive("co")
 
-        MatcherAssert.assertThat(queryMatches, hasSize(3))
-        MatcherAssert.assertThat(
+        assertThat(queryMatches, hasSize(3))
+        assertThat(
             queryMatches,
             hasItems(
                 QueryMatch("file.txt", 10),
@@ -55,8 +58,8 @@ abstract class FullTextSearchTest {
 
             val queryMatches = indexedDirectory.queryCaseSensitive("this")
 
-            MatcherAssert.assertThat(queryMatches, hasSize(2))
-            MatcherAssert.assertThat(
+            assertThat(queryMatches, hasSize(2))
+            assertThat(
                 queryMatches, hasItems(
                     QueryMatch("file-1.txt", 169),
                     QueryMatch("file-2.txt", 56)
@@ -71,8 +74,8 @@ abstract class FullTextSearchTest {
 
         val queryMatches = indexedDirectory.queryCaseSensitive("file")
 
-        MatcherAssert.assertThat(queryMatches, hasSize(4))
-        MatcherAssert.assertThat(
+        assertThat(queryMatches, hasSize(4))
+        assertThat(
             queryMatches, hasItems(
                 QueryMatch("file-1.txt", 5),
                 QueryMatch("file-2.txt", 5),
@@ -83,21 +86,44 @@ abstract class FullTextSearchTest {
     }
 
     @Test
-    internal fun `reports indexing progress`() = runBlocking {
+    internal fun `reports on each new indexed file`() = runBlocking {
         val indexedFileNames = synchronizedList(mutableListOf<String>())
         indexerUnderTest().buildIndex(
             Directory(Paths.get("src/test/resources/nested-files")),
-            indexingProgressListener = { file ->
-                indexedFileNames.add(file.path)
+            indexingProgressListener = object : IndexingProgressListener {
+                override fun onNewFileIndexed(indexedFile: IndexedFile) {
+                    indexedFileNames.add(indexedFile.path())
+                }
+
+                override fun onIndexingCompleted(indexedDirectory: IndexedDirectory) {
+                }
             })
 
-        MatcherAssert.assertThat(indexedFileNames, hasSize(3))
-        MatcherAssert.assertThat(
-            indexedFileNames, hasItems(
-                "src/test/resources/nested-files/file-1.txt",
-                "src/test/resources/nested-files/file-2.txt",
-                "src/test/resources/nested-files/nested/file-3.txt"
+        assertThat(indexedFileNames, hasSize(3))
+        assertThat(
+            indexedFileNames,
+            hasItems(
+                "file-1.txt",
+                "file-2.txt",
+                "nested/file-3.txt"
             )
         )
+    }
+
+    @Test
+    internal fun `reports on indexing completion`() = runBlocking {
+        var indexingCompleted = false
+        indexerUnderTest().buildIndex(
+            Directory(Paths.get("src/test/resources/nested-files")),
+            indexingProgressListener = object : IndexingProgressListener {
+                override fun onNewFileIndexed(indexedFile: IndexedFile) {
+                }
+
+                override fun onIndexingCompleted(indexedDirectory: IndexedDirectory) {
+                    indexingCompleted = true
+                }
+            })
+
+        assertTrue(indexingCompleted)
     }
 }

@@ -1,17 +1,18 @@
-package org.jetbrains.fulltextsearch.index
+package org.jetbrains.fulltextsearch.index.sync
 
 import org.jetbrains.fulltextsearch.Directory
+import org.jetbrains.fulltextsearch.index.IndexingProgressListener
 import org.jetbrains.fulltextsearch.search.IndexedDirectory
 
-interface Indexer {
+interface SyncIndexer {
     fun buildIndex(
         directory: Directory,
         indexingProgressListener: IndexingProgressListener = IndexingProgressListener.DoNothing()
     ): IndexedDirectory
 
     companion object {
-        fun defaultIndexer(): Indexer {
-            return NaiveParallelIndexer()
+        fun default(): SyncIndexer {
+            return NaiveParallelSyncIndexer()
         }
     }
 }

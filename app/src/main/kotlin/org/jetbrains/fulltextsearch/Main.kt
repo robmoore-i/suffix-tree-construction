@@ -2,7 +2,9 @@
 
 package org.jetbrains.fulltextsearch
 
-import org.jetbrains.fulltextsearch.index.Indexer
+import kotlinx.coroutines.runBlocking
+import org.jetbrains.fulltextsearch.index.IndexingProgressListener
+import org.jetbrains.fulltextsearch.index.async.AsyncIndexer
 import org.jetbrains.fulltextsearch.search.IndexedDirectory
 import java.nio.file.Paths
 import java.util.*
@@ -12,20 +14,25 @@ class Main {
     companion object {
         @JvmStatic
         fun main(args: Array<String>) {
-            printBanner()
-            val userInput = UserInputSource()
-            val directory: Directory = chooseSearchDirectory(userInput)
+            runBlocking {
+                printBanner()
+                val userInput = UserInputSource()
+                val directory: Directory = chooseSearchDirectory(userInput)
+                val indexer = AsyncIndexer.default()
+                println("Indexing...")
+                indexer.buildIndexAsync(
+                    directory,
+                    object : IndexingProgressListener {
+                        override fun onNewFileIndexed(indexedFile: IndexedFile) {
+                            println("Index built for ${indexedFile.path()}")
+                        }
 
-            val indexer = Indexer.defaultIndexer()
-            println("Indexing...")
-            val indexedDirectory: IndexedDirectory = indexer.buildIndex(
-                directory,
-                indexingProgressListener = { file ->
-                    println("Index built for ${directory.relativePathTo(file.path)}")
-                })
-            println("Done.")
-
-            runSearchQueryREPL(userInput, indexedDirectory)
+                        override fun onIndexingCompleted(indexedDirectory: IndexedDirectory) {
+                            println("Done.")
+                            runSearchQueryREPL(userInput, indexedDirectory)
+                        }
+                    })
+            }
         }
 
         private fun printBanner() {

@@ -1,14 +1,15 @@
-package org.jetbrains.fulltextsearch.index
+package org.jetbrains.fulltextsearch.index.sync
 
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.fulltextsearch.Directory
 import org.jetbrains.fulltextsearch.IndexedFile
+import org.jetbrains.fulltextsearch.index.IndexingProgressListener
 import org.jetbrains.fulltextsearch.search.IndexedDirectory
 import java.io.File
 import java.util.Collections.synchronizedList
 
-class NaiveParallelIndexer : Indexer {
+class NaiveParallelSyncIndexer : SyncIndexer {
     override fun buildIndex(
         directory: Directory,
         indexingProgressListener: IndexingProgressListener
@@ -18,12 +19,14 @@ class NaiveParallelIndexer : Indexer {
             directory.forEachFile {
                 launch {
                     val indexedFile = buildIndex(directory, it)
-                    indexingProgressListener.onNewFileIndexed(it)
+                    indexingProgressListener.onNewFileIndexed(indexedFile)
                     indexedFiles.add(indexedFile)
                 }
             }
         }
-        return IndexedDirectory(indexedFiles)
+        val indexedDirectory = IndexedDirectory(indexedFiles)
+        indexingProgressListener.onIndexingCompleted(indexedDirectory)
+        return indexedDirectory
     }
 
     private fun buildIndex(root: Directory, file: File): IndexedFile {

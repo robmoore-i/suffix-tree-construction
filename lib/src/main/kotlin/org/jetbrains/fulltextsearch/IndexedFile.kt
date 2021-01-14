@@ -7,4 +7,6 @@ class IndexedFile(private val path: String, private val fileText: String) {
             .map { QueryMatch(path, it.range.first) }
             .toList()
     }
+
+    fun path(): String = path
 }

@@ -1,7 +1,7 @@
 package org.jetbrains.fulltextsearch.performance_test
 
 import org.jetbrains.fulltextsearch.Directory
-import org.jetbrains.fulltextsearch.index.Indexer
+import org.jetbrains.fulltextsearch.index.sync.SyncIndexer
 import org.junit.jupiter.api.Tag
 import org.opentest4j.TestAbortedException
 import java.nio.file.Paths
@@ -35,8 +35,8 @@ fun collectAndPrintExecutionTimeData(
     repeat(n) {
         executionTimes.add(measureTimeMillis {
             // Note that we are testing the default indexer.
-            val defaultIndexer: Indexer = Indexer.defaultIndexer()
-            defaultIndexer.buildIndex(Directory(dirPath))
+            val defaultSyncIndexer: SyncIndexer = SyncIndexer.default()
+            defaultSyncIndexer.buildIndex(Directory(dirPath))
         })
     }
     val maxExecutionTime = executionTimes.maxOrNull()!!
