@@ -8,9 +8,7 @@ import org.hamcrest.Matchers.hasSize
 import org.jetbrains.fulltextsearch.Directory
 import org.jetbrains.fulltextsearch.IndexedFile
 import org.jetbrains.fulltextsearch.QueryMatch
-import org.jetbrains.fulltextsearch.index.IndexingProgressListener
 import org.jetbrains.fulltextsearch.search.IndexedDirectory
-import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.nio.file.Paths
 import java.util.Collections.synchronizedList
@@ -90,12 +88,9 @@ abstract class SyncFullTextSearchTest {
         val indexedFileNames = synchronizedList(mutableListOf<String>())
         indexerUnderTest().buildIndex(
             Directory(Paths.get("src/test/resources/nested-files")),
-            indexingProgressListener = object : IndexingProgressListener {
+            indexingProgressListener = object : SyncIndexingProgressListener {
                 override fun onNewFileIndexed(indexedFile: IndexedFile) {
                     indexedFileNames.add(indexedFile.path())
-                }
-
-                override fun onIndexingCompleted(indexedDirectory: IndexedDirectory) {
                 }
             })
 
@@ -108,22 +103,5 @@ abstract class SyncFullTextSearchTest {
                 "nested/file-3.txt"
             )
         )
-    }
-
-    @Test
-    internal fun `reports on indexing completion`() = runBlocking {
-        var indexingCompleted = false
-        indexerUnderTest().buildIndex(
-            Directory(Paths.get("src/test/resources/nested-files")),
-            indexingProgressListener = object : IndexingProgressListener {
-                override fun onNewFileIndexed(indexedFile: IndexedFile) {
-                }
-
-                override fun onIndexingCompleted(indexedDirectory: IndexedDirectory) {
-                    indexingCompleted = true
-                }
-            })
-
-        assertTrue(indexingCompleted)
     }
 }
