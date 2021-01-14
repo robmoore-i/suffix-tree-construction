@@ -3,6 +3,7 @@
 package org.jetbrains.fulltextsearch
 
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import org.jetbrains.fulltextsearch.index.IndexingProgressListener
 import org.jetbrains.fulltextsearch.index.async.AsyncIndexer
 import org.jetbrains.fulltextsearch.search.IndexedDirectory
@@ -19,19 +20,26 @@ class Main {
                 val userInput = UserInputSource()
                 val directory: Directory = chooseSearchDirectory(userInput)
                 val indexer = AsyncIndexer.default()
-                println("Indexing...")
-                indexer.buildIndexAsync(
-                    directory,
-                    object : IndexingProgressListener {
-                        override fun onNewFileIndexed(indexedFile: IndexedFile) {
-                            println("Index built for ${indexedFile.path()}")
-                        }
+                // Note: You can trigger a timeout using the below directory:
+                // example-input-directories/kotlin
+                val indexedDirectory: IndexedDirectory = withTimeout(2000) {
+                    println("Indexing...")
+                    var theIndexedDirectory: IndexedDirectory? = null
+                    indexer.buildIndexAsync(
+                        directory,
+                        object : IndexingProgressListener {
+                            override fun onNewFileIndexed(indexedFile: IndexedFile) {
+                                println("Index built for ${indexedFile.path()}")
+                            }
 
-                        override fun onIndexingCompleted(indexedDirectory: IndexedDirectory) {
-                            println("Done.")
-                            runSearchQueryREPL(userInput, indexedDirectory)
-                        }
-                    })
+                            override fun onIndexingCompleted(indexedDirectory: IndexedDirectory) {
+                                theIndexedDirectory = indexedDirectory
+                            }
+                        })
+                    println("Done.")
+                    theIndexedDirectory!!
+                }
+                runSearchQueryREPL(userInput, indexedDirectory)
             }
         }
 

@@ -36,9 +36,11 @@
   :white_check_mark: (14/01)
 
 - Enable interrupts. Create a mechanism for indexing to be interrupted.
+  :white_check_mark: (14/01)
 
 - Update the application so that the user can interrupt indexing. Users should
   be able to specify that indexing will automatically interrupt after N seconds.
+  :white_check_mark: (14/01)
 
 - Implement suffix tree construction in the library, using a standard algorithm
   like Ukkonen's. Ensure that constructed suffix trees can be queried for all
