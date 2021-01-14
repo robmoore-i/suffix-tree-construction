@@ -5,10 +5,10 @@ import org.hamcrest.CoreMatchers
 import org.hamcrest.CoreMatchers.hasItems
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.hasSize
-import org.jetbrains.fulltextsearch.Directory
-import org.jetbrains.fulltextsearch.IndexedFile
-import org.jetbrains.fulltextsearch.QueryMatch
+import org.jetbrains.fulltextsearch.filesystem.Directory
 import org.jetbrains.fulltextsearch.search.IndexedDirectory
+import org.jetbrains.fulltextsearch.search.IndexedFile
+import org.jetbrains.fulltextsearch.search.QueryMatch
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.nio.file.Paths
@@ -106,7 +106,8 @@ abstract class AsyncFullTextSearchTest {
     internal fun `reports on each new indexed file`() = runBlocking {
         val indexedFileNames = synchronizedList(mutableListOf<String>())
         indexerUnderTest()
-            .buildIndexAsync(Directory(Paths.get("src/test/resources/nested-files")),
+            .buildIndexAsync(
+                Directory(Paths.get("src/test/resources/nested-files")),
                 object : AsyncIndexingProgressListener {
                     override fun onNewFileIndexed(indexedFile: IndexedFile) {
                         indexedFileNames.add(indexedFile.path())
@@ -134,7 +135,8 @@ abstract class AsyncFullTextSearchTest {
     internal fun `reports on indexing completion`() = runBlocking {
         var indexingCompleted = false
         indexerUnderTest()
-            .buildIndexAsync(Directory(Paths.get("src/test/resources/nested-files")),
+            .buildIndexAsync(
+                Directory(Paths.get("src/test/resources/nested-files")),
                 object : AsyncIndexingProgressListener {
                     override fun onNewFileIndexed(indexedFile: IndexedFile) {
                     }

@@ -3,8 +3,6 @@ package org.jetbrains.fulltextsearch.search
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.fulltextsearch.IndexedFile
-import org.jetbrains.fulltextsearch.QueryMatch
 
 class IndexedDirectory(private val indexedFiles: List<IndexedFile>) {
     fun queryCaseSensitive(s: String): List<QueryMatch> {

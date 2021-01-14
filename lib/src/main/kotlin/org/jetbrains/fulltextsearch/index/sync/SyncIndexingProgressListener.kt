@@ -1,6 +1,6 @@
 package org.jetbrains.fulltextsearch.index.sync
 
-import org.jetbrains.fulltextsearch.IndexedFile
+import org.jetbrains.fulltextsearch.search.IndexedFile
 
 interface SyncIndexingProgressListener {
     fun onNewFileIndexed(indexedFile: IndexedFile)

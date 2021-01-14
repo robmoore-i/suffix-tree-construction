@@ -1,7 +1,6 @@
-package org.jetbrains.fulltextsearch
+package org.jetbrains.fulltextsearch.filesystem
 
 import java.io.File
-import java.lang.IllegalArgumentException
 import java.nio.file.Path
 
 class Directory(private val dirPath: Path) {

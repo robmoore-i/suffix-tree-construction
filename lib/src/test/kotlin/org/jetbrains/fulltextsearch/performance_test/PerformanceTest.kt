@@ -1,7 +1,11 @@
 package org.jetbrains.fulltextsearch.performance_test
 
-import org.jetbrains.fulltextsearch.Directory
-import org.jetbrains.fulltextsearch.index.sync.SyncIndexer
+import kotlinx.coroutines.runBlocking
+import org.jetbrains.fulltextsearch.filesystem.Directory
+import org.jetbrains.fulltextsearch.index.async.AsyncIndexer
+import org.jetbrains.fulltextsearch.index.async.AsyncIndexingProgressListener
+import org.jetbrains.fulltextsearch.search.IndexedDirectory
+import org.jetbrains.fulltextsearch.search.IndexedFile
 import org.junit.jupiter.api.Tag
 import org.opentest4j.TestAbortedException
 import java.nio.file.Paths
@@ -35,8 +39,18 @@ fun collectAndPrintExecutionTimeData(
     repeat(n) {
         executionTimes.add(measureTimeMillis {
             // Note that we are testing the default indexer.
-            val defaultSyncIndexer: SyncIndexer = SyncIndexer.default()
-            defaultSyncIndexer.buildIndex(Directory(dirPath))
+            val defaultIndexer = AsyncIndexer.default()
+            runBlocking {
+                defaultIndexer.buildIndexAsync(
+                    Directory(dirPath),
+                    object : AsyncIndexingProgressListener {
+                        override fun onNewFileIndexed(indexedFile: IndexedFile) {
+                        }
+
+                        override fun onIndexingCompleted(indexedDirectory: IndexedDirectory) {
+                        }
+                    })
+            }
         })
     }
     val maxExecutionTime = executionTimes.maxOrNull()!!

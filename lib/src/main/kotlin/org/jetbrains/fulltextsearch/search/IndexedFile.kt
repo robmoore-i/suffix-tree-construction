@@ -1,4 +1,4 @@
-package org.jetbrains.fulltextsearch
+package org.jetbrains.fulltextsearch.search
 
 class IndexedFile(private val path: String, private val fileText: String) {
     fun query(s: String): List<QueryMatch> {

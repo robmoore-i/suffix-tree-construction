@@ -1,8 +1,8 @@
 package org.jetbrains.fulltextsearch.index.sync
 
-import org.jetbrains.fulltextsearch.Directory
-import org.jetbrains.fulltextsearch.IndexedFile
+import org.jetbrains.fulltextsearch.filesystem.Directory
 import org.jetbrains.fulltextsearch.search.IndexedDirectory
+import org.jetbrains.fulltextsearch.search.IndexedFile
 import java.io.File
 
 class NaiveSerialSyncIndexer : SyncIndexer {

@@ -1,6 +1,6 @@
 package org.jetbrains.fulltextsearch.index.sync
 
-import org.jetbrains.fulltextsearch.Directory
+import org.jetbrains.fulltextsearch.filesystem.Directory
 import org.jetbrains.fulltextsearch.search.IndexedDirectory
 
 interface SyncIndexer {

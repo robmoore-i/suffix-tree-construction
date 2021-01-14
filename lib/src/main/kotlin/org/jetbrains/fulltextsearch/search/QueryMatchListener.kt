@@ -1,6 +1,5 @@
 package org.jetbrains.fulltextsearch.search
 
-import org.jetbrains.fulltextsearch.QueryMatch
 import java.util.*
 
 fun interface QueryMatchListener {
