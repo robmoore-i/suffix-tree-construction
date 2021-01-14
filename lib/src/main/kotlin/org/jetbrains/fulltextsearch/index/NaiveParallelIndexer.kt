@@ -1,20 +1,25 @@
-package org.jetbrains.fulltextsearch.indexer
+package org.jetbrains.fulltextsearch.index
 
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.fulltextsearch.Directory
-import org.jetbrains.fulltextsearch.IndexedDirectory
 import org.jetbrains.fulltextsearch.IndexedFile
+import org.jetbrains.fulltextsearch.search.IndexedDirectory
 import java.io.File
 import java.util.Collections.synchronizedList
 
 class NaiveParallelIndexer : Indexer {
-    override fun buildIndex(directory: Directory): IndexedDirectory {
+    override fun buildIndex(
+        directory: Directory,
+        indexingProgressListener: IndexingProgressListener
+    ): IndexedDirectory {
         val indexedFiles = synchronizedList(mutableListOf<IndexedFile>())
         runBlocking {
             directory.forEachFile {
                 launch {
-                    indexedFiles.add(buildIndex(directory, it))
+                    val indexedFile = buildIndex(directory, it)
+                    indexingProgressListener.onNewFileIndexed(it)
+                    indexedFiles.add(indexedFile)
                 }
             }
         }

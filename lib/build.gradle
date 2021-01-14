@@ -32,6 +32,9 @@ tasks.withType(Test) {
 }
 
 task performanceTest(type: Test) {
+    minHeapSize = "128m"
+    maxHeapSize = "1024m"
+
     useJUnitPlatform {
         includeTags "performance-test"
     }

@@ -1,4 +1,4 @@
-package org.jetbrains.fulltextsearch.indexer
+package org.jetbrains.fulltextsearch.index
 
 class NaiveSerialIndexerTest : FullTextSearchTest() {
     override fun indexerUnderTest() = NaiveSerialIndexer()

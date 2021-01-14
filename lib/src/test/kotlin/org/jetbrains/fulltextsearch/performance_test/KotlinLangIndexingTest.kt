@@ -5,12 +5,12 @@ package org.jetbrains.fulltextsearch.performance_test
 import org.junit.jupiter.api.Test
 
 @PerformanceTest
-class AndroidAppSrcIndexingTest {
+class KotlinLangIndexingTest {
     @Test
-    internal fun `indexing an Android app repository`() {
+    internal fun `indexing the kotlin programming language repository`() {
         collectAndPrintExecutionTimeData(
-            "example-input-directories/Learnification",
-            100
+            "example-input-directories/kotlin",
+            1
         )
     }
 }

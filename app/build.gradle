@@ -21,14 +21,23 @@ application {
     mainClass = 'org.jetbrains.fulltextsearch.Main'
 }
 
-run {
-    // See: https://github.com/gradle/gradle/issues/1251
-    print "\nNot running the application from Gradle on the CLI. " +
-            "You need to run this program from Intellij, rather than " +
-            "using Gradle from the command line. This is because " +
-            "running CLI programs from Gradle directly doesn't " +
-            "currently work.\n\n" +
-            "--> See this open issue for more information: https://github.com/gradle/gradle/issues/1251 <--\n"
-    enabled(false)
+/**
+ * Read the text in the below print statement to learn about this code.
+ */
+task printRunDisabledMessage {
+    doFirst {
+        print "\n!!! Not running the application from Gradle !!!\n" +
+                "- You need to run this program from Intellij, rather than " +
+                "using Gradle from the command line. The reason is that the " +
+                "application needs to read input from the user at the " +
+                "command line (i.e. via the Java Scanner object, or via " +
+                "Kotlin's readLine function. When run via the Gradle run " +
+                "task though, this behaviour does not work correctly.\n" +
+                "- There is an open issue related to this, which can be found " +
+                "here: https://github.com/gradle/gradle/issues/1251\n"
+    }
 }
-
+tasks.run.configure {
+    onlyIf { false }
+}
+tasks.run.dependsOn(tasks.printRunDisabledMessage)

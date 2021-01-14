@@ -6,3 +6,6 @@ build
 
 # Ignore Intellij project configuration files
 .idea
+
+# Test data
+example-input-directories

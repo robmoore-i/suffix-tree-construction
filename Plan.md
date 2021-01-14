@@ -18,20 +18,22 @@
 - Query indexed files in parallel. Search the indexes of different files in
   parallel using coroutines. :white_check_mark: (13/01)
 
-- Parallel queries. Update the application so that there is a way to execute
-  queries in parallel. Make sure that there are automated tests which cover this
-  use-case too.
+- Parallel queries. Update the library so that there is a way to execute queries
+  in parallel. Make sure that there are automated tests which cover this
+  use-case too. :white_check_mark: (14/01)
 
 - Add some larger datasets to the performance test suite so that the behaviour
   of the progress reporting feature will be easier to see visually. We will need
   to have fast-running automated tests for this behaviour as well though.
+  :white_check_mark: (14/01)
 
 - Report progress. Use the observer pattern to send events to the library's
   users to tell them whenever a new file has been indexed. Note, there is still
-  no meaningful index.
+  no meaningful index. :white_check_mark: (14/01)
 
 - Update the application so that it displays updates for index building using
   the progress reporting functionality provided by the library.
+  :white_check_mark: (14/01)
 
 - Enable interrupts. Create a mechanism for indexing to be interrupted.
 

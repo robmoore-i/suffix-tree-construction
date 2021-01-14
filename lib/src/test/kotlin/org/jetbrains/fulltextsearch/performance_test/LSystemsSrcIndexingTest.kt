@@ -5,11 +5,11 @@ package org.jetbrains.fulltextsearch.performance_test
 import org.junit.jupiter.api.Test
 
 @PerformanceTest
-class BibleIndexingTest {
+class LSystemsSrcIndexingTest {
     @Test
-    internal fun `indexing the King James Bible`() {
+    internal fun `indexing a small Java program repository`() {
         collectAndPrintExecutionTimeData(
-            "example-input-directories/bible",
+            "example-input-directories/LSystems",
             100
         )
     }
