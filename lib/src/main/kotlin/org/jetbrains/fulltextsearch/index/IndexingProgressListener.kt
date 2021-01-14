@@ -7,12 +7,4 @@ interface IndexingProgressListener {
     fun onNewFileIndexed(indexedFile: IndexedFile)
 
     fun onIndexingCompleted(indexedDirectory: IndexedDirectory)
-
-    class DoNothing : IndexingProgressListener {
-        override fun onNewFileIndexed(indexedFile: IndexedFile) {
-        }
-
-        override fun onIndexingCompleted(indexedDirectory: IndexedDirectory) {
-        }
-    }
 }
