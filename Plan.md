@@ -51,12 +51,15 @@
   algorithm which is the basis for Ukkonen's linear-time construction algorithm.
   Ensure that constructed suffix trees can be queried for all the positions of a
   given substring in the string it was constructed from.
+  :white_check_mark: (18/01)
 
 - Update the library's indexing function so that for small files, it both loads
   the file content into memory and builds a suffix tree from it.
+  :white_check_mark: (18/01)
 
 - Update the library's query function so that it exploits the suffix tree index.
   Verify that the query performance of the library has improved.
+  :white_check_mark: (18/01)
 
 - Update the suffix tree construction code so that it uses Ukkonen's linear-time
   algorithm.

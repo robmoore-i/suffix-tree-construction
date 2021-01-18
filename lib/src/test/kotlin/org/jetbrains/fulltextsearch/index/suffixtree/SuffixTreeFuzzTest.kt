@@ -10,11 +10,11 @@ import org.junit.jupiter.api.Test
 class SuffixTreeFuzzTest {
     @Test
     internal fun `find bugs`() {
-        repeat(1) {
-            val fileContent = generateRandomString(minLength = 50, maxLength = 100)
+        repeat(100) {
+            val fileContent = generateRandomString(minLength = 100, maxLength = 105)
             val naiveIndexedFile = NaiveIndexedFile("some-file.txt", fileContent)
             val suffixTreeIndexedFile = SuffixTreeIndexedFile("some-file.txt", fileContent)
-            repeat(1000) {
+            repeat(100) {
                 val queryString = generateRandomString(maxLength = 10)
                 assertQueryResultsMatch(
                     fileContent,
@@ -46,8 +46,9 @@ class SuffixTreeFuzzTest {
         naiveIndexedFile: NaiveIndexedFile,
         suffixTreeIndexedFile: SuffixTreeIndexedFile
     ) {
+        val expectedQueryResults = naiveIndexedFile.query(queryString).toSet()
         assertEquals(
-            naiveIndexedFile.query(queryString).toSet(),
+            expectedQueryResults,
             suffixTreeIndexedFile.query(queryString).toSet(),
             "SuffixTreeIndexedFile and NaiveIndexedFile disagreed on the output " +
                     "of a query.\n" +
