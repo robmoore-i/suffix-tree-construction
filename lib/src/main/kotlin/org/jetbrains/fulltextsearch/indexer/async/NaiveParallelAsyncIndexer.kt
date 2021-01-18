@@ -1,4 +1,4 @@
-package org.jetbrains.fulltextsearch.index.async
+package org.jetbrains.fulltextsearch.indexer.async
 
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope

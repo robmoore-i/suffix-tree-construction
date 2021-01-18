@@ -1,4 +1,4 @@
-package org.jetbrains.fulltextsearch.index.sync
+package org.jetbrains.fulltextsearch.indexer.sync
 
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking

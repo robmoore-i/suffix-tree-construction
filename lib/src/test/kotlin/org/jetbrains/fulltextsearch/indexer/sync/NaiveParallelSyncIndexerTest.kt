@@ -1,4 +1,4 @@
-package org.jetbrains.fulltextsearch.index.sync
+package org.jetbrains.fulltextsearch.indexer.sync
 
 class NaiveParallelSyncIndexerTest : SyncFullTextSearchTest() {
     override fun indexerUnderTest() = NaiveParallelSyncIndexer()

@@ -1,4 +1,4 @@
-package org.jetbrains.fulltextsearch.index.async
+package org.jetbrains.fulltextsearch.indexer.async
 
 import org.jetbrains.fulltextsearch.search.IndexedDirectory
 import org.jetbrains.fulltextsearch.search.IndexedFile
