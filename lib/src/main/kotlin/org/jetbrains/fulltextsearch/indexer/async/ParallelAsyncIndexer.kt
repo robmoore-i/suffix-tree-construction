@@ -9,7 +9,7 @@ import org.jetbrains.fulltextsearch.index.IndexedFile
 import org.jetbrains.fulltextsearch.search.IndexedDirectory
 import java.util.*
 
-class NaiveParallelAsyncIndexer : AsyncIndexer {
+class ParallelAsyncIndexer : AsyncIndexer {
     override suspend fun buildIndexAsync(
         directory: Directory,
         indexingProgressListener: AsyncIndexingProgressListener

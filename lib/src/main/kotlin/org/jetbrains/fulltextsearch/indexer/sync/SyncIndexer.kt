@@ -11,7 +11,7 @@ interface SyncIndexer {
 
     companion object {
         fun default(): SyncIndexer {
-            return NaiveParallelSyncIndexer()
+            return ParallelSyncIndexer()
         }
     }
 }

@@ -4,7 +4,7 @@ import org.jetbrains.fulltextsearch.filesystem.Directory
 import org.jetbrains.fulltextsearch.index.IndexedFile
 import org.jetbrains.fulltextsearch.search.IndexedDirectory
 
-class NaiveSerialSyncIndexer : SyncIndexer {
+class SerialSyncIndexer : SyncIndexer {
     override fun buildIndex(
         directory: Directory,
         indexingProgressListener: SyncIndexingProgressListener

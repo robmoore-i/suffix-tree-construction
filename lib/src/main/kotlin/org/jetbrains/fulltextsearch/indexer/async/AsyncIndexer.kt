@@ -11,7 +11,7 @@ interface AsyncIndexer {
 
     companion object {
         fun default(): AsyncIndexer {
-            return NaiveParallelAsyncIndexer()
+            return ParallelAsyncIndexer()
         }
     }
 }
