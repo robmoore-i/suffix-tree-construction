@@ -42,15 +42,27 @@
   be able to specify that indexing will automatically interrupt after N seconds.
   :white_check_mark: (14/01)
 
-- Implement suffix tree construction in the library, using a standard algorithm
-  like Ukkonen's. Ensure that constructed suffix trees can be queried for all
-  the positions of a given substring in the string it was constructed from.
+- Implement suffix tree construction in the library, using the naive cubic time
+  algorithm which is the basis for Ukkonen's linear-time construction algorithm.
+  Ensure that constructed suffix trees can be queried for all the positions of a
+  given substring in the string it was constructed from.
 
-- Update the library's indexing function so that it both loads the file content
-  into memory and builds a suffix tree from it.
+- Write a fuzz test suite which provides confidence that the query results from
+  the suffix tree index are equal to the results for the naive index. This is to
+  ensure that any bugs in the suffix tree implementation are caught as early as
+  possible.
+
+- Update the library's indexing function so that for small files, it both loads
+  the file content into memory and builds a suffix tree from it.
 
 - Update the library's query function so that it exploits the suffix tree index.
   Verify that the query performance of the library has improved.
+
+- Update the suffix tree construction code so that it uses Ukkonen's linear-time
+  algorithm.
+
+- Update the library's indexing function so that it builds a suffix tree index
+  even for bigger files - maybe even all files, if that is feasible.
 
 - **First iteration complete**
 
@@ -63,4 +75,5 @@
 ## Plan Changelog
 
 - 13/01 morning : Initial planning
+- 18/01 morning : Split suffix tree index integration into two iterations.
 
