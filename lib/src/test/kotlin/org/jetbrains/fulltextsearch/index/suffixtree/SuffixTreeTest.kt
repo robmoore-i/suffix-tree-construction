@@ -72,6 +72,12 @@ class SuffixTreeTest {
         assertEquals(setOf(3), suffixTree.offsetsOf("xb"))
     }
 
+    @Test
+    internal fun `converts the implicit suffix tree into a true suffix tree`() {
+        val suffixTree: SuffixTree = suffixTree("fff")
+        assertEquals(setOf(0, 1, 2), suffixTree.offsetsOf("f"))
+    }
+
     private fun suffixTree(inputString: String): SuffixTree {
         val suffixTree = SuffixTree(inputString)
         println("\nSuffix Tree for '$inputString': $suffixTree")

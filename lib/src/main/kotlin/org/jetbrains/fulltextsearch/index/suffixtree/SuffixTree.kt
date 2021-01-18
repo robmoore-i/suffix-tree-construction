@@ -1,14 +1,17 @@
 package org.jetbrains.fulltextsearch.index.suffixtree
 
-class SuffixTree(private val inputString: String) {
+class SuffixTree(inputString: String) {
     private val root: RootNode = RootNode()
+
+    // We append a terminating character to the inputString in order to ensure that we get a true
+    // suffix tree at the end of the process, rather than an implicit suffix tree.
+    private val terminatedInputString = inputString + terminatingCharacter()
 
     init {
         // PHASE 1 EXTENSION 1
         val endPosition = TextPosition(1)
         root.addLeafEdge(LeafNode(endPosition.value() - 1), TextPosition(0), endPosition)
-
-        (2..inputString.length).forEach { phaseNumber ->
+        (2..terminatedInputString.length).forEach { phaseNumber ->
             // PHASE i EXTENSION 1
             endPosition.increment()
 
@@ -23,10 +26,10 @@ class SuffixTree(private val inputString: String) {
                 }
 
                 val suffixOffset = extensionNumber - 1
-                val suffixToAdd = inputString.substring(suffixOffset, phaseNumber)
+                val suffixToAdd = terminatedInputString.substring(suffixOffset, phaseNumber)
                 Debugger.printLine("\nPhase $phaseNumber, extension $extensionNumber")
                 Debugger.printLine("Adding string '$suffixToAdd'")
-                root.suffixExtension(inputString, suffixToAdd, suffixOffset, endPosition)
+                root.suffixExtension(terminatedInputString, suffixToAdd, suffixOffset, endPosition)
                 Debugger.printLine("Root node: $root")
             }
         }
@@ -37,8 +40,11 @@ class SuffixTree(private val inputString: String) {
     }
 
     fun offsetsOf(queryString: String): Set<Int> {
-        Debugger.enable()
-        return root.offsetsOf(inputString, queryString)
+        return root.offsetsOf(terminatedInputString, queryString)
+    }
+
+    private fun terminatingCharacter(): Char {
+        return '\u0000'
     }
 }
 
