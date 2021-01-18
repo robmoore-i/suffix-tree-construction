@@ -6,9 +6,7 @@ import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import org.jetbrains.fulltextsearch.filesystem.Directory
 import org.jetbrains.fulltextsearch.index.IndexedFile
-import org.jetbrains.fulltextsearch.index.NaiveIndexedFile
 import org.jetbrains.fulltextsearch.search.IndexedDirectory
-import java.io.File
 import java.util.*
 
 class NaiveParallelAsyncIndexer : AsyncIndexer {
@@ -21,7 +19,7 @@ class NaiveParallelAsyncIndexer : AsyncIndexer {
             val indexingJobs = mutableListOf<Job>()
             directory.forEachFile {
                 indexingJobs.add(launch {
-                    val indexedFile = buildIndex(directory, it)
+                    val indexedFile = IndexedFile.buildFor(directory, it)
                     indexingProgressListener.onNewFileIndexed(indexedFile)
                     indexedFiles.add(indexedFile)
                 })
@@ -31,9 +29,5 @@ class NaiveParallelAsyncIndexer : AsyncIndexer {
                 IndexedDirectory(indexedFiles)
             )
         }
-    }
-
-    private fun buildIndex(root: Directory, file: File): NaiveIndexedFile {
-        return NaiveIndexedFile(root.relativePathTo(file.path), file.readText())
     }
 }

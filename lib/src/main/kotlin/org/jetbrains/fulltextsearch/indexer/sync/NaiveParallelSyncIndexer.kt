@@ -4,9 +4,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.fulltextsearch.filesystem.Directory
 import org.jetbrains.fulltextsearch.index.IndexedFile
-import org.jetbrains.fulltextsearch.index.NaiveIndexedFile
 import org.jetbrains.fulltextsearch.search.IndexedDirectory
-import java.io.File
 import java.util.Collections.synchronizedList
 
 class NaiveParallelSyncIndexer : SyncIndexer {
@@ -18,16 +16,12 @@ class NaiveParallelSyncIndexer : SyncIndexer {
         runBlocking {
             directory.forEachFile {
                 launch {
-                    val indexedFile = buildIndex(directory, it)
+                    val indexedFile = IndexedFile.buildFor(directory, it)
                     indexingProgressListener.onNewFileIndexed(indexedFile)
                     indexedFiles.add(indexedFile)
                 }
             }
         }
         return IndexedDirectory(indexedFiles)
-    }
-
-    private fun buildIndex(root: Directory, file: File): NaiveIndexedFile {
-        return NaiveIndexedFile(root.relativePathTo(file.path), file.readText())
     }
 }

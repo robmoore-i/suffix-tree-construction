@@ -1,9 +1,8 @@
 package org.jetbrains.fulltextsearch.indexer.sync
 
 import org.jetbrains.fulltextsearch.filesystem.Directory
-import org.jetbrains.fulltextsearch.index.NaiveIndexedFile
+import org.jetbrains.fulltextsearch.index.IndexedFile
 import org.jetbrains.fulltextsearch.search.IndexedDirectory
-import java.io.File
 
 class NaiveSerialSyncIndexer : SyncIndexer {
     override fun buildIndex(
@@ -12,13 +11,9 @@ class NaiveSerialSyncIndexer : SyncIndexer {
     ): IndexedDirectory {
         return IndexedDirectory(
             directory.forEachFile {
-                val indexedFile = buildIndex(directory, it)
+                val indexedFile = IndexedFile.buildFor(directory, it)
                 indexingProgressListener.onNewFileIndexed(indexedFile)
                 indexedFile
             })
-    }
-
-    private fun buildIndex(root: Directory, file: File): NaiveIndexedFile {
-        return NaiveIndexedFile(root.relativePathTo(file.path), file.readText())
     }
 }
