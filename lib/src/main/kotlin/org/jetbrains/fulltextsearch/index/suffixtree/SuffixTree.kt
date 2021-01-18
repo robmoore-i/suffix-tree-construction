@@ -59,9 +59,9 @@ interface SrcNode {
     fun deleteEdge(srcOffset: TextPosition)
 
     /**
-     * Performs a suffix extension in the subtree rooted at this node. It adds the String stored in the parameter
-     * suffixToAdd, which has the given suffixOffset. The current pointer to the end of the string is also given,
-     * because it is needed for constructing leaf nodes.
+     * Performs a suffix extension in the subtree rooted at this node. It adds the String stored in
+     * the parameter suffixToAdd, which has the given suffixOffset. The current pointer to the end
+     * of the string is also given, because it is needed for constructing leaf nodes.
      */
     fun addSuffix(
         inputString: String,
@@ -71,7 +71,8 @@ interface SrcNode {
     )
 
     /**
-     * @return The set of all offsets into the inputString which correspond to matches of the queryString.
+     * @return The set of all offsets into the inputString which correspond to matches of the
+     * queryString.
      */
     fun offsetsOf(inputString: String, queryString: String): Set<Int>
 
@@ -83,14 +84,17 @@ interface SrcNode {
 
 interface DstNode {
     /**
-     * @return The suffix extension which should be applied to the parent of this node, in order to add the given
-     * suffixToAdd into the tree being built from the given inputString.
+     * @return An action which should be executed by the parent of this node, in order to
+     * add the given suffixToAdd into the tree
      *
      * @param inputString is the string which we are building a suffix tree for
-     * @param suffixToAdd is the suffix we want to add. We call this method to create an appropriate SuffixExtension to use for that
+     * @param suffixToAdd is the suffix we want to add. We call this method to create an appropriate
+     * SuffixExtension to use for that
      * @param suffixOffset is the offset of the suffixToAdd in the inputString
-     * @param endPosition is the current pointer to the end of the input, which is needed to construct leaf nodes
-     * @param inboundEdgeDstOffset is the dstOffset of the inbound edge to this node, which is needed for leaf edge extensions
+     * @param endPosition is the current pointer to the end of the input, which is needed to
+     * construct leaf nodes
+     * @param inboundEdgeDstOffset is the dstOffset of the inbound edge to this node, which is
+     * needed for leaf edge extensions
      */
     fun suffixExtension(
         inputString: String,
@@ -101,13 +105,14 @@ interface DstNode {
     ): SuffixExtension
 
     /**
-     * Add an appropriate edge to the srcNode, which goes to this node. Use the given values for the edge's srcOffset
-     * and dstOffset.
+     * Add an appropriate edge to the srcNode, which goes to this node. Use the given values for the
+     * edge's srcOffset and dstOffset.
      */
     fun addAsDstOf(srcNode: InternalNode, srcOffset: TextPosition, dstOffset: TextPosition)
 
     /**
-     * @return The set of all offsets into the inputString which correspond to matches of the queryString.
+     * @return The set of all offsets into the inputString which correspond to matches of the
+     * queryString.
      */
     fun offsetsOf(inputString: String, queryString: String): Set<Int>
 
@@ -118,7 +123,8 @@ interface DstNode {
 }
 
 /**
- * A suffix extension is an operation which mutates a srcNode in order to add an enclosed suffix to the subtree rooted
+ * A suffix extension is an operation which mutates a srcNode in order to add an enclosed suffix to
+ * the subtree rooted
  * at the srcNode.
  */
 fun interface SuffixExtension {
@@ -137,16 +143,19 @@ class Edge(
     }
 
     /**
-     * The edge decides what kind of suffix extension will be necessary in order to add the given suffixToAdd into the
+     * The edge decides what kind of suffix extension will be necessary in order to add the given
+     * suffixToAdd into the
      * suffix tree being built for the given inputString.
      *
-     * @return If the suffixToAdd is able to be added within this edge, or within the subtree rooted at the dstNode of
-     * this edge, then it will return a suffix extension which will modify the srcNode in order to perform the required
-     * extension. If this edge doesn't match the given suffixToAdd, then this method will return null to indicate that
-     * there is action to be taken, but not from this edge.
+     * @return If the suffixToAdd is able to be added within this edge, or within the subtree rooted
+     * at the dstNode of this edge, then it will return a suffix extension which will modify the
+     * srcNode in order to perform the required extension. If this edge doesn't match the given
+     * suffixToAdd, then this method will return null to indicate that there is action to be taken,
+     * but not from this edge.
      *
      * @param suffixOffset is the offset of the suffixToAdd in the inputString
-     * @param endPosition is the current pointer to the end of the input, which is needed to construct leaf nodes
+     * @param endPosition is the current pointer to the end of the input, which is needed to
+     * construct leaf nodes
      */
     fun suffixExtension(
         inputString: String,
@@ -154,7 +163,8 @@ class Edge(
         suffixOffset: Int,
         endPosition: TextPosition
     ): SuffixExtension? {
-        // If the suffix won't go along this edge at all, stop and return null, because no extension is needed here
+        // If the suffix won't go along this edge at all, stop and return null, because no extension
+        // is needed here
         val label = label(inputString)
         if (label[0] != suffixToAdd[0]) {
             Debugger.printLine(
@@ -165,15 +175,16 @@ class Edge(
         }
 
         // If the suffix is implicitly contained within the edge label already, do nothing
-        // If the suffix and the edge label are equal, then we also don't need to do anything. This covers that case.
+        // If the suffix and the edge label are equal, then we also don't need to do anything. This
+        // covers that case.
         if (label.startsWith(suffixToAdd)) {
             Debugger.printLine("Suffix '$suffixToAdd' is implicitly contained within the edge label '$label'")
             return SuffixExtension { }
         }
 
-        // If this edge goes to a leaf, and the suffix would extend the current edge label by adding more characters to
-        // the end, then extend the edge label.
-        // If this edge goes to an internal node, and the suffix would extend the current edge label by adding more
+        // If this edge goes to a leaf, and the suffix would extend the current edge label by adding
+        // more characters to the end, then extend the edge label. Alternatively, if this edge goes
+        // to an internal node, and the suffix would extend the current edge label by adding more
         // characters to the end, then recurse to the internal node
         if (suffixToAdd.startsWith(label)) {
             val recursingSuffix = suffixToAdd.substring(label.length)
@@ -228,7 +239,7 @@ class Edge(
 
                 // This calculation requires some explanation:
                 // We know the length of the suffixToAdd
-                // We know the number of characters from the suffixToAdd are in the internal edge label
+                // We know the length of the matching prefix between suffixToAdd and the internal edge label
                 // From this, we can determine the number of characters in the leaf edge label
                 // We also know the index of the end of the string, from endPosition
                 // This therefore gives us the srcOffset as the difference of these two values.
@@ -248,13 +259,15 @@ class Edge(
     }
 
     /**
-     * @return If the queryString is able to be found on this edge, or in any subtree rooted at the dstNode of this
-     * edge, then it will return a set of offsets into the inputString which correspond to instances of the queryString.
-     * Otherwise, if this edge doesn't match the queryString, it will return null to indicate that the caller should
-     * check the other edges of the dstNode, or they may have to conclude that the search was unsuccessful.
+     * @return If the queryString is able to be found on this edge, or in any subtree rooted at the
+     * dstNode of this edge, then it will return a set of offsets into the inputString which
+     * correspond to instances of the queryString. Otherwise, if this edge doesn't match the
+     * queryString, it will return null to indicate that the caller should check the other edges of
+     * the dstNode, or they may have to conclude that the search was unsuccessful.
      */
     fun offsetsOf(inputString: String, queryString: String): Set<Int>? {
-        // If the query string won't go along this edge at all, stop and return null, because no extension is needed here.
+        // If the query string won't go along this edge at all, stop and return null, because no
+        // extension is needed here.
         val label = label(inputString)
         if (label[0] != queryString[0]) {
             Debugger.printLine(
@@ -264,8 +277,9 @@ class Edge(
             return null
         }
 
-        // If the query string goes along this edge but doesn't get all the way to the end, or only just gets to the end,
-        // then return the suffixOffsets of all the leaves of the subtree rooted at the dstNode of this edge.
+        // If the query string goes along this edge but doesn't get all the way to the end, or only
+        // just gets to the end, then return the suffixOffsets of all the leaves of the subtree
+        // rooted at the dstNode of this edge.
         if (label.startsWith(queryString)) {
             Debugger.printLine(
                 "The edge label '$label' starts with the query string '$queryString'. " +
@@ -274,9 +288,9 @@ class Edge(
             return descendentSuffixOffsets()
         }
 
-        // If the query string goes along this edge, but is longer than the label and needs to traverse further, then
-        // recurse to the dstNode of this edge, and behead the query string by the length that was covered by the label
-        // of this edge.
+        // If the query string goes along this edge, but is longer than the label and needs to
+        // traverse further, then recurse to the dstNode of this edge, and behead the query string
+        // by the length that was covered by the label of this edge.
         if (queryString.startsWith(label)) {
             @Suppress("SpellCheckingInspection")
             val recursedQueryString = queryString.substring(label.length)
@@ -287,8 +301,9 @@ class Edge(
             return dstNode.offsetsOf(inputString, recursedQueryString)
         }
 
-        // The only remaining case is a strictly partial match, in which the query string 'falls off' the tree in the
-        // middle of the edge label. In this case, there will be no query matches, so we return an empty collection.
+        // The only remaining case is a strictly partial match, in which the query string 'falls
+        // off' the tree in the middle of the edge label. In this case, there will be no query
+        // matches, so we return an empty collection.
         Debugger.printLine(
             "The query string '$queryString' has a strictly partial match with the edge label '$label'. " +
                     "This means that there are no matches for the query string in the text. " +
@@ -298,7 +313,8 @@ class Edge(
     }
 
     /**
-     * @return The set of suffix offsets in all the leaf nodes in the subtree rooted at the dstNode of this edge.
+     * @return The set of suffix offsets in all the leaf nodes in the subtree rooted at the dstNode
+     * of this edge.
      */
     fun descendentSuffixOffsets(): Set<Int> {
         return dstNode.descendentSuffixOffsets()
@@ -440,8 +456,8 @@ class InternalNode : SrcNode, DstNode {
         srcNode.addSuffix(inputString, suffixToAdd, suffixOffset, endPosition)
     }
 
-    // Recall that this method returns a suffix extension to apply to a given srcNode in order to add the given
-    // suffixToAdd into the subtree rooted the srcNode.
+    // Recall that this method returns a suffix extension to apply to a given srcNode in order to
+    // add the given suffixToAdd into the subtree rooted the srcNode.
     override fun suffixExtension(
         inputString: String,
         suffixToAdd: String,
@@ -449,9 +465,7 @@ class InternalNode : SrcNode, DstNode {
         endPosition: TextPosition,
         inboundEdgeDstOffset: TextPosition
     ): SuffixExtension {
-        return SuffixExtension {
-            srcNode.addSuffix(inputString, suffixToAdd, suffixOffset, endPosition)
-        }
+        return SuffixExtension { addSuffix(inputString, suffixToAdd, suffixOffset, endPosition) }
     }
 
     override fun addAsDstOf(
