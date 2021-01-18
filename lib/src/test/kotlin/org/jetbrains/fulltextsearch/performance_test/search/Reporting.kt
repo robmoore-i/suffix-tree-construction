@@ -5,11 +5,10 @@ import org.jetbrains.fulltextsearch.filesystem.Directory
 import org.jetbrains.fulltextsearch.index.IndexedFile
 import org.jetbrains.fulltextsearch.indexer.async.AsyncIndexer
 import org.jetbrains.fulltextsearch.indexer.async.AsyncIndexingProgressListener
+import org.jetbrains.fulltextsearch.randominput.RandomInput.generateRandomString
 import org.jetbrains.fulltextsearch.search.IndexedDirectory
 import org.opentest4j.TestAbortedException
 import java.nio.file.Paths
-import java.util.*
-import kotlin.streams.asSequence
 import kotlin.system.measureTimeMillis
 
 fun collectAndPrintSearchExecutionTimeData(
@@ -60,7 +59,7 @@ class SearchQueryPerformanceTester {
 
     fun nextResult(indexedDirectory: IndexedDirectory) {
         if (counter >= queryTerms.size) {
-            val queryTerm: String = randomString()
+            val queryTerm: String = generateRandomString()
             results[queryTerm] = measureTimeMillis {
                 indexedDirectory.queryCaseSensitive(queryTerm)
             }
@@ -73,21 +72,5 @@ class SearchQueryPerformanceTester {
         }
     }
 
-    private val random = Random()
-    private fun randomString(): String {
-        @Suppress("SpellCheckingInspection")
-        val source = "abcdefghijklmnopqrstuvwxyz "
-        val sizeOfRandomString: Long =
-            random.longs(1, 1, 20)
-                .findFirst()
-                .orElseThrow { RuntimeException("Couldn't create random query string") }
-
-        return random.ints(sizeOfRandomString, 0, source.length)
-            .asSequence()
-            .map(source::get)
-            .joinToString("")
-    }
-
-    fun printResults() =
-        results.forEach { println("'${it.key}' : ${it.value}ms") }
+    fun printResults() = results.forEach { println("'${it.key}' : ${it.value}ms") }
 }
