@@ -28,13 +28,7 @@ class SuffixTreeFuzzTest {
         }
     }
 
-    @Test
-    internal fun `regression 1`() {
-        val suffixTree: SuffixTree = suffixTree("gsblwoxjt")
-        assertEquals(setOf<Int>(), suffixTree.offsetsOf("te"))
-    }
-
-    @Suppress("SameParameterValue")
+    @Suppress("SameParameterValue", "unused")
     private fun suffixTree(inputString: String): SuffixTree {
         val suffixTree = SuffixTree(inputString)
         println("\nSuffix Tree for '$inputString': $suffixTree")

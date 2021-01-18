@@ -37,6 +37,7 @@ class SuffixTree(private val inputString: String) {
     }
 
     fun offsetsOf(queryString: String): Set<Int> {
+        Debugger.enable()
         return root.offsetsOf(inputString, queryString)
     }
 }
@@ -253,6 +254,10 @@ class Edge(
         // If the query string goes along this edge but doesn't get all the way to the end, or only just gets to the end,
         // then return the suffixOffsets of all the leaves of the subtree rooted at the dstNode of this edge.
         if (label.startsWith(queryString)) {
+            Debugger.printLine(
+                "The edge label '$label' starts with the query string '$queryString'. " +
+                        "Returning all descendent suffix offsets."
+            )
             return descendentSuffixOffsets()
         }
 
@@ -260,11 +265,22 @@ class Edge(
         // recurse to the dstNode of this edge, and behead the query string by the length that was covered by the label
         // of this edge.
         if (queryString.startsWith(label)) {
-            return dstNode.offsetsOf(inputString, queryString.substring(label.length))
+            @Suppress("SpellCheckingInspection")
+            val recursedQueryString = queryString.substring(label.length)
+            Debugger.printLine(
+                "The query string '$queryString' starts with the edge label '$label'. " +
+                        "Recursing to the dstNode of this edge, with the shortened query string '$recursedQueryString'."
+            )
+            return dstNode.offsetsOf(inputString, recursedQueryString)
         }
 
         // The only remaining case is a strictly partial match, in which the query string 'falls off' the tree in the
         // middle of the edge label. In this case, there will be no query matches, so we return an empty collection.
+        Debugger.printLine(
+            "The query string '$queryString' has a strictly partial match with the edge label '$label'. " +
+                    "This means that there are no matches for the query string in the text. " +
+                    "Returning an empty collection."
+        )
         return setOf()
     }
 
@@ -467,7 +483,7 @@ class LeafNode(private val suffixOffset: Int) : DstNode {
     }
 
     override fun offsetsOf(inputString: String, queryString: String): Set<Int> {
-        return setOf(suffixOffset)
+        return setOf()
     }
 
     override fun toString(): String {
