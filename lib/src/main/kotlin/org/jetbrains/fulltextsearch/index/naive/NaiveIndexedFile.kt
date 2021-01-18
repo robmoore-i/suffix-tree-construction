@@ -1,5 +1,6 @@
-package org.jetbrains.fulltextsearch.index
+package org.jetbrains.fulltextsearch.index.naive
 
+import org.jetbrains.fulltextsearch.index.IndexedFile
 import org.jetbrains.fulltextsearch.search.QueryMatch
 
 class NaiveIndexedFile(private val path: String, private val fileText: String) : IndexedFile {
