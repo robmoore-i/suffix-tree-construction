@@ -29,7 +29,7 @@ class SuffixTree(inputString: String) {
                 val suffixToAdd = terminatedInputString.substring(suffixOffset, phaseNumber)
                 Debugger.printLine("\nPhase $phaseNumber, extension $extensionNumber")
                 Debugger.printLine("Adding string '$suffixToAdd'")
-                root.suffixExtension(terminatedInputString, suffixToAdd, suffixOffset, endPosition)
+                root.addSuffix(terminatedInputString, suffixToAdd, suffixOffset, endPosition)
                 Debugger.printLine("Root node: $root")
             }
         }
@@ -63,7 +63,7 @@ interface SrcNode {
      * suffixToAdd, which has the given suffixOffset. The current pointer to the end of the string is also given,
      * because it is needed for constructing leaf nodes.
      */
-    fun suffixExtension(
+    fun addSuffix(
         inputString: String,
         suffixToAdd: String,
         suffixOffset: Int,
@@ -327,7 +327,7 @@ class DelegateSrcNode : SrcNode {
         edges.removeIf { it.hasSrcOffset(srcOffset) }
     }
 
-    override fun suffixExtension(
+    override fun addSuffix(
         inputString: String,
         suffixToAdd: String,
         suffixOffset: Int,
@@ -346,11 +346,7 @@ class DelegateSrcNode : SrcNode {
             "Adding leaf with suffixOffset $suffixOffset " +
                     "and offsets $srcOffset, ${endPosition.value()}"
         )
-        addLeafEdge(
-            LeafNode(suffixOffset),
-            TextPosition(srcOffset),
-            endPosition
-        )
+        addLeafEdge(LeafNode(suffixOffset), TextPosition(srcOffset), endPosition)
     }
 
     override fun offsetsOf(inputString: String, queryString: String): Set<Int> {
@@ -393,13 +389,13 @@ class RootNode : SrcNode {
         srcNode.deleteEdge(srcOffset)
     }
 
-    override fun suffixExtension(
+    override fun addSuffix(
         inputString: String,
         suffixToAdd: String,
         suffixOffset: Int,
         endPosition: TextPosition
     ) {
-        srcNode.suffixExtension(inputString, suffixToAdd, suffixOffset, endPosition)
+        srcNode.addSuffix(inputString, suffixToAdd, suffixOffset, endPosition)
     }
 
     override fun offsetsOf(inputString: String, queryString: String): Set<Int> {
@@ -435,13 +431,13 @@ class InternalNode : SrcNode, DstNode {
     }
 
     // Recall that this method applies a suffix extension to the node.
-    override fun suffixExtension(
+    override fun addSuffix(
         inputString: String,
         suffixToAdd: String,
         suffixOffset: Int,
         endPosition: TextPosition
     ) {
-        srcNode.suffixExtension(inputString, suffixToAdd, suffixOffset, endPosition)
+        srcNode.addSuffix(inputString, suffixToAdd, suffixOffset, endPosition)
     }
 
     // Recall that this method returns a suffix extension to apply to a given srcNode in order to add the given
@@ -454,7 +450,7 @@ class InternalNode : SrcNode, DstNode {
         inboundEdgeDstOffset: TextPosition
     ): SuffixExtension {
         return SuffixExtension {
-            srcNode.suffixExtension(inputString, suffixToAdd, suffixOffset, endPosition)
+            srcNode.addSuffix(inputString, suffixToAdd, suffixOffset, endPosition)
         }
     }
 
