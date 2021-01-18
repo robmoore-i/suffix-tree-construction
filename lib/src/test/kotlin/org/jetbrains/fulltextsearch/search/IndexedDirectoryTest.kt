@@ -11,7 +11,7 @@ class IndexedDirectoryTest {
         val indexedDirectory =
             IndexedDirectory(
                 listOf(
-                    IndexedFile(
+                    NaiveIndexedFile(
                         "hello-world.txt",
                         "hello world"
                     )
@@ -31,7 +31,7 @@ class IndexedDirectoryTest {
     @Test
     internal fun `finds multiple matches`() {
         val indexedDirectory =
-            IndexedDirectory(listOf(IndexedFile("file.txt", "abracadabra")))
+            IndexedDirectory(listOf(NaiveIndexedFile("file.txt", "abracadabra")))
 
         val queryResults: List<QueryMatch> =
             indexedDirectory.queryCaseSensitive("abra")
@@ -47,7 +47,7 @@ class IndexedDirectoryTest {
     @Test
     internal fun `can run search queries in parallel`() {
         val indexedDirectory =
-            IndexedDirectory(listOf(IndexedFile("file.txt", "abracadabra")))
+            IndexedDirectory(listOf(NaiveIndexedFile("file.txt", "abracadabra")))
 
         val one = QueryMatchListener.MatchCollector()
         val two = QueryMatchListener.MatchCollector()
@@ -76,8 +76,8 @@ class IndexedDirectoryTest {
     internal fun `doesn't send query matches event if no matches found`() {
         val indexedDirectory = IndexedDirectory(
             listOf(
-                IndexedFile("file-1.txt", "abracadabra"),
-                IndexedFile("file-2.txt", "nothing interesting")
+                NaiveIndexedFile("file-1.txt", "abracadabra"),
+                NaiveIndexedFile("file-2.txt", "nothing interesting")
             )
         )
         val eventCounter = object : QueryMatchListener {
