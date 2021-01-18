@@ -1,4 +1,4 @@
-package org.jetbrains.fulltextsearch.performance_test.index
+package org.jetbrains.fulltextsearch.performance_test.indexer
 
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.fulltextsearch.filesystem.Directory

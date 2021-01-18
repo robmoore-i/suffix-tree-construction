@@ -1,6 +1,6 @@
 @file:Suppress("SpellCheckingInspection")
 
-package org.jetbrains.fulltextsearch.performance_test.index
+package org.jetbrains.fulltextsearch.performance_test.indexer
 
 import org.jetbrains.fulltextsearch.performance_test.PerformanceTest
 import org.junit.jupiter.api.Test

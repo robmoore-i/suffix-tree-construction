@@ -1,17 +1,17 @@
 @file:Suppress("SpellCheckingInspection")
 
-package org.jetbrains.fulltextsearch.performance_test.index
+package org.jetbrains.fulltextsearch.performance_test.indexer
 
 import org.jetbrains.fulltextsearch.performance_test.PerformanceTest
 import org.junit.jupiter.api.Test
 
 @PerformanceTest
-class KotlinWebSiteIndexingTest {
+class KotlinLangIndexingTest {
     @Test
-    internal fun `indexing the kotlin web site repository`() {
+    internal fun `indexing the kotlin programming language repository`() {
         collectAndPrintIndexingExecutionTimeData(
-            "example-input-directories/kotlin-web-site",
-            10
+            "example-input-directories/kotlin",
+            1
         )
     }
 }
