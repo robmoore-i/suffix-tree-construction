@@ -219,6 +219,13 @@ class Edge(
                             "matchLength=$matchLength, endPosition=${endPosition.value()}, " +
                             "suffixToAdd.length=${suffixToAdd.length}"
                 )
+
+                // This calculation requires some explanation:
+                // We know the length of the suffixToAdd
+                // We know the number of characters from the suffixToAdd are in the internal edge label
+                // From this, we can determine the number of characters in the leaf edge label
+                // We also know the index of the end of the string, from endPosition
+                // This therefore gives us the srcOffset as the difference of these two values.
                 val newLeafSrcOffset =
                     TextPosition(endPosition.value() - suffixToAdd.length + matchLength)
                 Debugger.printLine("Adding new leaf edge from ${newLeafSrcOffset.value()} -> ${endPosition.value()}")
@@ -328,8 +335,16 @@ class LogicalSrcNode : SrcNode {
                 return
             }
         }
-        Debugger.printLine("Adding leaf with suffixOffset $suffixOffset")
-        addLeafEdge(LeafNode(suffixOffset), TextPosition(suffixOffset), endPosition)
+        val srcOffset: Int = endPosition.value() - suffixToAdd.length
+        Debugger.printLine(
+            "Adding leaf with suffixOffset $suffixOffset " +
+                    "and offsets $srcOffset, ${endPosition.value()}"
+        )
+        addLeafEdge(
+            LeafNode(suffixOffset),
+            TextPosition(srcOffset),
+            endPosition
+        )
     }
 
     override fun offsetsOf(inputString: String, queryString: String): Set<Int> {

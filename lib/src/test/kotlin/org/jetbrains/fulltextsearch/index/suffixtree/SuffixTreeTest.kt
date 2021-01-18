@@ -66,6 +66,12 @@ class SuffixTreeTest {
         assertEquals(setOf<Int>(), suffixTree.offsetsOf("cxa"))
     }
 
+    @Test
+    internal fun `can add all-new leaf nodes from internal nodes`() {
+        val suffixTree: SuffixTree = suffixTree("xxaxb")
+        assertEquals(setOf(3), suffixTree.offsetsOf("xb"))
+    }
+
     private fun suffixTree(inputString: String): SuffixTree {
         val suffixTree = SuffixTree(inputString)
         println("\nSuffix Tree for '$inputString': $suffixTree")

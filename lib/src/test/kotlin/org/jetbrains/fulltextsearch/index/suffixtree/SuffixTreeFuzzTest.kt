@@ -11,27 +11,48 @@ class SuffixTreeFuzzTest {
     @Test
     internal fun `find bugs`() {
         repeat(1) {
-            val randomFileContent = generateRandomString(minLength = 5, maxLength = 10)
-            val naiveIndexedFile = NaiveIndexedFile("some-file.txt", randomFileContent)
-            val suffixTreeIndexedFile = SuffixTreeIndexedFile("some-file.txt", randomFileContent)
-            repeat(100) {
-                val randomQueryString = generateRandomString(maxLength = 10)
-                assertEquals(
-                    naiveIndexedFile.query(randomQueryString).toSet(),
-                    suffixTreeIndexedFile.query(randomQueryString).toSet(),
-                    "SuffixTreeIndexedFile and NaiveIndexedFile disagreed on the output " +
-                            "of a query.\n" +
-                            "Query string: '$randomQueryString'\n" +
-                            "File content: '$randomFileContent'\n"
+            val fileContent = generateRandomString(minLength = 50, maxLength = 100)
+            val naiveIndexedFile = NaiveIndexedFile("some-file.txt", fileContent)
+            val suffixTreeIndexedFile = SuffixTreeIndexedFile("some-file.txt", fileContent)
+            repeat(1000) {
+                val queryString = generateRandomString(maxLength = 10)
+                assertQueryResultsMatch(
+                    fileContent,
+                    queryString,
+                    naiveIndexedFile,
+                    suffixTreeIndexedFile
                 )
             }
         }
     }
 
+    /**
+     * You can use this assertion method in this file to create small test cases that recreate bug
+     * scenarios, and then, using the test, refine the test data to minimal reproducing cases.
+     */
     @Suppress("SameParameterValue", "unused")
-    private fun suffixTree(inputString: String): SuffixTree {
-        val suffixTree = SuffixTree(inputString)
-        println("\nSuffix Tree for '$inputString': $suffixTree")
-        return suffixTree
+    private fun `assert that suffix tree index matches naive index`(
+        fileContent: String,
+        queryString: String
+    ) {
+        val naiveIndexedFile = NaiveIndexedFile("some-file.txt", fileContent)
+        val suffixTreeIndexedFile = SuffixTreeIndexedFile("some-file.txt", fileContent)
+        assertQueryResultsMatch(fileContent, queryString, naiveIndexedFile, suffixTreeIndexedFile)
+    }
+
+    private fun assertQueryResultsMatch(
+        fileContent: String,
+        queryString: String,
+        naiveIndexedFile: NaiveIndexedFile,
+        suffixTreeIndexedFile: SuffixTreeIndexedFile
+    ) {
+        assertEquals(
+            naiveIndexedFile.query(queryString).toSet(),
+            suffixTreeIndexedFile.query(queryString).toSet(),
+            "SuffixTreeIndexedFile and NaiveIndexedFile disagreed on the output " +
+                    "of a query.\n" +
+                    "Query string: '$queryString'\n" +
+                    "File content: '$fileContent'\n"
+        )
     }
 }
