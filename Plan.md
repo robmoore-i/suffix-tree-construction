@@ -42,15 +42,15 @@
   be able to specify that indexing will automatically interrupt after N seconds.
   :white_check_mark: (14/01)
 
+- Write a fuzz test suite which provides confidence that the query results from
+  the suffix tree index are equal to the results for the naive index. This is to
+  ensure that any bugs in the suffix tree implementation are caught as early as
+  possible. :white_check_mark: (18/01)
+
 - Implement suffix tree construction in the library, using the naive cubic time
   algorithm which is the basis for Ukkonen's linear-time construction algorithm.
   Ensure that constructed suffix trees can be queried for all the positions of a
   given substring in the string it was constructed from.
-
-- Write a fuzz test suite which provides confidence that the query results from
-  the suffix tree index are equal to the results for the naive index. This is to
-  ensure that any bugs in the suffix tree implementation are caught as early as
-  possible.
 
 - Update the library's indexing function so that for small files, it both loads
   the file content into memory and builds a suffix tree from it.
