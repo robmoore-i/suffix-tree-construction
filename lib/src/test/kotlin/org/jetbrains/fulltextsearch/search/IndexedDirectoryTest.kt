@@ -3,6 +3,7 @@ package org.jetbrains.fulltextsearch.search
 import kotlinx.coroutines.runBlocking
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.*
+import org.jetbrains.fulltextsearch.index.NaiveIndexedFile
 import org.junit.jupiter.api.Test
 
 class IndexedDirectoryTest {

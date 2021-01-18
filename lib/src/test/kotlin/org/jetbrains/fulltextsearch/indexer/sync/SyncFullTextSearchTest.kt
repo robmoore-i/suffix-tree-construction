@@ -6,8 +6,8 @@ import org.hamcrest.CoreMatchers.hasItems
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.hasSize
 import org.jetbrains.fulltextsearch.filesystem.Directory
+import org.jetbrains.fulltextsearch.index.IndexedFile
 import org.jetbrains.fulltextsearch.search.IndexedDirectory
-import org.jetbrains.fulltextsearch.search.IndexedFile
 import org.jetbrains.fulltextsearch.search.QueryMatch
 import org.junit.jupiter.api.Test
 import java.nio.file.Paths

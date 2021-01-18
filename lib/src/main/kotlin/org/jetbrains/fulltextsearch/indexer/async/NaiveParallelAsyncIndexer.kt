@@ -5,9 +5,9 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import org.jetbrains.fulltextsearch.filesystem.Directory
+import org.jetbrains.fulltextsearch.index.IndexedFile
+import org.jetbrains.fulltextsearch.index.NaiveIndexedFile
 import org.jetbrains.fulltextsearch.search.IndexedDirectory
-import org.jetbrains.fulltextsearch.search.IndexedFile
-import org.jetbrains.fulltextsearch.search.NaiveIndexedFile
 import java.io.File
 import java.util.*
 

@@ -1,4 +1,6 @@
-package org.jetbrains.fulltextsearch.search
+package org.jetbrains.fulltextsearch.index
+
+import org.jetbrains.fulltextsearch.search.QueryMatch
 
 class NaiveIndexedFile(private val path: String, private val fileText: String) : IndexedFile {
     override fun query(queryString: String): List<QueryMatch> {

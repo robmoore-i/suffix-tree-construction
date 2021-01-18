@@ -5,10 +5,10 @@ package org.jetbrains.fulltextsearch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import org.jetbrains.fulltextsearch.filesystem.Directory
+import org.jetbrains.fulltextsearch.index.IndexedFile
 import org.jetbrains.fulltextsearch.indexer.async.AsyncIndexer
 import org.jetbrains.fulltextsearch.indexer.async.AsyncIndexingProgressListener
 import org.jetbrains.fulltextsearch.search.IndexedDirectory
-import org.jetbrains.fulltextsearch.search.IndexedFile
 import org.jetbrains.fulltextsearch.search.QueryMatch
 import java.nio.file.Paths
 import java.util.*

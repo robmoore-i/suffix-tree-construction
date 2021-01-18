@@ -3,9 +3,9 @@ package org.jetbrains.fulltextsearch.indexer.sync
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.fulltextsearch.filesystem.Directory
+import org.jetbrains.fulltextsearch.index.IndexedFile
+import org.jetbrains.fulltextsearch.index.NaiveIndexedFile
 import org.jetbrains.fulltextsearch.search.IndexedDirectory
-import org.jetbrains.fulltextsearch.search.IndexedFile
-import org.jetbrains.fulltextsearch.search.NaiveIndexedFile
 import java.io.File
 import java.util.Collections.synchronizedList
 

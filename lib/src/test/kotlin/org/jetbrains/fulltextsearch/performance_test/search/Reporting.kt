@@ -2,10 +2,10 @@ package org.jetbrains.fulltextsearch.performance_test.search
 
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.fulltextsearch.filesystem.Directory
+import org.jetbrains.fulltextsearch.index.IndexedFile
 import org.jetbrains.fulltextsearch.indexer.async.AsyncIndexer
 import org.jetbrains.fulltextsearch.indexer.async.AsyncIndexingProgressListener
 import org.jetbrains.fulltextsearch.search.IndexedDirectory
-import org.jetbrains.fulltextsearch.search.IndexedFile
 import org.opentest4j.TestAbortedException
 import java.nio.file.Paths
 import java.util.*
