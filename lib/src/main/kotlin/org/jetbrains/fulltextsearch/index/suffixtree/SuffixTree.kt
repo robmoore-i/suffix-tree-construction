@@ -308,7 +308,7 @@ class Edge(
         inputString.substring(srcOffset.value(), dstOffset.value())
 }
 
-class LogicalSrcNode : SrcNode {
+class DelegateSrcNode : SrcNode {
     private val edges = mutableSetOf<Edge>()
 
     override fun addLeafEdge(dstNode: LeafNode, srcOffset: TextPosition, dstOffset: TextPosition) {
@@ -375,7 +375,7 @@ class LogicalSrcNode : SrcNode {
 }
 
 class RootNode : SrcNode {
-    private val srcNode: SrcNode = LogicalSrcNode()
+    private val srcNode: SrcNode = DelegateSrcNode()
 
     override fun addLeafEdge(dstNode: LeafNode, srcOffset: TextPosition, dstOffset: TextPosition) {
         srcNode.addLeafEdge(dstNode, srcOffset, dstOffset)
@@ -416,7 +416,7 @@ class RootNode : SrcNode {
 }
 
 class InternalNode : SrcNode, DstNode {
-    private val srcNode: SrcNode = LogicalSrcNode()
+    private val srcNode: SrcNode = DelegateSrcNode()
 
     override fun addLeafEdge(dstNode: LeafNode, srcOffset: TextPosition, dstOffset: TextPosition) {
         srcNode.addLeafEdge(dstNode, srcOffset, dstOffset)
