@@ -13,7 +13,8 @@ class SuffixTree(inputString: String) {
         root.addLeafEdge(LeafNode(endPosition.value() - 1), TextPosition(0), endPosition)
 
         var remainingSuffixes = 0
-        val activePoint = ActivePoint(terminatedInputString, root, endPosition)
+        val suffixLinkCandidate = SuffixLinkCandidate()
+        val activePoint = ActivePoint(terminatedInputString, root, suffixLinkCandidate, endPosition)
 
         (2..terminatedInputString.length).forEach { phaseNumber ->
             Debugger.enableIf { phaseNumber >= 7 }
@@ -28,7 +29,7 @@ class SuffixTree(inputString: String) {
             endPosition.increment()
 
             // Suffix link candidates reset at the start of every phase.
-            var suffixLinkCandidate: InternalNode? = null
+            activePoint.resetSuffixLinkCandidate()
 
             // The phase ends when it is no longer possible to add more suffixes into the tree in
             // the current phase. This happens either when we run out of remaining suffixes to add,
@@ -83,20 +84,7 @@ class SuffixTree(inputString: String) {
                             "Splitting at the active point $activePoint; " +
                                     "in order to add the character '${terminatedInputString[phaseNumber - 1]}'."
                         )
-                        val internalNode: InternalNode = activePoint.split(
-                            phaseNumber - 1,
-                            suffixOffset
-                        )
-
-                        // TODO: Duplicated
-                        if (suffixLinkCandidate != null) {
-                            Debugger.printLine(
-                                "Creating a suffix link FROM $suffixLinkCandidate;\nTO $internalNode;"
-                            )
-                            suffixLinkCandidate.linkTo(internalNode)
-                        }
-                        suffixLinkCandidate = internalNode
-                        Debugger.printLine("Next suffix link candidate is $suffixLinkCandidate;")
+                        activePoint.split(phaseNumber - 1, suffixOffset)
                         remainingSuffixes--
 
                         // TODO: Duplicated
@@ -146,9 +134,27 @@ class SuffixTree(inputString: String) {
     }
 }
 
+class SuffixLinkCandidate {
+    private var nextNodeToLinkFrom: InternalNode? = null
+
+    fun linkTo(internalNode: InternalNode) {
+        if (nextNodeToLinkFrom != null) {
+            Debugger.printLine("Creating a suffix link FROM $nextNodeToLinkFrom;\nTO $internalNode;")
+            nextNodeToLinkFrom!!.linkTo(internalNode)
+        }
+        nextNodeToLinkFrom = internalNode
+        Debugger.printLine("Next suffix link candidate is $nextNodeToLinkFrom;")
+    }
+
+    fun reset() {
+        nextNodeToLinkFrom = null
+    }
+}
+
 class ActivePoint(
     private val inputString: String,
     private val root: RootNode,
+    private val suffixLinkCandidate: SuffixLinkCandidate,
     private val endPosition: TextPosition
 ) {
     private var activeNode: SrcNode = root
@@ -205,8 +211,9 @@ class ActivePoint(
         return edge!!.labelHasCharacter(inputString, c, labelOffset)
     }
 
-    fun split(charToAddOffset: Int, suffixOffset: Int): InternalNode {
-        return edge!!.split(charToAddOffset, labelOffset, suffixOffset, endPosition)
+    fun split(charToAddOffset: Int, suffixOffset: Int) {
+        val newInternalNode = edge!!.split(charToAddOffset, labelOffset, suffixOffset, endPosition)
+        suffixLinkCandidate.linkTo(newInternalNode)
     }
 
     fun isAtNode(): Boolean {
@@ -218,6 +225,9 @@ class ActivePoint(
         if (reachedEndOfEdge()) {
             Debugger.printLine("Reached the end of the current activeEdge. Advancing the activeNode.")
             advanceActiveNode()
+        }
+        if (!activeNodeIsRoot()) {
+            suffixLinkCandidate.linkTo(activeNode as InternalNode)
         }
     }
 
@@ -289,6 +299,10 @@ class ActivePoint(
                 advanceActiveNode()
             }
         }
+    }
+
+    fun resetSuffixLinkCandidate() {
+        suffixLinkCandidate.reset()
     }
 }
 
