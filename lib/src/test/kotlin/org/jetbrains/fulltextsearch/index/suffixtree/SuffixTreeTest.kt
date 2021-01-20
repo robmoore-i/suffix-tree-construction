@@ -94,8 +94,15 @@ class SuffixTreeTest {
     }
 
     @Test
-    internal fun `next failing test`() {
-        suffixTree("xyyxyyy$")
+    internal fun `resets active length and edge when reverting to root after internal node insertion`() {
+        val suffixTree = suffixTree("xyyxyyy$")
+        assertEquals(setOf(6), suffixTree.offsetsOf("y$"))
+        assertEquals(setOf(1, 2, 4, 5, 6), suffixTree.offsetsOf("y"))
+        assertEquals(setOf(0, 3), suffixTree.offsetsOf("x"))
+        assertEquals(setOf(0, 3), suffixTree.offsetsOf("xy"))
+        assertEquals(setOf<Int>(), suffixTree.offsetsOf("xyx"))
+        assertEquals(setOf(5), suffixTree.offsetsOf("yy$"))
+        assertEquals(setOf(4), suffixTree.offsetsOf("yyy$"))
     }
 
     private fun suffixTree(inputString: String): SuffixTree {
