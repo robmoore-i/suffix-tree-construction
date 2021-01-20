@@ -161,15 +161,11 @@ class ActivePoint(
                 activeNode.advanceActiveEdge(input, activeEdge, activeLength, this)
                 return false
             } else {
-                val newNode = activeNode.extendEdge(
-                    input,
-                    activeEdge, activeLength,
+                activeNode.extendEdge(
+                    input, activeEdge, activeLength, suffixLinkCandidate,
                     nextCharOffset, suffixOffset, endPosition
                 )
                 remainingSuffixes.decrement()
-                if (newNode is InternalNode) {
-                    suffixLinkCandidate.linkTo(newNode)
-                }
                 activeNode.advanceActivePoint(this)
                 return true
             }
@@ -290,10 +286,11 @@ interface ActiveNode : SrcNode {
         input: String,
         edgeSrcOffset: Int,
         edgeLabelOffset: Int,
+        suffixLinkCandidate: SuffixLinkCandidate,
         charToAddOffset: Int,
         suffixOffset: Int,
         endPosition: TextPosition
-    ): DstNode
+    )
 
     fun advanceActiveEdge(
         input: String,
@@ -734,15 +731,19 @@ abstract class DelegateSrcNode : ActiveNode {
         input: String,
         edgeSrcOffset: Int,
         edgeLabelOffset: Int,
+        suffixLinkCandidate: SuffixLinkCandidate,
         charToAddOffset: Int,
         suffixOffset: Int,
         endPosition: TextPosition
-    ): DstNode {
+    ) {
         val activeEdge = edges.first { it.labelHasChar(input, input[edgeSrcOffset], 0) }
-        return if (edgeLabelOffset == activeEdge.labelLength()) {
+        if (edgeLabelOffset == activeEdge.labelLength()) {
             activeEdge.addLeafNodeToChild(suffixOffset, charToAddOffset, endPosition)
         } else {
-            activeEdge.split(charToAddOffset, edgeLabelOffset, suffixOffset, endPosition)
+            val newNode = activeEdge.split(
+                charToAddOffset, edgeLabelOffset, suffixOffset, endPosition
+            )
+            suffixLinkCandidate.linkTo(newNode)
         }
     }
 
