@@ -52,7 +52,6 @@ class SuffixTree(private val terminatedInputString: String, private val root: Ro
                 ActivePoint(terminatedInputString, root, SuffixLinkCandidate(), endPosition)
 
             (2..terminatedInputString.length).forEach { phaseNumber ->
-                Debugger.enableIf { false }
                 Debugger.printLine(
                     "\nStarting phase $phaseNumber for character '${terminatedInputString[phaseNumber - 1]}'\n" +
                             "There are $remainingSuffixes suffixes remaining.\n" +
@@ -647,16 +646,17 @@ class Edge(
         // Add an internal edge for the new internal node
         val internalNode = InternalNode()
         val dstOffsetOfSrcNode = TextPosition(srcOffset.value() + edgeLabelOffset)
+        Debugger.printLine(
+            "Splitting to create a new internal edge of " +
+                    "${srcOffset.value()} -> ${dstOffsetOfSrcNode.value()}"
+        )
         srcNode.addInternalEdge(internalNode, srcOffset, dstOffsetOfSrcNode)
         // Preserve the existing edge
-        Debugger.printLine("Preserving dstNode $dstNode; of edge $this")
-        dstNode.addAsDstOf(internalNode, dstOffsetOfSrcNode, endPosition)
-        // Add the new leaf edge
         Debugger.printLine(
-            "srcOffset=${srcOffset.value()}, charToAddOffset=$charToAddOffset, " +
-                    "endPosition=${endPosition.value()}"
+            "Preserving dstNode under new edge ${dstOffsetOfSrcNode.value()} -> ${dstOffset.value()}"
         )
-
+        dstNode.addAsDstOf(internalNode, dstOffsetOfSrcNode, dstOffset)
+        // Add the new leaf edge
         Debugger.printLine(
             "Adding new leaf edge from $charToAddOffset -> ${endPosition.value()}," +
                     "for suffix with offset $suffixOffset"

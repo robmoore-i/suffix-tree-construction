@@ -75,7 +75,7 @@ class SuffixTreeTest {
     internal fun `next failing test`() {
         val inputString = "abcdefggg$"
         val suffixTree = suffixTree(inputString)
-        assertEquals(setOf(6), suffixTree.offsetsOf("eee$"))
+        assertEquals(setOf(6), suffixTree.offsetsOf("ggg$"))
         assertSuffixTreeIsCorrectlyConstructed(inputString, suffixTree)
     }
 
@@ -125,7 +125,7 @@ class SuffixTreeTest {
         // Test the full string
         assertQueryIsCorrect(inputString)
         // Test 100 random substrings for good measure
-        repeat(100) {
+        repeat(200) {
             val randomInput = RandomInput.generateRandomString(
                 alphabet = inputString + "abcdefghijklmnopqrstuvwxyz$",
                 maxLength = inputString.length
