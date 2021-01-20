@@ -134,23 +134,6 @@ class SuffixTree(inputString: String) {
     }
 }
 
-class SuffixLinkCandidate {
-    private var nextNodeToLinkFrom: InternalNode? = null
-
-    fun linkTo(internalNode: InternalNode) {
-        if (nextNodeToLinkFrom != null) {
-            Debugger.printLine("Creating a suffix link FROM $nextNodeToLinkFrom;\nTO $internalNode;")
-            nextNodeToLinkFrom!!.linkTo(internalNode)
-        }
-        nextNodeToLinkFrom = internalNode
-        Debugger.printLine("Next suffix link candidate is $nextNodeToLinkFrom;")
-    }
-
-    fun reset() {
-        nextNodeToLinkFrom = null
-    }
-}
-
 class ActivePoint(
     private val inputString: String,
     private val root: RootNode,
@@ -303,6 +286,23 @@ class ActivePoint(
 
     fun resetSuffixLinkCandidate() {
         suffixLinkCandidate.reset()
+    }
+}
+
+class SuffixLinkCandidate {
+    private var nextNodeToLinkFrom: InternalNode? = null
+
+    fun linkTo(internalNode: InternalNode) {
+        if (nextNodeToLinkFrom != null) {
+            Debugger.printLine("Creating a suffix link FROM $nextNodeToLinkFrom;\nTO $internalNode;")
+            nextNodeToLinkFrom!!.linkTo(internalNode)
+        }
+        nextNodeToLinkFrom = internalNode
+        Debugger.printLine("Next suffix link candidate is $nextNodeToLinkFrom;")
+    }
+
+    fun reset() {
+        nextNodeToLinkFrom = null
     }
 }
 
