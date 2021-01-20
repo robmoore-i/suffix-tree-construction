@@ -5,10 +5,12 @@ package org.jetbrains.fulltextsearch.index.suffixtree
 import org.jetbrains.fulltextsearch.index.naive.NaiveIndexedFile
 import org.jetbrains.fulltextsearch.randominput.RandomInput.generateRandomString
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 
 class SuffixTreeFuzzTest {
     @Test
+    @Disabled
     internal fun `find bugs`() {
         repeat(1000) {
             val fileContent = generateRandomString(minLength = 11, maxLength = 20)

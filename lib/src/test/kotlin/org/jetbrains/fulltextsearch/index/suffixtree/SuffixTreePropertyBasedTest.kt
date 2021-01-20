@@ -5,10 +5,12 @@ package org.jetbrains.fulltextsearch.index.suffixtree
 import org.jetbrains.fulltextsearch.index.naive.NaiveIndexedFile
 import org.jetbrains.fulltextsearch.randominput.RandomInput
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 
 class SuffixTreePropertyBasedTest {
     @Test
+    @Disabled
     internal fun `there exists a leaf for every suffix of the input`() {
         repeat(10000) {
             val fileContent = RandomInput.generateRandomString(minLength = 1, maxLength = 15)

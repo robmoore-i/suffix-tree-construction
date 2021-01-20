@@ -3,13 +3,13 @@ package org.jetbrains.fulltextsearch.index.suffixtree
 class SuffixTree(private val terminatedInputString: String, private val root: RootNode) {
 
     companion object {
-        fun defaultConstruction(inputString: String): SuffixTree {
-            return ukkonenConstruction(inputString)
+        fun defaultConstruction(input: String): SuffixTree {
+            return ukkonenConstruction(input)
         }
 
-        fun naiveConstruction(inputString: String): SuffixTree {
+        fun naiveConstruction(input: String): SuffixTree {
             val root = RootNode()
-            val terminatedInputString = inputString + terminatingCharacter()
+            val terminatedInputString = input + terminatingCharacter()
 
             // PHASE 1 EXTENSION 1
             val endPosition = TextPosition(1)
@@ -39,107 +39,46 @@ class SuffixTree(private val terminatedInputString: String, private val root: Ro
             return SuffixTree(terminatedInputString, root)
         }
 
-        fun ukkonenConstruction(inputString: String): SuffixTree {
-            val root = RootNode()
-            val terminatedInputString = inputString + terminatingCharacter()
+        fun ukkonenConstruction(input: String): SuffixTree {
+            @Suppress("NAME_SHADOWING")
+            val input = input + terminatingCharacter()
 
-            // PHASE 1 EXTENSION 1
+            // Initialise suffix tree
+            val root = RootNode()
             val endPosition = TextPosition(1)
             root.addLeafEdge(LeafNode(endPosition.value() - 1), TextPosition(0), endPosition)
 
-            var remainingSuffixes = 0
-            val activePoint =
-                ActivePoint(terminatedInputString, root, SuffixLinkCandidate(), endPosition)
+            // Prepare variables
+            val remainingSuffixes = RemainingSuffixesPointer()
+            val activePoint = ActivePoint(input, root, endPosition, remainingSuffixes)
 
-            (2..terminatedInputString.length).forEach { phaseNumber ->
+            // Phases
+            (2..input.length).forEach { phaseNumber ->
                 Debugger.enableIf { false }
+                val nextCharOffset = phaseNumber - 1
+                val nextChar = input[nextCharOffset]
                 Debugger.printLine(
-                    "\nStarting phase $phaseNumber for character '${terminatedInputString[phaseNumber - 1]}'\n" +
+                    "\nStarting phase $phaseNumber for character '$nextChar'\n" +
                             "There are $remainingSuffixes suffixes remaining.\n" +
                             "root=$root;\nactivePoint=$activePoint;\n"
                 )
-                remainingSuffixes++
+                remainingSuffixes.increment()
 
                 // Extend leaf edge offsets
                 endPosition.increment()
-
-                // Suffix link candidates reset at the start of every phase.
-                activePoint.resetSuffixLinkCandidate()
 
                 // The phase ends when it is no longer possible to add more suffixes into the tree in
                 // the current phase. This happens either when we run out of remaining suffixes to add,
                 // i.e. when remainder == 0, or when we perform a rule three suffix extension.
                 var canAddMoreSuffixes = true
                 while (canAddMoreSuffixes) {
-                    Debugger.printLine(
-                        "\nAdding suffixes. $remainingSuffixes remaining. " +
-                                "Currently extending tree with suffix '${
-                                    terminatedInputString.substring(
-                                        endPosition.value() - remainingSuffixes,
-                                        endPosition.value()
-                                    )
-                                }'\n" +
-                                "root=$root;\nactivePoint=$activePoint;"
-                    )
-                    if (activePoint.isAtNode()) {
-                        if (activePoint.hasEdgeStartingWith(terminatedInputString[phaseNumber - 1])) {
-                            activePoint.activateEdgeStartingWith(terminatedInputString[phaseNumber - 1])
-                            canAddMoreSuffixes = false
-                        } else {
-                            val suffixOffset = endPosition.value() - remainingSuffixes
-                            Debugger.printLine(
-                                "Creating new leaf node with offsets " +
-                                        "${phaseNumber - 1} -> ${endPosition.value()} " +
-                                        "for suffix with offset $suffixOffset"
-                            )
-                            activePoint.addLeafEdge(
-                                LeafNode(suffixOffset),
-                                TextPosition(phaseNumber - 1)
-                            )
-                            remainingSuffixes--
-
-                            // TODO: Duplicated
-                            if (!activePoint.activeNodeIsRoot()) {
-                                activePoint.followSuffixLink(remainingSuffixes)
-                            } else if (activePoint.activeNodeIsRoot() && !activePoint.isAtNode()) {
-                                activePoint.nextEdge()
-                            }
-                        }
-                    } else {
-                        if (activePoint.labelHasNextCharacter(terminatedInputString[phaseNumber - 1])) {
-                            Debugger.printLine(
-                                "Advancing further down the current active edge of the active point $this;\n" +
-                                        "This ends the current phase."
-                            )
-                            activePoint.advanceDownLabel()
-                            canAddMoreSuffixes = false
-                        } else {
-                            val suffixOffset = endPosition.value() - remainingSuffixes
-                            Debugger.printLine(
-                                "Splitting at the active point $activePoint; " +
-                                        "in order to add the character '${terminatedInputString[phaseNumber - 1]}'."
-                            )
-                            activePoint.split(phaseNumber - 1, suffixOffset)
-                            remainingSuffixes--
-
-                            // TODO: Duplicated
-                            if (!activePoint.activeNodeIsRoot()) {
-                                activePoint.followSuffixLink(remainingSuffixes)
-                            } else if (activePoint.activeNodeIsRoot() && !activePoint.isAtNode()) {
-                                activePoint.nextEdge()
-                            }
-                        }
-                    }
-                    if (remainingSuffixes == 0) {
-                        Debugger.printLine("No more suffixes to add. Ending the current phase.")
-                        canAddMoreSuffixes = false
-                    }
+                    canAddMoreSuffixes = activePoint.addNextSuffix(nextCharOffset)
                 }
             }
-            return SuffixTree(terminatedInputString, root)
+            return SuffixTree(input, root)
         }
 
-        // We append a terminating character to the inputString in order to ensure that we get a true
+        // We append a terminating character to the input in order to ensure that we get a true
         // suffix tree at the end of the process, rather than an implicit suffix tree.
         private fun terminatingCharacter(): Char {
             return '\u0000'
@@ -159,168 +98,64 @@ class SuffixTree(private val terminatedInputString: String, private val root: Ro
     }
 }
 
+class RemainingSuffixesPointer(private var remainingSuffixes: Int = 0) {
+    fun value(): Int = remainingSuffixes
+
+    fun increment() {
+        remainingSuffixes++
+    }
+
+    fun decrement() {
+        remainingSuffixes--
+    }
+}
+
 class ActivePoint(
-    private val inputString: String,
+    private val input: String,
     private val root: RootNode,
-    private val suffixLinkCandidate: SuffixLinkCandidate,
-    private val endPosition: TextPosition
+    private val endPosition: TextPosition,
+    private val remainingSuffixes: RemainingSuffixesPointer
 ) {
-    // The node from which we are performing the next O(1) step of the algorithm.
-    private var activeNode: SrcNode = root
-
-    // Identifies the edge on the activeNode.
     private var activeEdge = -1
-
-    // The number of characters of edge label we need to go over to find the active point.
     private var activeLength = 0
 
-    private var edge: Edge? = null
-
-    override fun toString(): String {
-        val values =
-            "ActivePoint(activeNode=$activeNode,\nactiveEdge=$activeEdge,activeLength=$activeLength," +
-                    "edge=$edge"
-        return if (activeEdge >= 0) {
-            "$values,representation=${
-                inputString.substring(
-                    activeEdge,
-                    activeEdge + activeLength
-                )
-            })"
-        } else {
-            "$values)"
-        }
-    }
-
-    fun offset() = activeEdge
-
-    fun nextEdge() {
-        activeEdge++
-        activeLength--
-        if (activeLength > 0) {
-            Debugger.printLine("Reactivating edge for new activeEdge=$activeEdge and activeLength=$activeLength.")
-            activeNode.reactivateEdge(inputString, this)
-            if (reachedEndOfEdge()) {
-                Debugger.printLine(
-                    "Reached an internal node after advancing the active edge pointer. " +
-                            "Advancing the activeNode."
-                )
-                advanceActiveNode()
+    fun addNextSuffix(nextCharOffset: Int): Boolean {
+        val nextChar = input[nextCharOffset]
+        val suffixOffset = endPosition.value() - remainingSuffixes.value()
+        if (activeLength == 0) {
+            if (root.hasEdgeStartingWith(input, nextChar)) {
+                root.activateEdge(input, nextChar, this)
+                activeLength++
+            } else {
+                root.addLeafEdge(LeafNode(suffixOffset), TextPosition(nextCharOffset), endPosition)
+                remainingSuffixes.decrement()
             }
+        } else {
+            root.splitEdge(
+                input,
+                activeEdge,
+                activeLength,
+                nextCharOffset,
+                suffixOffset,
+                endPosition
+            )
+            activeEdge++
+            activeLength--
         }
+        return false
     }
 
-    fun setEdge(edge: Edge, edgeSrcOffset: Int) {
-        this.edge = edge
+    fun activeNodeOffset(): Pair<Int, Int> {
+        return Pair(activeEdge, activeLength)
+    }
+
+    fun setActiveEdgeOffset(edgeSrcOffset: Int) {
         this.activeEdge = edgeSrcOffset
     }
 
-    fun resetEdge(edge: Edge) {
-        this.edge = edge
-    }
-
-    fun labelHasNextCharacter(c: Char): Boolean {
-        return edge!!.labelHasCharacter(inputString, c, activeLength)
-    }
-
-    fun split(charToAddOffset: Int, suffixOffset: Int) {
-        val newInternalNode =
-            edge!!.split(charToAddOffset, activeLength, suffixOffset, endPosition)
-        suffixLinkCandidate.linkTo(newInternalNode)
-    }
-
-    fun isAtNode(): Boolean {
-        return activeLength == 0
-    }
-
-    fun advanceDownLabel() {
-        activeLength++
-        if (reachedEndOfEdge()) {
-            Debugger.printLine("Reached the end of the current activeEdge. Advancing the activeNode.")
-            advanceActiveNode()
-        } else if (!activeNodeIsRoot()) {
-            Debugger.printLine("Creating a suffix link after advancing the activeEdge from an internal node.")
-            suffixLinkCandidate.linkTo(activeNode as InternalNode)
-        }
-    }
-
-    // Only call this method if you're sure that labelOffset > 0
-    private fun reachedEndOfEdge(): Boolean {
-        val labelLength = edge!!.labelLength()
-        Debugger.printLine(
-            "Checking if we reached the end of the current active edge. " +
-                    "activeEdge=$activeEdge,activeLength=$activeLength,edgeLabelLength=$labelLength;"
-        )
-        return activeLength >= labelLength
-    }
-
-    private fun advanceActiveNode() {
-        val edge = this.edge!!
-        val labelLength = edge.labelLength()
-        Debugger.printLine(
-            "Advancing active node by doing these things:\n" +
-                    "- Advancing the active edge offset: $activeEdge + $labelLength => ${activeEdge + labelLength}\n" +
-                    "- Reducing the active edge label offset: $activeLength - $labelLength => ${activeLength - labelLength}\n" +
-                    "- Setting the active node to ${edge.dstNode()}"
-        )
-        activeEdge += labelLength
-        activeLength -= labelLength
-        activeNode = edge.dstNode() as InternalNode
-        if (activeLength == 0) {
-            this.edge = null
-        } else {
-            Debugger.printLine("After advancing the active node, we need to again reset the active edge.")
-            activeNode.reactivateEdge(inputString, this)
-        }
-    }
-
-    fun hasEdgeStartingWith(c: Char): Boolean {
-        return activeNode.hasEdgeStartingWith(inputString, c)
-    }
-
-    fun activateEdgeStartingWith(c: Char) {
-        activeNode.activateEdge(inputString, c, this)
-        Debugger.printLine(
-            "Advancing down the start of the edge with activeEdge=$activeEdge, corresponding to '${inputString[activeEdge]}' " +
-                    "and current activeLength=$activeLength. This ends the current phase."
-        )
-        advanceDownLabel()
-    }
-
-    fun addLeafEdge(leafNode: LeafNode, newEdgeSrcOffset: TextPosition) {
-        activeNode.addLeafEdge(leafNode, newEdgeSrcOffset, endPosition)
-    }
-
-    fun activeNodeIsRoot(): Boolean {
-        return activeNode is RootNode
-    }
-
-    fun followSuffixLink(remainingSuffixes: Int) {
-        val suffixLink: SrcNode = (activeNode as InternalNode).followLinkOrGoToRoot(root)
-        Debugger.printLine("Following suffixLink FROM $activeNode;\nTO $suffixLink;")
-        activeNode = suffixLink
-        if (activeNodeIsRoot() && remainingSuffixes > 1) {
-            activeLength = remainingSuffixes - 1
-            activeEdge = endPosition.value() - remainingSuffixes
-            Debugger.printLine(
-                "After resetting to root, we update activeLength to $activeLength and " +
-                        "activeEdge to $activeEdge."
-            )
-        }
-        if (activeLength > 0) {
-            activeNode.reactivateEdge(inputString, this)
-            if (reachedEndOfEdge()) {
-                Debugger.printLine(
-                    "After following the suffixLink, the new active edge has been hopped over. " +
-                            "Advancing the activeNode."
-                )
-                advanceActiveNode()
-            }
-        }
-    }
-
-    fun resetSuffixLinkCandidate() {
-        suffixLinkCandidate.reset()
+    fun setActiveNodeOffset(activeEdge: Int, activeLength: Int) {
+        this.activeEdge = activeEdge
+        this.activeLength = activeLength
     }
 }
 
@@ -329,15 +164,12 @@ class SuffixLinkCandidate {
 
     fun linkTo(internalNode: InternalNode) {
         if (nextNodeToLinkFrom != null && nextNodeToLinkFrom != internalNode) {
-            Debugger.printLine("Creating a suffix link FROM $nextNodeToLinkFrom;\nTO $internalNode;")
             nextNodeToLinkFrom!!.linkTo(internalNode)
         }
         nextNodeToLinkFrom = internalNode
-        Debugger.printLine("Next suffix link candidate is $nextNodeToLinkFrom;")
     }
 
     fun reset() {
-        Debugger.printLine("Resetting suffix tree candidate")
         nextNodeToLinkFrom = null
     }
 }
@@ -358,30 +190,45 @@ interface SrcNode {
      * of the string is also given, because it is needed for constructing leaf nodes.
      */
     fun addSuffix(
-        inputString: String,
+        input: String,
         suffixToAdd: String,
         suffixOffset: Int,
         endPosition: TextPosition
     )
 
     /**
-     * @return The set of all offsets into the inputString which correspond to matches of the
+     * @return The set of all offsets into the input which correspond to matches of the
      * queryString.
      */
-    fun offsetsOf(inputString: String, queryString: String): Set<Int>
+    fun offsetsOf(input: String, queryString: String): Set<Int>
 
     /**
      * @return The set of suffix offsets in all the leaf nodes in the subtree rooted at this node.
      */
     fun descendentSuffixOffsets(): Set<Int>
 
-    fun hasEdgeStartingWith(inputString: String, c: Char): Boolean
-
-    fun activateEdge(inputString: String, edgeLeadingCharacter: Char, activePoint: ActivePoint)
-
-    fun reactivateEdge(inputString: String, activePoint: ActivePoint)
+    fun hasEdgeStartingWith(input: String, c: Char): Boolean
 
     fun descendentLeaves(): Set<LeafNode>
+
+    fun hasLeafEdge(srcOffset: Int, dstOffset: Int, suffixOffset: Int): Boolean
+
+    fun hasInternalEdge(
+        srcOffset: Int,
+        dstOffset: Int,
+        internalNodeMatcher: (InternalNode) -> Boolean
+    ): Boolean
+
+    fun activateEdge(input: String, edgeLeadingChar: Char, activePoint: ActivePoint)
+
+    fun splitEdge(
+        input: String,
+        edgeSrcOffset: Int,
+        edgeLabelOffset: Int,
+        charToAddOffset: Int,
+        suffixOffset: Int,
+        endPosition: TextPosition
+    )
 }
 
 interface DstNode {
@@ -389,17 +236,17 @@ interface DstNode {
      * @return An action which should be executed by the parent of this node, in order to
      * add the given suffixToAdd into the tree
      *
-     * @param inputString is the string which we are building a suffix tree for
+     * @param input is the string which we are building a suffix tree for
      * @param suffixToAdd is the suffix we want to add. We call this method to create an appropriate
      * SuffixExtension to use for that
-     * @param suffixOffset is the offset of the suffixToAdd in the inputString
+     * @param suffixOffset is the offset of the suffixToAdd in the input
      * @param endPosition is the current pointer to the end of the input, which is needed to
      * construct leaf nodes
      * @param inboundEdgeDstOffset is the dstOffset of the inbound edge to this node, which is
      * needed for leaf edge extensions
      */
     fun suffixExtension(
-        inputString: String,
+        input: String,
         suffixToAdd: String,
         suffixOffset: Int,
         endPosition: TextPosition,
@@ -413,10 +260,10 @@ interface DstNode {
     fun addAsDstOf(srcNode: InternalNode, srcOffset: TextPosition, dstOffset: TextPosition)
 
     /**
-     * @return The set of all offsets into the inputString which correspond to matches of the
+     * @return The set of all offsets into the input which correspond to matches of the
      * queryString.
      */
-    fun offsetsOf(inputString: String, queryString: String): Set<Int>
+    fun offsetsOf(input: String, queryString: String): Set<Int>
 
     /**
      * @return The set of suffix offsets in all the leaf nodes in the subtree rooted at this node.
@@ -446,13 +293,13 @@ class Edge(
         return "Edge(srcOffset=${srcOffset.value()}, dstOffset=${dstOffset.value()}, dstNode=$dstNode)"
     }
 
-    fun label(inputString: String) =
-        inputString.substring(srcOffset.value(), dstOffset.value())
+    fun label(input: String) =
+        input.substring(srcOffset.value(), dstOffset.value())
 
     /**
      * The edge decides what kind of suffix extension will be necessary in order to add the given
      * suffixToAdd into the
-     * suffix tree being built for the given inputString.
+     * suffix tree being built for the given input.
      *
      * @return If the suffixToAdd is able to be added within this edge, or within the subtree rooted
      * at the dstNode of this edge, then it will return a suffix extension which will modify the
@@ -460,19 +307,19 @@ class Edge(
      * suffixToAdd, then this method will return null to indicate that there is action to be taken,
      * but not from this edge.
      *
-     * @param suffixOffset is the offset of the suffixToAdd in the inputString
+     * @param suffixOffset is the offset of the suffixToAdd in the input
      * @param endPosition is the current pointer to the end of the input, which is needed to
      * construct leaf nodes
      */
     fun suffixExtension(
-        inputString: String,
+        input: String,
         suffixToAdd: String,
         suffixOffset: Int,
         endPosition: TextPosition
     ): SuffixExtension? {
         // If the suffix won't go along this edge at all, stop and return null, because no extension
         // is needed here
-        val label = label(inputString)
+        val label = label(input)
         if (label[0] != suffixToAdd[0]) {
             Debugger.printLine(
                 "Suffix '$suffixToAdd' won't go along the edge starting at offset '$srcOffset'. " +
@@ -500,7 +347,7 @@ class Edge(
                         "Recursing with suffix '$recursingSuffix'."
             )
             return dstNode.suffixExtension(
-                inputString,
+                input,
                 recursingSuffix,
                 suffixOffset,
                 endPosition,
@@ -568,15 +415,15 @@ class Edge(
 
     /**
      * @return If the queryString is able to be found on this edge, or in any subtree rooted at the
-     * dstNode of this edge, then it will return a set of offsets into the inputString which
+     * dstNode of this edge, then it will return a set of offsets into the input which
      * correspond to instances of the queryString. Otherwise, if this edge doesn't match the
      * queryString, it will return null to indicate that the caller should check the other edges of
      * the dstNode, or they may have to conclude that the search was unsuccessful.
      */
-    fun offsetsOf(inputString: String, queryString: String): Set<Int>? {
+    fun offsetsOf(input: String, queryString: String): Set<Int>? {
         // If the query string won't go along this edge at all, stop and return null, because no
         // extension is needed here.
-        val label = label(inputString)
+        val label = label(input)
         if (label[0] != queryString[0]) {
             Debugger.printLine(
                 "Query string '$queryString' won't go along the edge starting at offset '$srcOffset'. " +
@@ -606,7 +453,7 @@ class Edge(
                 "The query string '$queryString' starts with the edge label '$label'. " +
                         "Recursing to the dstNode of this edge, with the shortened query string '$recursedQueryString'."
             )
-            return dstNode.offsetsOf(inputString, recursedQueryString)
+            return dstNode.offsetsOf(input, recursedQueryString)
         }
 
         // The only remaining case is a strictly partial match, in which the query string 'falls
@@ -628,12 +475,8 @@ class Edge(
         return dstNode.descendentSuffixOffsets()
     }
 
-    fun labelStartsWith(inputString: String, c: Char): Boolean {
-        return inputString[srcOffset.value()] == c
-    }
-
-    fun labelHasCharacter(inputString: String, c: Char, edgeLabelOffset: Int): Boolean {
-        return label(inputString)[edgeLabelOffset] == c
+    fun labelStartsWith(input: String, c: Char): Boolean {
+        return input[srcOffset.value()] == c
     }
 
     fun split(
@@ -647,16 +490,17 @@ class Edge(
         // Add an internal edge for the new internal node
         val internalNode = InternalNode()
         val dstOffsetOfSrcNode = TextPosition(srcOffset.value() + edgeLabelOffset)
+        Debugger.printLine(
+            "Splitting to create a new internal edge of " +
+                    "${srcOffset.value()} -> ${dstOffsetOfSrcNode.value()}"
+        )
         srcNode.addInternalEdge(internalNode, srcOffset, dstOffsetOfSrcNode)
         // Preserve the existing edge
-        Debugger.printLine("Preserving dstNode $dstNode; of edge $this")
-        dstNode.addAsDstOf(internalNode, dstOffsetOfSrcNode, endPosition)
-        // Add the new leaf edge
         Debugger.printLine(
-            "srcOffset=${srcOffset.value()}, charToAddOffset=$charToAddOffset, " +
-                    "endPosition=${endPosition.value()}"
+            "Preserving dstNode under new edge ${dstOffsetOfSrcNode.value()} -> ${dstOffset.value()}"
         )
-
+        dstNode.addAsDstOf(internalNode, dstOffsetOfSrcNode, dstOffset)
+        // Add the new leaf edge
         Debugger.printLine(
             "Adding new leaf edge from $charToAddOffset -> ${endPosition.value()}," +
                     "for suffix with offset $suffixOffset"
@@ -669,26 +513,34 @@ class Edge(
         return internalNode
     }
 
-    fun dstNode() = dstNode
-
-    fun labelLength(): Int {
-        return (dstOffset - srcOffset).value()
-    }
-
-    fun activate(activePoint: ActivePoint) {
-        activePoint.setEdge(this, srcOffset.value())
-    }
-
-    fun reactivate(activePoint: ActivePoint) {
-        activePoint.resetEdge(this)
-    }
-
     fun leaves(): Set<LeafNode> {
         return dstNode.leaves()
     }
+
+    fun isLeafEdge(srcOffset: Int, dstOffset: Int, suffixOffset: Int): Boolean {
+        val offsetsMatch =
+            this.srcOffset.value() == srcOffset && this.dstOffset.value() == dstOffset
+        val dstNodeMatches = (dstNode as? LeafNode)?.suffixOffset() == suffixOffset
+        return offsetsMatch && dstNodeMatches
+    }
+
+    fun isInternalEdge(srcOffset: Int, dstOffset: Int): Boolean {
+        val offsetsMatch =
+            this.srcOffset.value() == srcOffset && this.dstOffset.value() == dstOffset
+        val dstNodeMatches = dstNode is InternalNode
+        return offsetsMatch && dstNodeMatches
+    }
+
+    fun leadsToInternalNode(internalNodeMatcher: (InternalNode) -> Boolean): Boolean {
+        return (dstNode as? InternalNode)?.let { internalNodeMatcher(it) } ?: false
+    }
+
+    fun activateEdge(activePoint: ActivePoint) {
+        activePoint.setActiveEdgeOffset(srcOffset.value())
+    }
 }
 
-class DelegateSrcNode : SrcNode {
+open class DelegateSrcNode : SrcNode {
     private val edges = mutableSetOf<Edge>()
 
     override fun addLeafEdge(
@@ -712,14 +564,14 @@ class DelegateSrcNode : SrcNode {
     }
 
     override fun addSuffix(
-        inputString: String,
+        input: String,
         suffixToAdd: String,
         suffixOffset: Int,
         endPosition: TextPosition
     ) {
         for (edge in edges) {
             val suffixExtension =
-                edge.suffixExtension(inputString, suffixToAdd, suffixOffset, endPosition)
+                edge.suffixExtension(input, suffixToAdd, suffixOffset, endPosition)
             if (suffixExtension != null) {
                 suffixExtension.extend(this)
                 return
@@ -733,9 +585,9 @@ class DelegateSrcNode : SrcNode {
         addLeafEdge(LeafNode(suffixOffset), TextPosition(srcOffset), endPosition)
     }
 
-    override fun offsetsOf(inputString: String, queryString: String): Set<Int> {
+    override fun offsetsOf(input: String, queryString: String): Set<Int> {
         for (edge in edges) {
-            val offsets: Set<Int>? = edge.offsetsOf(inputString, queryString)
+            val offsets: Set<Int>? = edge.offsetsOf(input, queryString)
             if (offsets != null) {
                 return offsets
             }
@@ -749,28 +601,42 @@ class DelegateSrcNode : SrcNode {
         }
     }
 
-    override fun hasEdgeStartingWith(inputString: String, c: Char): Boolean {
-        return edges.any { it.labelStartsWith(inputString, c) }
-    }
-
-    override fun activateEdge(
-        inputString: String,
-        edgeLeadingCharacter: Char,
-        activePoint: ActivePoint
-    ) {
-        edges.first { it.labelStartsWith(inputString, edgeLeadingCharacter) }
-            .activate(activePoint)
-    }
-
-    override fun reactivateEdge(inputString: String, activePoint: ActivePoint) {
-        val edgeLeadingChar = inputString[activePoint.offset()]
-        Debugger.printLine("Reactivating active edge for leading character '${edgeLeadingChar}' at node $this;")
-        edges.first { it.labelStartsWith(inputString, edgeLeadingChar) }
-            .reactivate(activePoint)
+    override fun hasEdgeStartingWith(input: String, c: Char): Boolean {
+        return edges.any { it.labelStartsWith(input, c) }
     }
 
     override fun descendentLeaves(): Set<LeafNode> {
         return edges.flatMapTo(mutableSetOf()) { it.leaves() }
+    }
+
+    override fun hasLeafEdge(srcOffset: Int, dstOffset: Int, suffixOffset: Int): Boolean {
+        return edges.any { it.isLeafEdge(srcOffset, dstOffset, suffixOffset) }
+    }
+
+    override fun hasInternalEdge(
+        srcOffset: Int,
+        dstOffset: Int,
+        internalNodeMatcher: (InternalNode) -> Boolean
+    ): Boolean {
+        val internalEdge: Edge? = edges.firstOrNull { it.isInternalEdge(srcOffset, dstOffset) }
+        return internalEdge?.leadsToInternalNode(internalNodeMatcher) ?: false
+    }
+
+    override fun activateEdge(input: String, edgeLeadingChar: Char, activePoint: ActivePoint) {
+        edges.first { it.labelStartsWith(input, edgeLeadingChar) }
+            .activateEdge(activePoint)
+    }
+
+    override fun splitEdge(
+        input: String,
+        edgeSrcOffset: Int,
+        edgeLabelOffset: Int,
+        charToAddOffset: Int,
+        suffixOffset: Int,
+        endPosition: TextPosition
+    ) {
+        edges.first { it.labelStartsWith(input, input[edgeSrcOffset]) }
+            .split(charToAddOffset, edgeLabelOffset, suffixOffset, endPosition)
     }
 
     override fun toString(): String {
@@ -778,113 +644,23 @@ class DelegateSrcNode : SrcNode {
     }
 }
 
-class RootNode : SrcNode {
-    private val srcNode: SrcNode = DelegateSrcNode()
-
-    override fun addLeafEdge(
-        dstNode: LeafNode,
-        srcOffset: TextPosition,
-        dstOffset: TextPosition
-    ) {
-        srcNode.addLeafEdge(dstNode, srcOffset, dstOffset)
-    }
-
-    override fun addInternalEdge(
-        dstNode: InternalNode,
-        srcOffset: TextPosition,
-        dstOffset: TextPosition
-    ) {
-        srcNode.addInternalEdge(dstNode, srcOffset, dstOffset)
-    }
-
-    override fun deleteEdge(srcOffset: TextPosition) {
-        srcNode.deleteEdge(srcOffset)
-    }
-
-    override fun addSuffix(
-        inputString: String,
-        suffixToAdd: String,
-        suffixOffset: Int,
-        endPosition: TextPosition
-    ) {
-        srcNode.addSuffix(inputString, suffixToAdd, suffixOffset, endPosition)
-    }
-
-    override fun offsetsOf(inputString: String, queryString: String): Set<Int> {
-        return srcNode.offsetsOf(inputString, queryString)
-    }
-
-    override fun descendentSuffixOffsets(): Set<Int> {
-        return srcNode.descendentSuffixOffsets()
-    }
-
-    override fun hasEdgeStartingWith(inputString: String, c: Char): Boolean {
-        return srcNode.hasEdgeStartingWith(inputString, c)
-    }
-
-    override fun activateEdge(
-        inputString: String,
-        edgeLeadingCharacter: Char,
-        activePoint: ActivePoint
-    ) {
-        srcNode.activateEdge(inputString, edgeLeadingCharacter, activePoint)
-    }
-
-    override fun reactivateEdge(inputString: String, activePoint: ActivePoint) {
-        srcNode.reactivateEdge(inputString, activePoint)
-    }
-
-    override fun descendentLeaves(): Set<LeafNode> {
-        return srcNode.descendentLeaves()
-    }
-
+class RootNode : DelegateSrcNode() {
     override fun toString(): String {
-        return "RootNode(srcNode=$srcNode)"
+        return "RootNode(${super.toString()})"
     }
 }
 
-class InternalNode : SrcNode, DstNode {
-    private val srcNode: SrcNode = DelegateSrcNode()
+class InternalNode : DelegateSrcNode(), DstNode {
     private var suffixLink: InternalNode? = null
 
     override fun toString(): String {
-        return "InternalNode(srcNode=$srcNode)"
-    }
-
-    override fun addLeafEdge(
-        dstNode: LeafNode,
-        srcOffset: TextPosition,
-        dstOffset: TextPosition
-    ) {
-        srcNode.addLeafEdge(dstNode, srcOffset, dstOffset)
-    }
-
-    override fun addInternalEdge(
-        dstNode: InternalNode,
-        srcOffset: TextPosition,
-        dstOffset: TextPosition
-    ) {
-        srcNode.addInternalEdge(dstNode, srcOffset, dstOffset)
-    }
-
-    override fun deleteEdge(srcOffset: TextPosition) {
-        srcNode.deleteEdge(srcOffset)
-    }
-
-    // Recall that this method applies a suffix extension to the node.
-    override fun addSuffix(
-        inputString: String,
-        suffixToAdd: String,
-        suffixOffset: Int,
-        endPosition: TextPosition
-    ) {
-        srcNode.addSuffix(inputString, suffixToAdd, suffixOffset, endPosition)
+        return "InternalNode(${super.toString()})"
     }
 
     // Recall that this method returns a suffix extension to apply to a given srcNode in order to
     // add the given suffixToAdd into the subtree rooted the srcNode.
     override fun suffixExtension(
-        inputString: String,
+        input: String,
         suffixToAdd: String,
         suffixOffset: Int,
         endPosition: TextPosition,
@@ -892,7 +668,7 @@ class InternalNode : SrcNode, DstNode {
     ): SuffixExtension {
         return SuffixExtension {
             addSuffix(
-                inputString,
+                input,
                 suffixToAdd,
                 suffixOffset,
                 endPosition
@@ -908,51 +684,19 @@ class InternalNode : SrcNode, DstNode {
         srcNode.addInternalEdge(this, srcOffset, dstOffset)
     }
 
-    override fun offsetsOf(inputString: String, queryString: String): Set<Int> {
-        return srcNode.offsetsOf(inputString, queryString)
-    }
-
-    override fun descendentSuffixOffsets(): Set<Int> {
-        return srcNode.descendentSuffixOffsets()
-    }
-
-    override fun descendentLeaves(): Set<LeafNode> {
-        return srcNode.descendentLeaves()
-    }
-
     override fun leaves(): Set<LeafNode> {
         return descendentLeaves()
     }
 
-    override fun hasEdgeStartingWith(inputString: String, c: Char): Boolean {
-        return srcNode.hasEdgeStartingWith(inputString, c)
-    }
-
-    override fun activateEdge(
-        inputString: String,
-        edgeLeadingCharacter: Char,
-        activePoint: ActivePoint
-    ) {
-        srcNode.activateEdge(inputString, edgeLeadingCharacter, activePoint)
-    }
-
-    override fun reactivateEdge(inputString: String, activePoint: ActivePoint) {
-        srcNode.reactivateEdge(inputString, activePoint)
-    }
-
     fun linkTo(internalNode: InternalNode) {
         this.suffixLink = internalNode
-    }
-
-    fun followLinkOrGoToRoot(root: RootNode): SrcNode {
-        return suffixLink ?: root
     }
 }
 
 class LeafNode(private val suffixOffset: Int) : DstNode {
 
     override fun suffixExtension(
-        inputString: String,
+        input: String,
         suffixToAdd: String,
         suffixOffset: Int,
         endPosition: TextPosition,
@@ -977,13 +721,15 @@ class LeafNode(private val suffixOffset: Int) : DstNode {
         return setOf(this)
     }
 
-    override fun offsetsOf(inputString: String, queryString: String): Set<Int> {
+    override fun offsetsOf(input: String, queryString: String): Set<Int> {
         return setOf()
     }
 
     override fun toString(): String {
         return "LeafNode(suffixOffset=$suffixOffset)"
     }
+
+    fun suffixOffset() = suffixOffset
 }
 
 class TextPosition(private var i: Int) {
