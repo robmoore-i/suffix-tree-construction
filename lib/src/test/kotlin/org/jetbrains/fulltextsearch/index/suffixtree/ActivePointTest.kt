@@ -163,4 +163,33 @@ class ActivePointTest {
 
         assertEquals(Pair(0, 2), activePoint.activeNodeOffset())
     }
+
+    @Test
+    internal fun `if there are remaining suffixes, and they can be added, then the phase doesn't end`() {
+        val remainingSuffixes = RemainingSuffixesPointer(remainingSuffixes = 3)
+        val root = RootNode()
+        val endPosition = TextPosition(4)
+        root.addLeafEdge(LeafNode(0), TextPosition(0), endPosition)
+        val activePoint = ActivePoint("xxx$", root, endPosition, remainingSuffixes)
+        activePoint.setActiveNodeOffset(0, 2)
+
+        val canAddMoreSuffixes = activePoint.addNextSuffix(3)
+
+        assertTrue(canAddMoreSuffixes)
+    }
+
+    @Test
+    internal fun `decrements the number of remaining suffixes after splitting an edge`() {
+        val remainingSuffixes = RemainingSuffixesPointer(remainingSuffixes = 2)
+        val root = RootNode()
+        val endPosition = TextPosition(4)
+        root.addLeafEdge(LeafNode(0), TextPosition(0), endPosition)
+        root.addLeafEdge(LeafNode(1), TextPosition(1), endPosition)
+        val activePoint = ActivePoint("memo", root, endPosition, remainingSuffixes)
+        activePoint.setActiveNodeOffset(0, 1)
+
+        activePoint.addNextSuffix(3)
+
+        assertEquals(1, remainingSuffixes.value())
+    }
 }

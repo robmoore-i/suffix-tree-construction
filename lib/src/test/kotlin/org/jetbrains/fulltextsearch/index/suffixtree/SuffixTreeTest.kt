@@ -10,21 +10,18 @@ import org.junit.jupiter.api.Test
 class SuffixTreeTest {
 
     @Test
-    @Disabled
     internal fun `constructs simple suffix tree with only leaf nodes`() {
         val inputString = "abcde"
         assertSuffixTreeIsCorrectlyConstructed(inputString, suffixTree(inputString))
     }
 
     @Test
-    @Disabled
     internal fun `constructs simple suffix tree with one internal node`() {
         val inputString = "memo"
         assertSuffixTreeIsCorrectlyConstructed(inputString, suffixTree(inputString))
     }
 
     @Test
-    @Disabled
     internal fun `can construct multiple internal nodes on different branches'`() {
         val inputString = "xabxa$"
         assertSuffixTreeIsCorrectlyConstructed(inputString, suffixTree(inputString))

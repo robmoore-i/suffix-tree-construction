@@ -46,26 +46,25 @@ class SuffixTree(private val terminatedInputString: String, private val root: Ro
             // Initialise suffix tree
             val root = RootNode()
             val endPosition = TextPosition(1)
-            root.addLeafEdge(LeafNode(endPosition.value() - 1), TextPosition(0), endPosition)
+            root.addLeafEdge(LeafNode(0), TextPosition(0), endPosition)
 
             // Prepare variables
-            val remainingSuffixes = RemainingSuffixesPointer()
+            val remainingSuffixes = RemainingSuffixesPointer(0)
             val activePoint = ActivePoint(input, root, endPosition, remainingSuffixes)
 
             // Phases
             (2..input.length).forEach { phaseNumber ->
                 Debugger.enableIf { false }
                 val nextCharOffset = phaseNumber - 1
-                val nextChar = input[nextCharOffset]
                 Debugger.printLine(
-                    "\nStarting phase $phaseNumber for character '$nextChar'\n" +
-                            "There are $remainingSuffixes suffixes remaining.\n" +
+                    "\nStarting phase $phaseNumber for character '${input[nextCharOffset]}'\n" +
+                            "Before the first extension, there are $remainingSuffixes suffixes remaining.\n" +
                             "root=$root;\nactivePoint=$activePoint;\n"
                 )
-                remainingSuffixes.increment()
 
                 // Extend leaf edge offsets
                 endPosition.increment()
+                remainingSuffixes.increment()
 
                 // The phase ends when it is no longer possible to add more suffixes into the tree in
                 // the current phase. This happens either when we run out of remaining suffixes to add,
@@ -108,6 +107,10 @@ class RemainingSuffixesPointer(private var remainingSuffixes: Int = 0) {
     fun decrement() {
         remainingSuffixes--
     }
+
+    override fun toString(): String {
+        return "$remainingSuffixes"
+    }
 }
 
 class ActivePoint(
@@ -119,20 +122,34 @@ class ActivePoint(
     private var activeEdge = -1
     private var activeLength = 0
 
+    /**
+     * @return Whether or not more suffixes can be added in the current phase.
+     */
     fun addNextSuffix(nextCharOffset: Int): Boolean {
         val nextChar = input[nextCharOffset]
         val suffixOffset = endPosition.value() - remainingSuffixes.value()
         if (activeLength == 0) {
             if (root.hasEdgeWithChar(input, nextChar, 0)) {
+                Debugger.printLine("Activating edge $activeEdge with leading char '$nextChar'")
                 root.activateEdge(input, nextChar, this)
                 activeLength++
             } else {
+                Debugger.printLine("Adding leaf node [$nextCharOffset, ${endPosition.value()}]($suffixOffset)")
                 root.addLeafEdge(LeafNode(suffixOffset), TextPosition(nextCharOffset), endPosition)
                 remainingSuffixes.decrement()
             }
+
+            // We only ever enter this branch if we're either about to perform an active-edge
+            // extension, or we're about to add the last suffix in the phase.
+            return false
         } else {
             if (root.hasEdgeWithChar(input, nextChar, activeLength)) {
+                Debugger.printLine(
+                    "Advancing along active edge $activeEdge " +
+                            "due to next char '$nextChar' at label offset $activeLength"
+                )
                 activeLength++
+                return false
             } else {
                 root.splitEdge(
                     input,
@@ -142,11 +159,12 @@ class ActivePoint(
                     suffixOffset,
                     endPosition
                 )
+                remainingSuffixes.decrement()
                 activeEdge++
                 activeLength--
+                return true
             }
         }
-        return false
     }
 
     fun activeNodeOffset(): Pair<Int, Int> {
@@ -160,6 +178,10 @@ class ActivePoint(
     fun setActiveNodeOffset(activeEdge: Int, activeLength: Int) {
         this.activeEdge = activeEdge
         this.activeLength = activeLength
+    }
+
+    override fun toString(): String {
+        return "ActivePoint(activeEdge=$activeEdge, activeLength=$activeLength)"
     }
 }
 
