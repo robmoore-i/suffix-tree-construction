@@ -119,6 +119,8 @@ class ActivePoint(
     private val endPosition: TextPosition,
     private val remainingSuffixes: RemainingSuffixesPointer
 ) {
+    companion object;
+
     private var activeEdge = -1
     private var activeLength = 0
 

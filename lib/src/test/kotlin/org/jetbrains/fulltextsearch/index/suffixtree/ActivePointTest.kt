@@ -9,9 +9,8 @@ class ActivePointTest {
         val root = RootNode()
         val remainingSuffixes = RemainingSuffixesPointer(remainingSuffixes = 1)
 
-        val canAddMoreSuffixes =
-            ActivePoint("xy", root, TextPosition(2), remainingSuffixes)
-                .addNextSuffix(1)
+        val canAddMoreSuffixes = ActivePoint("xy", root, TextPosition(2), remainingSuffixes)
+            .addNextSuffix(1)
 
         assertTrue(
             root.hasLeafEdge(1, 2, 1),
@@ -93,11 +92,10 @@ class ActivePointTest {
         val endPosition = TextPosition(4)
         root.addLeafEdge(LeafNode(0), TextPosition(0), endPosition)
         root.addLeafEdge(LeafNode(1), TextPosition(1), endPosition)
-        val activePoint = ActivePoint(
+        val activePoint = ActivePoint.positionedAt(
             "memo", root, endPosition,
-            RemainingSuffixesPointer(remainingSuffixes = 2)
+            remainingSuffixes = 2, activeEdge = 0, activeLength = 1
         )
-        activePoint.setActiveNodeOffset(0, 1)
 
         activePoint.addNextSuffix(3)
 
@@ -115,11 +113,10 @@ class ActivePointTest {
         val root = RootNode()
         val endPosition = TextPosition(4)
         root.addLeafEdge(LeafNode(0), TextPosition(0), endPosition)
-        val activePoint = ActivePoint(
+        val activePoint = ActivePoint.positionedAt(
             "xxx$", root, endPosition,
-            RemainingSuffixesPointer(remainingSuffixes = 3)
+            remainingSuffixes = 3, activeEdge = 0, activeLength = 2
         )
-        activePoint.setActiveNodeOffset(0, 2)
 
         activePoint.addNextSuffix(3)
 
@@ -137,15 +134,15 @@ class ActivePointTest {
     internal fun `can split an internal edge`() {
         val root = RootNode()
         val endPosition = TextPosition(4)
-        val internalNode = InternalNode()
-        root.addInternalEdge(internalNode, TextPosition(0), TextPosition(2))
-        internalNode.addLeafEdge(LeafNode(0), TextPosition(2), endPosition)
-        internalNode.addLeafEdge(LeafNode(1), TextPosition(3), endPosition)
-        val activePoint = ActivePoint(
-            "xxx$", root, endPosition,
-            RemainingSuffixesPointer(remainingSuffixes = 2)
+        root.addInternalEdge(
+            internalEdgeOffsets = Pair(0, 2),
+            firstLeafSuffixOffset = 0, firstLeafEdgeSrcOffset = 1,
+            secondLeafSuffixOffset = 1, secondLeafEdgeSrcOffset = 3, endPosition = endPosition
         )
-        activePoint.setActiveNodeOffset(1, 1)
+        val activePoint = ActivePoint.positionedAt(
+            "xxx$", root, endPosition,
+            remainingSuffixes = 2, activeEdge = 1, activeLength = 1
+        )
 
         activePoint.addNextSuffix(3)
 
@@ -164,11 +161,10 @@ class ActivePointTest {
         val endPosition = TextPosition(4)
         root.addLeafEdge(LeafNode(0), TextPosition(0), endPosition)
         root.addLeafEdge(LeafNode(1), TextPosition(1), endPosition)
-        val activePoint = ActivePoint(
+        val activePoint = ActivePoint.positionedAt(
             "xyxya", root, endPosition,
-            RemainingSuffixesPointer(remainingSuffixes = 2)
+            remainingSuffixes = 2, activeEdge = 0, activeLength = 1
         )
-        activePoint.setActiveNodeOffset(0, 1)
 
         activePoint.addNextSuffix(3)
 
@@ -180,11 +176,10 @@ class ActivePointTest {
         val root = RootNode()
         val endPosition = TextPosition(4)
         root.addLeafEdge(LeafNode(0), TextPosition(0), endPosition)
-        val activePoint = ActivePoint(
+        val activePoint = ActivePoint.positionedAt(
             "xxx$", root, endPosition,
-            RemainingSuffixesPointer(remainingSuffixes = 3)
+            remainingSuffixes = 3, activeEdge = 0, activeLength = 2
         )
-        activePoint.setActiveNodeOffset(0, 2)
 
         val canAddMoreSuffixes = activePoint.addNextSuffix(3)
 
@@ -210,21 +205,22 @@ class ActivePointTest {
     internal fun `can make insertion from root with a jump into an internal node`() {
         val root = RootNode()
         val endPosition = TextPosition(9)
-        val internalNodeXY = InternalNode()
-        internalNodeXY.addLeafEdge(LeafNode(0), TextPosition(2), endPosition)
-        internalNodeXY.addLeafEdge(LeafNode(3), TextPosition(5), endPosition)
-        root.addInternalEdge(internalNodeXY, TextPosition(0), TextPosition(2))
-        val internalNodeY = InternalNode()
-        internalNodeY.addLeafEdge(LeafNode(1), TextPosition(2), endPosition)
-        internalNodeY.addLeafEdge(LeafNode(4), TextPosition(5), endPosition)
-        root.addInternalEdge(internalNodeY, TextPosition(1), TextPosition(2))
+        root.addInternalEdge(
+            internalEdgeOffsets = Pair(0, 2),
+            firstLeafSuffixOffset = 0, firstLeafEdgeSrcOffset = 2,
+            secondLeafSuffixOffset = 3, secondLeafEdgeSrcOffset = 5, endPosition = endPosition
+        )
+        root.addInternalEdge(
+            internalEdgeOffsets = Pair(1, 2),
+            firstLeafSuffixOffset = 1, firstLeafEdgeSrcOffset = 2,
+            secondLeafSuffixOffset = 4, secondLeafEdgeSrcOffset = 5, endPosition = endPosition
+        )
         root.addLeafEdge(LeafNode(2), TextPosition(2), endPosition)
         root.addLeafEdge(LeafNode(5), TextPosition(5), endPosition)
-        val activePoint = ActivePoint(
+        val activePoint = ActivePoint.positionedAt(
             "xyzxyaxyb", root, endPosition,
-            RemainingSuffixesPointer(remainingSuffixes = 3)
+            remainingSuffixes = 3, activeEdge = 0, activeLength = 2
         )
-        activePoint.setActiveNodeOffset(0, 2)
 
         Debugger.enabledFor {
             activePoint.addNextSuffix(8)
@@ -235,5 +231,44 @@ class ActivePointTest {
                     it.hasLeafEdge(5, 9, 3) &&
                     it.hasLeafEdge(8, 9, 6)
         }, "Root didn't have the expected edges\nInstead, root was $root;")
+    }
+
+    private fun RootNode.addInternalEdge(
+        internalEdgeOffsets: Pair<Int, Int>, firstLeafSuffixOffset: Int,
+        firstLeafEdgeSrcOffset: Int, secondLeafSuffixOffset: Int,
+        secondLeafEdgeSrcOffset: Int, endPosition: TextPosition
+    ) {
+        val internalNode = InternalNode()
+        internalNode.addLeafEdge(
+            LeafNode(firstLeafSuffixOffset),
+            TextPosition(firstLeafEdgeSrcOffset),
+            endPosition
+        )
+        internalNode.addLeafEdge(
+            LeafNode(secondLeafSuffixOffset),
+            TextPosition(secondLeafEdgeSrcOffset),
+            endPosition
+        )
+        addInternalEdge(
+            internalNode,
+            TextPosition(internalEdgeOffsets.first),
+            TextPosition(internalEdgeOffsets.second)
+        )
+    }
+
+    private fun ActivePoint.Companion.positionedAt(
+        input: String,
+        root: RootNode,
+        endPosition: TextPosition,
+        remainingSuffixes: Int,
+        activeEdge: Int,
+        activeLength: Int
+    ): ActivePoint {
+        val activePoint = ActivePoint(
+            input, root, endPosition,
+            RemainingSuffixesPointer(remainingSuffixes = remainingSuffixes)
+        )
+        activePoint.setActiveNodeOffset(activeEdge, activeLength)
+        return activePoint
     }
 }
