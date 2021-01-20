@@ -28,21 +28,18 @@ class SuffixTreeTest {
     }
 
     @Test
-    @Disabled
     internal fun `can construct nested internal nodes'`() {
         val inputString = "xaxbxac"
         assertSuffixTreeIsCorrectlyConstructed(inputString, suffixTree(inputString))
     }
 
     @Test
-    @Disabled
     internal fun `can add all-new leaf nodes from internal nodes`() {
         val inputString = "xxaxb"
         assertSuffixTreeIsCorrectlyConstructed(inputString, suffixTree(inputString))
     }
 
     @Test
-    @Disabled
     internal fun `converts the implicit suffix tree into a true suffix tree`() {
         val suffixTree = suffixTree("xxx")
         assertEquals(setOf(0, 1, 2), suffixTree.offsetsOf("x"))
@@ -119,7 +116,7 @@ class SuffixTreeTest {
             try {
                 assertEquals(expectedIndices(), suffixTree.offsetsOf(queryString))
             } catch (e: Throwable) {
-                println("Query for '$queryString' was incorrect for input '$inputString'!")
+                println("Query for '$queryString' was incorrect for input '$inputString'")
                 throw e
             }
         }

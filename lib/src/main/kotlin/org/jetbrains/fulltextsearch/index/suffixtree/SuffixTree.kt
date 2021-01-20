@@ -50,9 +50,9 @@ class SuffixTree(private val terminatedInputString: String, private val root: Ro
 
             // Prepare variables
             val remainingSuffixes = RemainingSuffixesPointer(0)
+            val suffixLinkCandidate = SuffixLinkCandidate()
             val activePoint = ActivePoint(
-                // TODO: Suffix link candidate should be reset at the start of each phase
-                input, root, endPosition, remainingSuffixes, SuffixLinkCandidate()
+                input, root, endPosition, remainingSuffixes, suffixLinkCandidate
             )
 
             // Phases
@@ -68,6 +68,9 @@ class SuffixTree(private val terminatedInputString: String, private val root: Ro
                 // Extend leaf edge offsets
                 endPosition.increment()
                 remainingSuffixes.increment()
+
+                // Suffix links should only be created within a phase
+                suffixLinkCandidate.reset()
 
                 // The phase ends when it is no longer possible to add more suffixes into the tree in
                 // the current phase. This happens either when we run out of remaining suffixes to add,
@@ -361,7 +364,7 @@ class Edge(
     private val srcOffset: TextPosition, private val dstOffset: TextPosition
 ) {
     override fun toString(): String {
-        return "Edge(srcOffset=${srcOffset.value()}, dstOffset=${dstOffset.value()}, dstNode=$dstNode)"
+        return "Edge(srcOffset=${srcOffset.value()}, dstOffset=${dstOffset.value()})"
     }
 
     fun label(input: String) =
