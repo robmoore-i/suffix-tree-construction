@@ -323,6 +323,34 @@ class ActivePointTest {
         )
     }
 
+    @Test
+    internal fun `jumps over an internal node after following suffix link if necessary`() {
+        val root = RootNode()
+        val endPosition = TextPosition(9)
+        val activeNode = root.addInternalEdge(
+            internalEdgeOffsets = Pair(0, 1),
+            firstLeafEdgeSrcOffset = 1, firstLeafSuffixOffset = 0,
+            secondLeafEdgeSrcOffset = 4, secondLeafSuffixOffset = 3, endPosition = endPosition
+        )
+        val expectedNextActiveNode = root.addInternalEdge(
+            internalEdgeOffsets = Pair(1, 2),
+            firstLeafEdgeSrcOffset = 6, firstLeafSuffixOffset = 5,
+            secondLeafEdgeSrcOffset = 2, secondLeafSuffixOffset = 1, endPosition = endPosition
+        )
+        val activePoint = ActivePoint.positionedAt(
+            "xyzxzyxy$", root, endPosition, remainingSuffixes = 3,
+            activeEdge = 1, activeLength = 1, activeNode = activeNode
+        )
+
+        activePoint.addNextSuffix(8)
+
+        assertEquals(Pair(2, 0), activePoint.activeNodeOffset())
+        assertTrue(
+            activePoint.activePointIsInternalNode { it == expectedNextActiveNode },
+            "Active point didn't meet expectations.\nInstead, active point was $activePoint;"
+        )
+    }
+
     private fun RootNode.addInternalEdge(
         internalEdgeOffsets: Pair<Int, Int>, firstLeafSuffixOffset: Int,
         firstLeafEdgeSrcOffset: Int, secondLeafSuffixOffset: Int,

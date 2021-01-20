@@ -214,6 +214,10 @@ class ActivePoint(
 
     fun followSuffixLink(suffixLink: InternalNode?) {
         activeNode = suffixLink ?: root
+        activeNode.advanceActiveEdge(
+            input, activeEdge, activeLength, this,
+            eagerNodeHop = true
+        )
     }
 }
 
@@ -299,7 +303,8 @@ interface ActiveNode : SrcNode {
         input: String,
         edgeSrcOffset: Int,
         edgeLabelOffset: Int,
-        activePoint: ActivePoint
+        activePoint: ActivePoint,
+        eagerNodeHop: Boolean = false
     )
 
     fun advanceActivePoint(activePoint: ActivePoint)
@@ -364,7 +369,7 @@ class Edge(
     private val srcOffset: TextPosition, private val dstOffset: TextPosition
 ) {
     override fun toString(): String {
-        return "Edge(srcOffset=${srcOffset.value()}, dstOffset=${dstOffset.value()})"
+        return "Edge(srcOffset=${srcOffset.value()}, dstOffset=${dstOffset.value()}, dstNode=$dstNode)"
     }
 
     fun label(input: String) =
@@ -754,10 +759,12 @@ abstract class DelegateSrcNode : ActiveNode {
         input: String,
         edgeSrcOffset: Int,
         edgeLabelOffset: Int,
-        activePoint: ActivePoint
+        activePoint: ActivePoint,
+        eagerNodeHop: Boolean
     ) {
         val activeEdge = edges.first { it.labelHasChar(input, input[edgeSrcOffset], 0) }
-        if (edgeLabelOffset > activeEdge.labelLength()) {
+        val eagerHopModifier = if (eagerNodeHop) 1 else 0
+        if (edgeLabelOffset + eagerHopModifier > activeEdge.labelLength()) {
             activeEdge.advanceActivePoint(edgeSrcOffset, edgeLabelOffset, activePoint)
         }
     }
@@ -787,7 +794,7 @@ class InternalNode : DelegateSrcNode(), DstNode {
     private var suffixLink: InternalNode? = null
 
     override fun toString(): String {
-        return "InternalNode(${super.toString()}, suffixLink=${suffixLink})"
+        return "InternalNode(${super.toString()}, suffixLink.null?=${suffixLink == null})"
     }
 
     override fun advanceActivePoint(activePoint: ActivePoint) {
