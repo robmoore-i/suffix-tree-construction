@@ -72,11 +72,16 @@ class SuffixTreeTest {
     }
 
     @Test
-    internal fun `next failing test`() {
+    internal fun `can split internal edges`() {
         val inputString = "abcdefggg$"
         val suffixTree = suffixTree(inputString)
         assertEquals(setOf(6), suffixTree.offsetsOf("ggg$"))
         assertSuffixTreeIsCorrectlyConstructed(inputString, suffixTree)
+    }
+
+    @Test
+    internal fun `next failing test`() {
+        suffixTree("xxyzxyazxy$")
     }
 
     private fun suffixTree(inputString: String): SuffixTree {

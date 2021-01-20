@@ -10,8 +10,8 @@ import org.junit.jupiter.api.Test
 class SuffixTreeFuzzTest {
     @Test
     internal fun `find bugs`() {
-        repeat(1000) {
-            val fileContent = generateRandomString(minLength = 11, maxLength = 20)
+        repeat(100000) {
+            val fileContent = generateRandomString(minLength = 10, maxLength = 25)
             val naiveIndexedFile = NaiveIndexedFile("some-file.txt", fileContent)
 
             fun getSuffixTreeIndexedFile(): SuffixTreeIndexedFile {
