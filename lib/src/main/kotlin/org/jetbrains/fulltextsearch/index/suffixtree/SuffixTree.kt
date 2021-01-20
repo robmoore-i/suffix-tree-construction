@@ -365,7 +365,7 @@ fun interface SuffixExtension {
 }
 
 class Edge(
-    @Suppress("unused") private val srcNode: SrcNode, private val dstNode: DstNode,
+    private val srcNode: SrcNode, private val dstNode: DstNode,
     private val srcOffset: TextPosition, private val dstOffset: TextPosition
 ) {
     override fun toString(): String {
