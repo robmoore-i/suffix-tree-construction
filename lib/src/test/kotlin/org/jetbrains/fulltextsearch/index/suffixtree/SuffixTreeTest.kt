@@ -78,6 +78,26 @@ class SuffixTreeTest {
         assertEquals(setOf(0, 1, 2), suffixTree.offsetsOf("f"))
     }
 
+    @Test
+    internal fun `checks for active node hop after following a suffix link`() {
+        val suffixTree = suffixTree("xyzxzyxy$")
+        assertEquals(setOf(0, 6), suffixTree.offsetsOf("xy"))
+        assertEquals(setOf(0), suffixTree.offsetsOf("xyz"))
+        assertEquals(setOf<Int>(), suffixTree.offsetsOf("f"))
+    }
+
+    @Test
+    internal fun `checks for active node hop after root node insertion`() {
+        val suffixTree = suffixTree("xzyxyxy$")
+        assertEquals(setOf(2, 4), suffixTree.offsetsOf("yxy"))
+        assertEquals(setOf(3, 5), suffixTree.offsetsOf("xy"))
+    }
+
+    @Test
+    internal fun `next failing test`() {
+        suffixTree("xyyxyyy$")
+    }
+
     private fun suffixTree(inputString: String): SuffixTree {
         val suffixTree = SuffixTree(inputString)
         println("\nSuffix Tree for '$inputString': $suffixTree")

@@ -5,18 +5,17 @@ package org.jetbrains.fulltextsearch.index.suffixtree
 import org.jetbrains.fulltextsearch.index.naive.NaiveIndexedFile
 import org.jetbrains.fulltextsearch.randominput.RandomInput.generateRandomString
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 
 class SuffixTreeFuzzTest {
     @Test
-    @Disabled
     internal fun `find bugs`() {
-        repeat(100) {
-            val fileContent = generateRandomString(minLength = 100, maxLength = 105)
+        repeat(10000) {
+            val fileContent = generateRandomString(minLength = 5, maxLength = 15)
             val naiveIndexedFile = NaiveIndexedFile("some-file.txt", fileContent)
+            println("fileContent=$fileContent")
             val suffixTreeIndexedFile = SuffixTreeIndexedFile("some-file.txt", fileContent)
-            repeat(100) {
+            repeat(1) {
                 val queryString = generateRandomString(maxLength = 10)
                 assertQueryResultsMatch(
                     fileContent,
