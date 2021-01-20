@@ -222,15 +222,39 @@ class ActivePointTest {
             remainingSuffixes = 3, activeEdge = 0, activeLength = 2
         )
 
-        Debugger.enabledFor {
-            activePoint.addNextSuffix(8)
-        }
+        activePoint.addNextSuffix(8)
 
         assertTrue(root.hasInternalEdge(0, 2) {
             it.hasLeafEdge(2, 9, 0) &&
                     it.hasLeafEdge(5, 9, 3) &&
                     it.hasLeafEdge(8, 9, 6)
         }, "Root didn't have the expected edges\nInstead, root was $root;")
+    }
+
+    @Test
+    internal fun `update active node when jumping over internal node during active edge extension`() {
+        val root = RootNode()
+        val endPosition = TextPosition(9)
+        root.addInternalEdge(
+            internalEdgeOffsets = Pair(0, 2),
+            firstLeafSuffixOffset = 0, firstLeafEdgeSrcOffset = 2,
+            secondLeafSuffixOffset = 3, secondLeafEdgeSrcOffset = 5, endPosition = endPosition
+        )
+        root.addInternalEdge(
+            internalEdgeOffsets = Pair(1, 2),
+            firstLeafSuffixOffset = 1, firstLeafEdgeSrcOffset = 2,
+            secondLeafSuffixOffset = 4, secondLeafEdgeSrcOffset = 5, endPosition = endPosition
+        )
+        root.addLeafEdge(LeafNode(2), TextPosition(2), endPosition)
+        root.addLeafEdge(LeafNode(5), TextPosition(5), endPosition)
+        val activePoint = ActivePoint.positionedAt(
+            "xyzxyaxyzb", root, endPosition,
+            remainingSuffixes = 3, activeEdge = 0, activeLength = 2
+        )
+
+        activePoint.addNextSuffix(8)
+
+        assertEquals(Pair(2, 1), activePoint.activeNodeOffset())
     }
 
     private fun RootNode.addInternalEdge(
