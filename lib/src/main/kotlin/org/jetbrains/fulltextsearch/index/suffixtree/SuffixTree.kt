@@ -151,7 +151,7 @@ class ActivePoint(
                 activeLength++
                 return false
             } else {
-                root.splitEdge(
+                root.extendEdge(
                     input,
                     activeEdge,
                     activeLength,
@@ -247,7 +247,7 @@ interface SrcNode {
 
     fun activateEdge(input: String, edgeLeadingChar: Char, activePoint: ActivePoint)
 
-    fun splitEdge(
+    fun extendEdge(
         input: String,
         edgeSrcOffset: Int,
         edgeLabelOffset: Int,
@@ -564,6 +564,18 @@ class Edge(
     fun activateEdge(activePoint: ActivePoint) {
         activePoint.setActiveEdgeOffset(srcOffset.value())
     }
+
+    fun labelLength(): Int {
+        return dstOffset.value() - srcOffset.value()
+    }
+
+    fun extend(suffixOffset: Int, charToAddOffset: Int, endPosition: TextPosition) {
+        (dstNode as InternalNode).addLeafEdge(
+            LeafNode(suffixOffset),
+            TextPosition(charToAddOffset),
+            endPosition
+        )
+    }
 }
 
 open class DelegateSrcNode : SrcNode {
@@ -653,7 +665,7 @@ open class DelegateSrcNode : SrcNode {
             .activateEdge(activePoint)
     }
 
-    override fun splitEdge(
+    override fun extendEdge(
         input: String,
         edgeSrcOffset: Int,
         edgeLabelOffset: Int,
@@ -661,8 +673,12 @@ open class DelegateSrcNode : SrcNode {
         suffixOffset: Int,
         endPosition: TextPosition
     ) {
-        edges.first { it.labelHasChar(input, input[edgeSrcOffset], 0) }
-            .split(charToAddOffset, edgeLabelOffset, suffixOffset, endPosition)
+        val activeEdge = edges.first { it.labelHasChar(input, input[edgeSrcOffset], 0) }
+        if (edgeLabelOffset == activeEdge.labelLength()) {
+            activeEdge.extend(suffixOffset, charToAddOffset, endPosition)
+        } else {
+            activeEdge.split(charToAddOffset, edgeLabelOffset, suffixOffset, endPosition)
+        }
     }
 
     override fun toString(): String {
