@@ -89,8 +89,8 @@ class ActivePointTest {
         val remainingSuffixes = RemainingSuffixesPointer(remainingSuffixes = 2)
         val root = RootNode()
         val endPosition = TextPosition(4)
-        root.addLeafEdge(LeafNode(1), TextPosition(1), endPosition)
         root.addLeafEdge(LeafNode(0), TextPosition(0), endPosition)
+        root.addLeafEdge(LeafNode(1), TextPosition(1), endPosition)
         val activePoint = ActivePoint("memo", root, endPosition, remainingSuffixes)
         activePoint.setActiveNodeOffset(0, 1)
 
@@ -138,9 +138,7 @@ class ActivePointTest {
         val activePoint = ActivePoint("xxx$", root, endPosition, remainingSuffixes)
         activePoint.setActiveNodeOffset(1, 1)
 
-        Debugger.enabledFor {
-            activePoint.addNextSuffix(3)
-        }
+        activePoint.addNextSuffix(3)
 
         assertTrue(
             root.hasInternalEdge(0, 1) { it ->
@@ -149,5 +147,20 @@ class ActivePointTest {
             },
             "Root didn't have the expected edges\nInstead, root was $root;"
         )
+    }
+
+    @Test
+    internal fun `moves down active edge if character is matching`() {
+        val remainingSuffixes = RemainingSuffixesPointer(remainingSuffixes = 2)
+        val root = RootNode()
+        val endPosition = TextPosition(4)
+        root.addLeafEdge(LeafNode(0), TextPosition(0), endPosition)
+        root.addLeafEdge(LeafNode(1), TextPosition(1), endPosition)
+        val activePoint = ActivePoint("xyxya", root, endPosition, remainingSuffixes)
+        activePoint.setActiveNodeOffset(0, 1)
+
+        activePoint.addNextSuffix(3)
+
+        assertEquals(Pair(0, 2), activePoint.activeNodeOffset())
     }
 }

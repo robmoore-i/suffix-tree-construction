@@ -123,7 +123,7 @@ class ActivePoint(
         val nextChar = input[nextCharOffset]
         val suffixOffset = endPosition.value() - remainingSuffixes.value()
         if (activeLength == 0) {
-            if (root.hasEdgeStartingWith(input, nextChar)) {
+            if (root.hasEdgeWithChar(input, nextChar, 0)) {
                 root.activateEdge(input, nextChar, this)
                 activeLength++
             } else {
@@ -131,16 +131,20 @@ class ActivePoint(
                 remainingSuffixes.decrement()
             }
         } else {
-            root.splitEdge(
-                input,
-                activeEdge,
-                activeLength,
-                nextCharOffset,
-                suffixOffset,
-                endPosition
-            )
-            activeEdge++
-            activeLength--
+            if (root.hasEdgeWithChar(input, nextChar, activeLength)) {
+                activeLength++
+            } else {
+                root.splitEdge(
+                    input,
+                    activeEdge,
+                    activeLength,
+                    nextCharOffset,
+                    suffixOffset,
+                    endPosition
+                )
+                activeEdge++
+                activeLength--
+            }
         }
         return false
     }
@@ -207,7 +211,7 @@ interface SrcNode {
      */
     fun descendentSuffixOffsets(): Set<Int>
 
-    fun hasEdgeStartingWith(input: String, c: Char): Boolean
+    fun hasEdgeWithChar(input: String, c: Char, labelOffset: Int): Boolean
 
     fun descendentLeaves(): Set<LeafNode>
 
@@ -475,8 +479,8 @@ class Edge(
         return dstNode.descendentSuffixOffsets()
     }
 
-    fun labelStartsWith(input: String, c: Char): Boolean {
-        return input[srcOffset.value()] == c
+    fun labelHasChar(input: String, c: Char, labelOffset: Int): Boolean {
+        return input[srcOffset.value() + labelOffset] == c
     }
 
     fun split(
@@ -601,8 +605,8 @@ open class DelegateSrcNode : SrcNode {
         }
     }
 
-    override fun hasEdgeStartingWith(input: String, c: Char): Boolean {
-        return edges.any { it.labelStartsWith(input, c) }
+    override fun hasEdgeWithChar(input: String, c: Char, labelOffset: Int): Boolean {
+        return edges.any { it.labelHasChar(input, c, labelOffset) }
     }
 
     override fun descendentLeaves(): Set<LeafNode> {
@@ -623,7 +627,7 @@ open class DelegateSrcNode : SrcNode {
     }
 
     override fun activateEdge(input: String, edgeLeadingChar: Char, activePoint: ActivePoint) {
-        edges.first { it.labelStartsWith(input, edgeLeadingChar) }
+        edges.first { it.labelHasChar(input, edgeLeadingChar, 0) }
             .activateEdge(activePoint)
     }
 
@@ -635,7 +639,7 @@ open class DelegateSrcNode : SrcNode {
         suffixOffset: Int,
         endPosition: TextPosition
     ) {
-        edges.first { it.labelStartsWith(input, input[edgeSrcOffset]) }
+        edges.first { it.labelHasChar(input, input[edgeSrcOffset], 0) }
             .split(charToAddOffset, edgeLabelOffset, suffixOffset, endPosition)
     }
 
