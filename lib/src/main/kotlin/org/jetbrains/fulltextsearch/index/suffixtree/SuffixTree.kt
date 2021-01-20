@@ -213,9 +213,6 @@ class ActivePoint(
             Debugger.printLine("Reached the end of the current activeEdge. Advancing the activeNode.")
             advanceActiveNode()
         }
-        if (!activeNodeIsRoot()) {
-            suffixLinkCandidate.linkTo(activeNode as InternalNode)
-        }
     }
 
     // Only call this method if you're sure that labelOffset > 0
@@ -274,13 +271,12 @@ class ActivePoint(
         Debugger.printLine("Following suffixLink FROM $activeNode;\nTO $suffixLink;")
         activeNode = suffixLink
         if (activeNodeIsRoot() && remainingSuffixes > 1) {
-            val nextSuffixLeadingChar = inputString[endPosition.value() - remainingSuffixes]
-            Debugger.printLine(
-                "After resetting to root, we update activeLength to ${remainingSuffixes - 1} and " +
-                        "make sure activeEdge points to an edge starting with '$nextSuffixLeadingChar'."
-            )
             activeLength = remainingSuffixes - 1
-            activeNode.activateEdge(inputString, nextSuffixLeadingChar, this)
+            activeEdge = endPosition.value() - remainingSuffixes
+            Debugger.printLine(
+                "After resetting to root, we update activeLength to $activeLength and " +
+                        "activeEdge to $activeEdge."
+            )
         }
         if (activeLength > 0) {
             activeNode.reactivateEdge(inputString, this)

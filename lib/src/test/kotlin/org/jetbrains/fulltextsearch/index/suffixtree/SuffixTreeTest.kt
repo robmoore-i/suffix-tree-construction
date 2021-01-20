@@ -105,6 +105,17 @@ class SuffixTreeTest {
         assertEquals(setOf(4), suffixTree.offsetsOf("yyy$"))
     }
 
+    @Test
+    internal fun `sets suffix link candidates only when splitting an edge`() {
+        val suffixTree = suffixTree("xxyzyxyz$")
+        assertEquals(setOf(1, 5), suffixTree.offsetsOf("xy"))
+        assertEquals(setOf<Int>(), suffixTree.offsetsOf("xyx"))
+        assertEquals(setOf<Int>(), suffixTree.offsetsOf("asd"))
+        assertEquals(setOf<Int>(), suffixTree.offsetsOf("xxyzyxyzO"))
+        assertEquals(setOf(1, 5), suffixTree.offsetsOf("xyz"))
+        assertEquals(setOf(4), suffixTree.offsetsOf("yx"))
+    }
+
     private fun suffixTree(inputString: String): SuffixTree {
         val suffixTree = SuffixTree(inputString)
         println("\nSuffix Tree for '$inputString': $suffixTree")
