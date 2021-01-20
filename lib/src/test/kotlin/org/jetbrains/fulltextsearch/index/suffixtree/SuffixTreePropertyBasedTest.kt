@@ -3,36 +3,30 @@
 package org.jetbrains.fulltextsearch.index.suffixtree
 
 import org.jetbrains.fulltextsearch.index.naive.NaiveIndexedFile
-import org.jetbrains.fulltextsearch.randominput.RandomInput.generateRandomString
+import org.jetbrains.fulltextsearch.randominput.RandomInput
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
-class SuffixTreeFuzzTest {
+class SuffixTreePropertyBasedTest {
     @Test
-    internal fun `find bugs`() {
-        repeat(1000) {
-            val fileContent = generateRandomString(minLength = 11, maxLength = 20)
-            val naiveIndexedFile = NaiveIndexedFile("some-file.txt", fileContent)
-
-            fun getSuffixTreeIndexedFile(): SuffixTreeIndexedFile {
-                try {
-                    return SuffixTreeIndexedFile("some-file.txt", fileContent)
-                } catch (e: Exception) {
-                    println("Fails for file content='$fileContent'")
-                    throw e
+    internal fun `there exists a leaf for every suffix of the input`() {
+        repeat(10000) {
+            val fileContent = RandomInput.generateRandomString(minLength = 1, maxLength = 15)
+            val suffixTree = SuffixTree.defaultConstruction(fileContent)
+            val leaves: Set<LeafNode> = suffixTree.leaves()
+            try {
+                assertEquals(fileContent.length + 1, leaves.size)
+                (fileContent.indices).forEach { suffixOffset ->
+                    assertEquals(
+                        1,
+                        leaves.filter { leafNode ->
+                            setOf(suffixOffset) == leafNode.descendentSuffixOffsets()
+                        }.size
+                    )
                 }
-            }
-
-            val suffixTreeIndexedFile = getSuffixTreeIndexedFile()
-
-            repeat(1) {
-                val queryString = generateRandomString(maxLength = 10)
-                assertQueryResultsMatch(
-                    fileContent,
-                    queryString,
-                    naiveIndexedFile,
-                    suffixTreeIndexedFile
-                )
+            } catch (e: Throwable) {
+                println("Failed for input '$fileContent'")
+                throw e
             }
         }
     }

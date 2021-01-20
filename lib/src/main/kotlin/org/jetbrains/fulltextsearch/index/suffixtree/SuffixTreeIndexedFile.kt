@@ -4,7 +4,7 @@ import org.jetbrains.fulltextsearch.index.IndexedFile
 import org.jetbrains.fulltextsearch.search.QueryMatch
 
 class SuffixTreeIndexedFile(private val path: String, fileText: String) : IndexedFile {
-    private val suffixTree = SuffixTree(fileText)
+    private val suffixTree = SuffixTree.defaultConstruction(fileText)
 
     override fun query(queryString: String): List<QueryMatch> {
         return suffixTree.offsetsOf(queryString)

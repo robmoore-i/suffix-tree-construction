@@ -1,123 +1,148 @@
 package org.jetbrains.fulltextsearch.index.suffixtree
 
-class SuffixTree(inputString: String) {
-    private val root: RootNode = RootNode()
+class SuffixTree(private val terminatedInputString: String, private val root: RootNode) {
 
-    // We append a terminating character to the inputString in order to ensure that we get a true
-    // suffix tree at the end of the process, rather than an implicit suffix tree.
-    private val terminatedInputString = inputString + terminatingCharacter()
+    companion object {
+        fun defaultConstruction(inputString: String): SuffixTree {
+            return ukkonenConstruction(inputString)
+        }
 
-    init {
-        // PHASE 1 EXTENSION 1
-        val endPosition = TextPosition(1)
-        root.addLeafEdge(LeafNode(endPosition.value() - 1), TextPosition(0), endPosition)
+        fun naiveConstruction(inputString: String): SuffixTree {
+            val root = RootNode()
+            val terminatedInputString = inputString + terminatingCharacter()
 
-        var remainingSuffixes = 0
-        val activePoint =
-            ActivePoint(terminatedInputString, root, SuffixLinkCandidate(), endPosition)
+            // PHASE 1 EXTENSION 1
+            val endPosition = TextPosition(1)
+            root.addLeafEdge(LeafNode(endPosition.value() - 1), TextPosition(0), endPosition)
 
-        (2..terminatedInputString.length).forEach { phaseNumber ->
-            Debugger.enableIf { true }
-            Debugger.printLine(
-                "\nStarting phase $phaseNumber for character '${terminatedInputString[phaseNumber - 1]}'\n" +
-                        "There are $remainingSuffixes suffixes remaining.\n" +
-                        "root=$root;\nactivePoint=$activePoint;\n"
-            )
-            remainingSuffixes++
-
-            // Extend leaf edge offsets
-            endPosition.increment()
-
-            // Suffix link candidates reset at the start of every phase.
-            activePoint.resetSuffixLinkCandidate()
-
-            // The phase ends when it is no longer possible to add more suffixes into the tree in
-            // the current phase. This happens either when we run out of remaining suffixes to add,
-            // i.e. when remainder == 0, or when we perform a rule three suffix extension.
-            var canAddMoreSuffixes = true
-            while (canAddMoreSuffixes) {
+            (2..terminatedInputString.length).forEach { phaseNumber ->
+                Debugger.enableIf { false }
                 Debugger.printLine(
-                    "\nAdding suffixes. $remainingSuffixes remaining. " +
-                            "Currently extending tree with suffix '${
-                                terminatedInputString.substring(
-                                    endPosition.value() - remainingSuffixes,
-                                    endPosition.value()
-                                )
-                            }'\n" +
-                            "root=$root;\nactivePoint=$activePoint;"
+                    "\nStarting phase $phaseNumber " +
+                            "for character '${terminatedInputString[phaseNumber - 1]}'\n"
                 )
-                if (activePoint.isAtNode()) {
-                    if (activePoint.hasEdgeStartingWith(terminatedInputString[phaseNumber - 1])) {
-                        activePoint.activateEdgeStartingWith(terminatedInputString[phaseNumber - 1])
-                        canAddMoreSuffixes = false
-                    } else {
-                        val suffixOffset = endPosition.value() - remainingSuffixes
-                        Debugger.printLine(
-                            "Creating new leaf node with offsets " +
-                                    "${phaseNumber - 1} -> ${endPosition.value()} " +
-                                    "for suffix with offset $suffixOffset"
-                        )
-                        activePoint.addLeafEdge(
-                            LeafNode(suffixOffset),
-                            TextPosition(phaseNumber - 1)
-                        )
-                        remainingSuffixes--
 
-                        // TODO: Duplicated
-                        if (!activePoint.activeNodeIsRoot()) {
-                            activePoint.followSuffixLink(remainingSuffixes)
-                        } else if (activePoint.activeNodeIsRoot() && !activePoint.isAtNode()) {
-                            activePoint.nextEdge()
-                        }
-                    }
-                } else {
-                    if (activePoint.labelHasNextCharacter(terminatedInputString[phaseNumber - 1])) {
-                        Debugger.printLine(
-                            "Advancing further down the current active edge of the active point $this;\n" +
-                                    "This ends the current phase."
-                        )
-                        activePoint.advanceDownLabel()
-                        canAddMoreSuffixes = false
-                    } else {
-                        val suffixOffset = endPosition.value() - remainingSuffixes
-                        Debugger.printLine(
-                            "Splitting at the active point $activePoint; " +
-                                    "in order to add the character '${terminatedInputString[phaseNumber - 1]}'."
-                        )
-                        activePoint.split(phaseNumber - 1, suffixOffset)
-                        remainingSuffixes--
+                // PHASE i EXTENSION 1
+                endPosition.increment()
 
-                        // TODO: Duplicated
-                        if (!activePoint.activeNodeIsRoot()) {
-                            activePoint.followSuffixLink(remainingSuffixes)
-                        } else if (activePoint.activeNodeIsRoot() && !activePoint.isAtNode()) {
-                            activePoint.nextEdge()
-                        }
-                    }
-                }
-                if (remainingSuffixes == 0) {
-                    Debugger.printLine("No more suffixes to add. Ending the current phase.")
-                    canAddMoreSuffixes = false
+                (2..phaseNumber).forEach { extensionNumber ->
+                    // PHASE i EXTENSION j
+                    val suffixOffset = extensionNumber - 1
+                    val suffixToAdd = terminatedInputString.substring(suffixOffset, phaseNumber)
+                    Debugger.printLine("\nPhase $phaseNumber, extension $extensionNumber")
+                    Debugger.printLine("Adding string '$suffixToAdd'")
+                    root.addSuffix(terminatedInputString, suffixToAdd, suffixOffset, endPosition)
+                    Debugger.printLine("Root node: $root")
                 }
             }
 
-//            (2..phaseNumber).forEach { extensionNumber ->
-//                // PHASE i EXTENSION j
-//                val debugAlwaysEnabled = false
-//                val debugEnabled = false
-//                if (debugAlwaysEnabled || (debugEnabled && phaseNumber == 7 && extensionNumber == 6)) {
-//                    Debugger.enable()
-//                } else {
-//                    Debugger.disable()
-//                }
-//
-//                val suffixOffset = extensionNumber - 1
-//                val suffixToAdd = terminatedInputString.substring(suffixOffset, phaseNumber)
-//                Debugger.printLine("\nPhase $phaseNumber, extension $extensionNumber")
-//                Debugger.printLine("Adding string '$suffixToAdd'")
-//                root.addSuffix(terminatedInputString, suffixToAdd, suffixOffset, endPosition)
-//                Debugger.printLine("Root node: $root")
-//            }
+            return SuffixTree(terminatedInputString, root)
+        }
+
+        fun ukkonenConstruction(inputString: String): SuffixTree {
+            val root = RootNode()
+            val terminatedInputString = inputString + terminatingCharacter()
+
+            // PHASE 1 EXTENSION 1
+            val endPosition = TextPosition(1)
+            root.addLeafEdge(LeafNode(endPosition.value() - 1), TextPosition(0), endPosition)
+
+            var remainingSuffixes = 0
+            val activePoint =
+                ActivePoint(terminatedInputString, root, SuffixLinkCandidate(), endPosition)
+
+            (2..terminatedInputString.length).forEach { phaseNumber ->
+                Debugger.enableIf { false }
+                Debugger.printLine(
+                    "\nStarting phase $phaseNumber for character '${terminatedInputString[phaseNumber - 1]}'\n" +
+                            "There are $remainingSuffixes suffixes remaining.\n" +
+                            "root=$root;\nactivePoint=$activePoint;\n"
+                )
+                remainingSuffixes++
+
+                // Extend leaf edge offsets
+                endPosition.increment()
+
+                // Suffix link candidates reset at the start of every phase.
+                activePoint.resetSuffixLinkCandidate()
+
+                // The phase ends when it is no longer possible to add more suffixes into the tree in
+                // the current phase. This happens either when we run out of remaining suffixes to add,
+                // i.e. when remainder == 0, or when we perform a rule three suffix extension.
+                var canAddMoreSuffixes = true
+                while (canAddMoreSuffixes) {
+                    Debugger.printLine(
+                        "\nAdding suffixes. $remainingSuffixes remaining. " +
+                                "Currently extending tree with suffix '${
+                                    terminatedInputString.substring(
+                                        endPosition.value() - remainingSuffixes,
+                                        endPosition.value()
+                                    )
+                                }'\n" +
+                                "root=$root;\nactivePoint=$activePoint;"
+                    )
+                    if (activePoint.isAtNode()) {
+                        if (activePoint.hasEdgeStartingWith(terminatedInputString[phaseNumber - 1])) {
+                            activePoint.activateEdgeStartingWith(terminatedInputString[phaseNumber - 1])
+                            canAddMoreSuffixes = false
+                        } else {
+                            val suffixOffset = endPosition.value() - remainingSuffixes
+                            Debugger.printLine(
+                                "Creating new leaf node with offsets " +
+                                        "${phaseNumber - 1} -> ${endPosition.value()} " +
+                                        "for suffix with offset $suffixOffset"
+                            )
+                            activePoint.addLeafEdge(
+                                LeafNode(suffixOffset),
+                                TextPosition(phaseNumber - 1)
+                            )
+                            remainingSuffixes--
+
+                            // TODO: Duplicated
+                            if (!activePoint.activeNodeIsRoot()) {
+                                activePoint.followSuffixLink(remainingSuffixes)
+                            } else if (activePoint.activeNodeIsRoot() && !activePoint.isAtNode()) {
+                                activePoint.nextEdge()
+                            }
+                        }
+                    } else {
+                        if (activePoint.labelHasNextCharacter(terminatedInputString[phaseNumber - 1])) {
+                            Debugger.printLine(
+                                "Advancing further down the current active edge of the active point $this;\n" +
+                                        "This ends the current phase."
+                            )
+                            activePoint.advanceDownLabel()
+                            canAddMoreSuffixes = false
+                        } else {
+                            val suffixOffset = endPosition.value() - remainingSuffixes
+                            Debugger.printLine(
+                                "Splitting at the active point $activePoint; " +
+                                        "in order to add the character '${terminatedInputString[phaseNumber - 1]}'."
+                            )
+                            activePoint.split(phaseNumber - 1, suffixOffset)
+                            remainingSuffixes--
+
+                            // TODO: Duplicated
+                            if (!activePoint.activeNodeIsRoot()) {
+                                activePoint.followSuffixLink(remainingSuffixes)
+                            } else if (activePoint.activeNodeIsRoot() && !activePoint.isAtNode()) {
+                                activePoint.nextEdge()
+                            }
+                        }
+                    }
+                    if (remainingSuffixes == 0) {
+                        Debugger.printLine("No more suffixes to add. Ending the current phase.")
+                        canAddMoreSuffixes = false
+                    }
+                }
+            }
+            return SuffixTree(terminatedInputString, root)
+        }
+
+        // We append a terminating character to the inputString in order to ensure that we get a true
+        // suffix tree at the end of the process, rather than an implicit suffix tree.
+        private fun terminatingCharacter(): Char {
+            return '\u0000'
         }
     }
 
@@ -129,8 +154,8 @@ class SuffixTree(inputString: String) {
         return root.offsetsOf(terminatedInputString, queryString)
     }
 
-    private fun terminatingCharacter(): Char {
-        return '\u0000'
+    fun leaves(): Set<LeafNode> {
+        return root.descendentLeaves()
     }
 }
 
@@ -199,7 +224,8 @@ class ActivePoint(
     }
 
     fun split(charToAddOffset: Int, suffixOffset: Int) {
-        val newInternalNode = edge!!.split(charToAddOffset, activeLength, suffixOffset, endPosition)
+        val newInternalNode =
+            edge!!.split(charToAddOffset, activeLength, suffixOffset, endPosition)
         suffixLinkCandidate.linkTo(newInternalNode)
     }
 
@@ -212,6 +238,9 @@ class ActivePoint(
         if (reachedEndOfEdge()) {
             Debugger.printLine("Reached the end of the current activeEdge. Advancing the activeNode.")
             advanceActiveNode()
+        } else if (!activeNodeIsRoot()) {
+            Debugger.printLine("Creating a suffix link after advancing the activeEdge from an internal node.")
+            suffixLinkCandidate.linkTo(activeNode as InternalNode)
         }
     }
 
@@ -351,6 +380,8 @@ interface SrcNode {
     fun activateEdge(inputString: String, edgeLeadingCharacter: Char, activePoint: ActivePoint)
 
     fun reactivateEdge(inputString: String, activePoint: ActivePoint)
+
+    fun descendentLeaves(): Set<LeafNode>
 }
 
 interface DstNode {
@@ -391,6 +422,8 @@ interface DstNode {
      * @return The set of suffix offsets in all the leaf nodes in the subtree rooted at this node.
      */
     fun descendentSuffixOffsets(): Set<Int>
+
+    fun leaves(): Set<LeafNode>
 }
 
 /**
@@ -413,7 +446,7 @@ class Edge(
         return "Edge(srcOffset=${srcOffset.value()}, dstOffset=${dstOffset.value()}, dstNode=$dstNode)"
     }
 
-    private fun label(inputString: String) =
+    fun label(inputString: String) =
         inputString.substring(srcOffset.value(), dstOffset.value())
 
     /**
@@ -488,7 +521,8 @@ class Edge(
         }
         val matchLength = i
         val noMatchingPrefix = matchLength == 0
-        val fullMatchingPrefix = matchLength == label.length || matchLength == suffixToAdd.length
+        val fullMatchingPrefix =
+            matchLength == label.length || matchLength == suffixToAdd.length
         val matchIsStrictlyPartial = !(noMatchingPrefix || fullMatchingPrefix)
         if (matchIsStrictlyPartial) {
             Debugger.printLine(
@@ -648,12 +682,20 @@ class Edge(
     fun reactivate(activePoint: ActivePoint) {
         activePoint.resetEdge(this)
     }
+
+    fun leaves(): Set<LeafNode> {
+        return dstNode.leaves()
+    }
 }
 
 class DelegateSrcNode : SrcNode {
     private val edges = mutableSetOf<Edge>()
 
-    override fun addLeafEdge(dstNode: LeafNode, srcOffset: TextPosition, dstOffset: TextPosition) {
+    override fun addLeafEdge(
+        dstNode: LeafNode,
+        srcOffset: TextPosition,
+        dstOffset: TextPosition
+    ) {
         edges.add(Edge(this, dstNode, srcOffset, dstOffset))
     }
 
@@ -727,6 +769,10 @@ class DelegateSrcNode : SrcNode {
             .reactivate(activePoint)
     }
 
+    override fun descendentLeaves(): Set<LeafNode> {
+        return edges.flatMapTo(mutableSetOf()) { it.leaves() }
+    }
+
     override fun toString(): String {
         return "DelegateSrcNode(edges=${edges.joinToString { "\n${it}" }})"
     }
@@ -735,7 +781,11 @@ class DelegateSrcNode : SrcNode {
 class RootNode : SrcNode {
     private val srcNode: SrcNode = DelegateSrcNode()
 
-    override fun addLeafEdge(dstNode: LeafNode, srcOffset: TextPosition, dstOffset: TextPosition) {
+    override fun addLeafEdge(
+        dstNode: LeafNode,
+        srcOffset: TextPosition,
+        dstOffset: TextPosition
+    ) {
         srcNode.addLeafEdge(dstNode, srcOffset, dstOffset)
     }
 
@@ -784,6 +834,10 @@ class RootNode : SrcNode {
         srcNode.reactivateEdge(inputString, activePoint)
     }
 
+    override fun descendentLeaves(): Set<LeafNode> {
+        return srcNode.descendentLeaves()
+    }
+
     override fun toString(): String {
         return "RootNode(srcNode=$srcNode)"
     }
@@ -797,7 +851,11 @@ class InternalNode : SrcNode, DstNode {
         return "InternalNode(srcNode=$srcNode)"
     }
 
-    override fun addLeafEdge(dstNode: LeafNode, srcOffset: TextPosition, dstOffset: TextPosition) {
+    override fun addLeafEdge(
+        dstNode: LeafNode,
+        srcOffset: TextPosition,
+        dstOffset: TextPosition
+    ) {
         srcNode.addLeafEdge(dstNode, srcOffset, dstOffset)
     }
 
@@ -832,7 +890,14 @@ class InternalNode : SrcNode, DstNode {
         endPosition: TextPosition,
         inboundEdgeDstOffset: TextPosition
     ): SuffixExtension {
-        return SuffixExtension { addSuffix(inputString, suffixToAdd, suffixOffset, endPosition) }
+        return SuffixExtension {
+            addSuffix(
+                inputString,
+                suffixToAdd,
+                suffixOffset,
+                endPosition
+            )
+        }
     }
 
     override fun addAsDstOf(
@@ -849,6 +914,14 @@ class InternalNode : SrcNode, DstNode {
 
     override fun descendentSuffixOffsets(): Set<Int> {
         return srcNode.descendentSuffixOffsets()
+    }
+
+    override fun descendentLeaves(): Set<LeafNode> {
+        return srcNode.descendentLeaves()
+    }
+
+    override fun leaves(): Set<LeafNode> {
+        return descendentLeaves()
     }
 
     override fun hasEdgeStartingWith(inputString: String, c: Char): Boolean {
@@ -898,6 +971,10 @@ class LeafNode(private val suffixOffset: Int) : DstNode {
 
     override fun descendentSuffixOffsets(): Set<Int> {
         return setOf(suffixOffset)
+    }
+
+    override fun leaves(): Set<LeafNode> {
+        return setOf(this)
     }
 
     override fun offsetsOf(inputString: String, queryString: String): Set<Int> {
@@ -969,6 +1046,7 @@ object Debugger {
         enabled = false
     }
 
+    @Suppress("unused")
     fun enabledFor(function: () -> Unit) {
         val wasEnabled = enabled
         enable()
