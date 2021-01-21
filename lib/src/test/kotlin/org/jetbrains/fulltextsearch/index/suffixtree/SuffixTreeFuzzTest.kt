@@ -59,7 +59,7 @@ class SuffixTreeFuzzTest {
         naiveIndexedFile: NaiveIndexedFile,
         suffixTreeIndexedFile: SuffixTreeIndexedFile
     ) {
-        val expectedQueryResults = naiveIndexedFile.query(queryString).toSet()
+        val expectedQueryResults = naiveIndexedFile.lookaheadQuery(queryString).toSet()
         assertEquals(
             expectedQueryResults,
             suffixTreeIndexedFile.query(queryString).toSet(),
