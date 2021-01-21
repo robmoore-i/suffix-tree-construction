@@ -4,38 +4,39 @@ package org.jetbrains.fulltextsearch.index.suffixtree
 
 import org.jetbrains.fulltextsearch.randominput.RandomInput
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 
 class SuffixTreeTest {
 
     @Test
     internal fun `constructs simple suffix tree with only leaf nodes`() {
-        val inputString = "abcde"
-        assertSuffixTreeIsCorrectlyConstructed(inputString, suffixTree(inputString))
+        val input = "abcde"
+        assertSuffixTreeIsCorrectlyConstructed(input, suffixTree(input))
     }
 
     @Test
     internal fun `constructs simple suffix tree with one internal node`() {
-        val inputString = "memo"
-        assertSuffixTreeIsCorrectlyConstructed(inputString, suffixTree(inputString))
+        val input = "memo"
+        assertSuffixTreeIsCorrectlyConstructed(input, suffixTree(input))
     }
 
     @Test
     internal fun `can construct multiple internal nodes on different branches'`() {
-        val inputString = "xabxa$"
-        assertSuffixTreeIsCorrectlyConstructed(inputString, suffixTree(inputString))
+        val input = "xabxa$"
+        assertSuffixTreeIsCorrectlyConstructed(input, suffixTree(input))
     }
 
     @Test
     internal fun `can construct nested internal nodes'`() {
-        val inputString = "xaxbxac"
-        assertSuffixTreeIsCorrectlyConstructed(inputString, suffixTree(inputString))
+        val input = "xaxbxac"
+        assertSuffixTreeIsCorrectlyConstructed(input, suffixTree(input))
     }
 
     @Test
     internal fun `can add all-new leaf nodes from internal nodes`() {
-        val inputString = "xxaxb"
-        assertSuffixTreeIsCorrectlyConstructed(inputString, suffixTree(inputString))
+        val input = "xxaxb"
+        assertSuffixTreeIsCorrectlyConstructed(input, suffixTree(input))
     }
 
     @Test
@@ -48,44 +49,51 @@ class SuffixTreeTest {
 
     @Test
     internal fun `reverts to root after internal node insertion`() {
-        val inputString = "yyxyyz"
-        assertSuffixTreeIsCorrectlyConstructed(inputString, suffixTree(inputString))
+        val input = "yyxyyz"
+        assertSuffixTreeIsCorrectlyConstructed(input, suffixTree(input))
     }
 
     @Test
     internal fun `checks for active node hop after following a suffix link`() {
-        val inputString = "xyzxzyxy$"
-        assertSuffixTreeIsCorrectlyConstructed(inputString, suffixTree(inputString))
+        val input = "xyzxzyxy$"
+        assertSuffixTreeIsCorrectlyConstructed(input, suffixTree(input))
     }
 
     @Test
     internal fun `checks for active node hop after root node insertion`() {
-        val inputString = "xzyxyxy$"
-        val suffixTree = suffixTree(inputString)
+        val input = "xzyxyxy$"
+        val suffixTree = suffixTree(input)
         assertEquals(setOf(4), suffixTree.offsetsOf("yxy$"))
-        assertSuffixTreeIsCorrectlyConstructed(inputString, suffixTree)
+        assertSuffixTreeIsCorrectlyConstructed(input, suffixTree)
     }
 
     @Test
     internal fun `resets active length and edge when reverting to root after internal node insertion`() {
-        val inputString = "xyyxyyy$"
-        assertSuffixTreeIsCorrectlyConstructed(inputString, suffixTree(inputString))
+        val input = "xyyxyyy$"
+        assertSuffixTreeIsCorrectlyConstructed(input, suffixTree(input))
     }
 
     @Test
     internal fun `hopping over internal nodes without adding a new leaf`() {
-        val inputString = "xxyzyxyz$"
-        assertSuffixTreeIsCorrectlyConstructed(inputString, suffixTree(inputString))
+        val input = "xxyzyxyz$"
+        assertSuffixTreeIsCorrectlyConstructed(input, suffixTree(input))
     }
 
-    private fun suffixTree(inputString: String): SuffixTree {
-        val suffixTree = SuffixTree.ukkonenConstruction(inputString)
-        println("\nSuffix Tree for '$inputString': $suffixTree")
+    @Test
+    @Disabled
+    internal fun `next failing test`() {
+        val input = "pvxwkvxgeafammpqzvxgp"
+        assertSuffixTreeIsCorrectlyConstructed(input, suffixTree(input))
+    }
+
+    private fun suffixTree(input: String): SuffixTree {
+        val suffixTree = SuffixTree.ukkonenConstruction(input)
+        println("\nSuffix Tree for '$input': $suffixTree")
         return suffixTree
     }
 
     private fun assertSuffixTreeIsCorrectlyConstructed(
-        inputString: String,
+        input: String,
         suffixTree: SuffixTree
     ) {
         fun assertQueryIsCorrect(queryString: String) {
@@ -97,7 +105,7 @@ class SuffixTreeTest {
 
                 var i = -1
                 while (true) {
-                    i = inputString.indexOf(queryString, i + 1)
+                    i = input.indexOf(queryString, i + 1)
                     when (i) {
                         -1 -> return indices
                         else -> indices.add(i)
@@ -108,26 +116,26 @@ class SuffixTreeTest {
             try {
                 assertEquals(expectedIndices(), suffixTree.offsetsOf(queryString))
             } catch (e: Throwable) {
-                println("Query for '$queryString' was incorrect for input '$inputString'")
+                println("Query for '$queryString' was incorrect for input '$input'")
                 throw e
             }
         }
 
         // Test the first n characters up to n=5
-        (1..minOf(5, inputString.length - 1)).forEach {
-            assertQueryIsCorrect(inputString.substring(0, it))
+        (1..minOf(5, input.length - 1)).forEach {
+            assertQueryIsCorrect(input.substring(0, it))
         }
         // Test the last n characters up to n=5
-        (1..minOf(5, inputString.length - 1)).forEach {
-            assertQueryIsCorrect(inputString.substring(inputString.length - it, inputString.length))
+        (1..minOf(5, input.length - 1)).forEach {
+            assertQueryIsCorrect(input.substring(input.length - it, input.length))
         }
         // Test the full string
-        assertQueryIsCorrect(inputString)
+        assertQueryIsCorrect(input)
         // Test 100 random substrings for good measure
         repeat(100) {
             val randomInput = RandomInput.generateRandomString(
-                alphabet = inputString + "abcdefghijklmnopqrstuvwxyz$",
-                maxLength = inputString.length
+                alphabet = input + "abcdefghijklmnopqrstuvwxyz$",
+                maxLength = input.length
             )
             assertQueryIsCorrect(randomInput)
         }
