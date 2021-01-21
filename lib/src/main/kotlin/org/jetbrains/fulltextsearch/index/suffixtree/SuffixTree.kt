@@ -17,7 +17,7 @@ class SuffixTree(private val terminatedInputString: String, private val root: Ro
 
             (2..terminatedInputString.length).forEach { phaseNumber ->
                 Debugger.enableIf { false }
-                Debugger.printLine(
+                Debugger.info(
                     "\nStarting phase $phaseNumber " +
                             "for character '${terminatedInputString[phaseNumber - 1]}'\n"
                 )
@@ -29,10 +29,10 @@ class SuffixTree(private val terminatedInputString: String, private val root: Ro
                     // PHASE i EXTENSION j
                     val suffixOffset = extensionNumber - 1
                     val suffixToAdd = terminatedInputString.substring(suffixOffset, phaseNumber)
-                    Debugger.printLine("\nPhase $phaseNumber, extension $extensionNumber")
-                    Debugger.printLine("Adding string '$suffixToAdd'")
+                    Debugger.info("\nPhase $phaseNumber, extension $extensionNumber")
+                    Debugger.info("Adding string '$suffixToAdd'")
                     root.addSuffix(terminatedInputString, suffixToAdd, suffixOffset, endPosition)
-                    Debugger.printLine("Root node: $root")
+                    Debugger.info("Root node: $root")
                 }
             }
 
@@ -59,7 +59,7 @@ class SuffixTree(private val terminatedInputString: String, private val root: Ro
             (2..input.length).forEach { phaseNumber ->
                 Debugger.enableIf { true }
                 val nextCharOffset = phaseNumber - 1
-                Debugger.printLine(
+                Debugger.info(
                     "\nStarting phase $phaseNumber for character '${input[nextCharOffset]}'\n" +
                             "Before the first extension, there are $remainingSuffixes suffixes remaining.\n" +
                             "root=$root;\nactivePoint=$activePoint;\n"
@@ -138,24 +138,24 @@ class ActivePoint(
     fun addNextSuffix(nextCharOffset: Int): Boolean {
         val nextChar = input[nextCharOffset]
         val suffixOffset = endPosition.value() - remainingSuffixes.value()
-        Debugger.printLine(
+        Debugger.debug(
             "Adding suffix '${
                 input.substring(
                     suffixOffset,
                     endPosition.value()
                 )
-            }' with offset $suffixOffset. " +
-                    "${remainingSuffixes.value()} suffixes remaining. " +
-                    "End position = ${endPosition.value()}\nActive point=$this"
+            }' with offset $suffixOffset for char '$nextChar' at index $nextCharOffset, " +
+                    "and there are ${remainingSuffixes.value()} suffixes remaining. " +
+                    "endPosition=${endPosition.value()}\nActive point=$this"
         )
         if (activeLength == 0) {
             if (activeNode.hasEdgeWithChar(input, nextChar, 0)) {
-                Debugger.printLine("Activating edge with leading char '$nextChar'")
+                Debugger.info("Activating edge with leading char '$nextChar'")
                 activeEdge = nextCharOffset
                 activeLength++
                 return false
             } else {
-                Debugger.printLine("Adding leaf node [$nextCharOffset, ${endPosition.value()}]($suffixOffset)")
+                Debugger.info("Adding leaf node [$nextCharOffset, ${endPosition.value()}]($suffixOffset)")
                 activeNode.addLeafEdge(
                     LeafNode(suffixOffset),
                     TextPosition(nextCharOffset),
@@ -167,12 +167,12 @@ class ActivePoint(
             }
         } else {
             if (activeNode.edgeHasChar(input, activeEdge, activeLength, nextChar)) {
-                Debugger.printLine(
+                Debugger.info(
                     "Advancing along active edge $activeEdge " +
                             "due to next char '$nextChar' at label offset $activeLength"
                 )
                 activeLength++
-                advanceActiveEdge()
+                normalizeActivePoint()
                 return false
             } else {
                 activeNode.extendEdge(
@@ -221,16 +221,16 @@ class ActivePoint(
     fun shiftActiveEdge() {
         activeEdge++
         activeLength--
-        advanceActiveEdge(eagerNodeHop = true)
+        normalizeActivePoint(eagerNodeHop = true)
     }
 
     fun followSuffixLink(suffixLink: InternalNode?) {
         activeNode = suffixLink ?: root
-        advanceActiveEdge(eagerNodeHop = true)
+        normalizeActivePoint(eagerNodeHop = true)
     }
 
-    private fun advanceActiveEdge(eagerNodeHop: Boolean = false) {
-        activeNode.advanceActiveEdge(
+    private fun normalizeActivePoint(eagerNodeHop: Boolean = false) {
+        activeNode.normalizeActivePoint(
             input, activeEdge, activeLength, this,
             eagerNodeHop = eagerNodeHop
         )
@@ -246,10 +246,10 @@ class SuffixLinkCandidate {
 
     fun linkTo(internalNode: InternalNode) {
         if (nextNodeToLinkFrom != null && nextNodeToLinkFrom != internalNode) {
-            Debugger.printLine("Linking from $nextNodeToLinkFrom;\nto $internalNode;")
+            Debugger.info("Linking from $nextNodeToLinkFrom;\nto $internalNode;")
             nextNodeToLinkFrom!!.linkTo(internalNode)
         }
-        Debugger.printLine("Next suffix link candidate is $internalNode;")
+        Debugger.info("Next suffix link candidate is $internalNode;")
         nextNodeToLinkFrom = internalNode
     }
 
@@ -318,7 +318,7 @@ interface ActiveNode : SrcNode {
         endPosition: TextPosition
     )
 
-    fun advanceActiveEdge(
+    fun normalizeActivePoint(
         input: String,
         edgeSrcOffset: Int,
         edgeLabelOffset: Int,
@@ -419,7 +419,7 @@ class Edge(
         // is needed here
         val label = label(input)
         if (label[0] != suffixToAdd[0]) {
-            Debugger.printLine(
+            Debugger.info(
                 "Suffix '$suffixToAdd' won't go along the edge starting at offset '$srcOffset'. " +
                         "No applicable suffix extension will be created."
             )
@@ -430,7 +430,7 @@ class Edge(
         // If the suffix and the edge label are equal, then we also don't need to do anything. This
         // covers that case.
         if (label.startsWith(suffixToAdd)) {
-            Debugger.printLine("Suffix '$suffixToAdd' is implicitly contained within the edge label '$label'")
+            Debugger.info("Suffix '$suffixToAdd' is implicitly contained within the edge label '$label'")
             return SuffixExtension { }
         }
 
@@ -440,7 +440,7 @@ class Edge(
         // characters to the end, then recurse to the internal node
         if (suffixToAdd.startsWith(label)) {
             val recursingSuffix = suffixToAdd.substring(label.length)
-            Debugger.printLine(
+            Debugger.info(
                 "Suffix '$suffixToAdd' extends the current edge label '$label'. " +
                         "Recursing with suffix '$recursingSuffix'."
             )
@@ -470,7 +470,7 @@ class Edge(
             matchLength == label.length || matchLength == suffixToAdd.length
         val matchIsStrictlyPartial = !(noMatchingPrefix || fullMatchingPrefix)
         if (matchIsStrictlyPartial) {
-            Debugger.printLine(
+            Debugger.info(
                 "Suffix '$suffixToAdd' has a strictly partial match with edge label '$label'. " +
                         "Adding an internal node at offset '$matchLength'."
             )
@@ -484,7 +484,7 @@ class Edge(
                 // Preserve the existing edge
                 dstNode.addAsDstOf(internalNode, dstOffsetOfSrcNode, endPosition)
                 // Add the new leaf edge
-                Debugger.printLine(
+                Debugger.info(
                     "srcOffset=${srcOffset.value()}, suffixOffset=$suffixOffset, " +
                             "matchLength=$matchLength, endPosition=${endPosition.value()}, " +
                             "suffixToAdd.length=${suffixToAdd.length}"
@@ -498,7 +498,7 @@ class Edge(
                 // This therefore gives us the srcOffset as the difference of these two values.
                 val newLeafSrcOffset =
                     TextPosition(endPosition.value() - suffixToAdd.length + matchLength)
-                Debugger.printLine("Adding new leaf edge from ${newLeafSrcOffset.value()} -> ${endPosition.value()}")
+                Debugger.info("Adding new leaf edge from ${newLeafSrcOffset.value()} -> ${endPosition.value()}")
                 internalNode.addLeafEdge(LeafNode(suffixOffset), newLeafSrcOffset, endPosition)
             }
         }
@@ -519,7 +519,7 @@ class Edge(
         // extension is needed here.
         val label = label(input)
         if (label[0] != queryString[0]) {
-            Debugger.printLine(
+            Debugger.info(
                 "Query string '$queryString' won't go along the edge starting at offset '$srcOffset'. " +
                         "This edge won't be queried any further for offsets."
             )
@@ -530,7 +530,7 @@ class Edge(
         // just gets to the end, then return the suffixOffsets of all the leaves of the subtree
         // rooted at the dstNode of this edge.
         if (label.startsWith(queryString)) {
-            Debugger.printLine(
+            Debugger.info(
                 "The edge label '$label' starts with the query string '$queryString'. " +
                         "Returning all descendent suffix offsets."
             )
@@ -543,7 +543,7 @@ class Edge(
         if (queryString.startsWith(label)) {
             @Suppress("SpellCheckingInspection")
             val recursedQueryString = queryString.substring(label.length)
-            Debugger.printLine(
+            Debugger.info(
                 "The query string '$queryString' starts with the edge label '$label'. " +
                         "Recursing to the dstNode of this edge, with the shortened query string '$recursedQueryString'."
             )
@@ -553,7 +553,7 @@ class Edge(
         // The only remaining case is a strictly partial match, in which the query string 'falls
         // off' the tree in the middle of the edge label. In this case, there will be no query
         // matches, so we return an empty collection.
-        Debugger.printLine(
+        Debugger.info(
             "The query string '$queryString' has a strictly partial match with the edge label '$label'. " +
                     "This means that there are no matches for the query string in the text. " +
                     "Returning an empty collection."
@@ -584,18 +584,18 @@ class Edge(
         // Add an internal edge for the new internal node
         val internalNode = InternalNode()
         val dstOffsetOfSrcNode = TextPosition(srcOffset.value() + edgeLabelOffset)
-        Debugger.printLine(
+        Debugger.info(
             "Splitting to create a new internal edge of " +
                     "${srcOffset.value()} -> ${dstOffsetOfSrcNode.value()}"
         )
         srcNode.addInternalEdge(internalNode, srcOffset, dstOffsetOfSrcNode)
         // Preserve the existing edge
-        Debugger.printLine(
+        Debugger.info(
             "Preserving dstNode under new edge ${dstOffsetOfSrcNode.value()} -> ${dstOffset.value()}"
         )
         dstNode.addAsDstOf(internalNode, dstOffsetOfSrcNode, dstOffset)
         // Add the new leaf edge
-        Debugger.printLine(
+        Debugger.info(
             "Adding new leaf edge from $charToAddOffset -> ${endPosition.value()}," +
                     "for suffix with offset $suffixOffset"
         )
@@ -641,14 +641,16 @@ class Edge(
         suffixOffset: Int,
         charToAddOffset: Int,
         endPosition: TextPosition
-    ): LeafNode {
-        val leaf = LeafNode(suffixOffset)
+    ) {
+        Debugger.info(
+            "Adding leaf [$charToAddOffset, ${endPosition.value()}]($suffixOffset) " +
+                    "to an internal node."
+        )
         (dstNode as InternalNode).addLeafEdge(
-            leaf,
+            LeafNode(suffixOffset),
             TextPosition(charToAddOffset),
             endPosition
         )
-        return leaf
     }
 
     fun advanceActivePoint(
@@ -657,8 +659,8 @@ class Edge(
         activePoint: ActivePoint
     ) {
         val edgeLength = labelLength()
-        Debugger.printLine(
-            "Jumped over a node - updating active edge from ($edgeSrcOffset, $edgeLabelOffset) " +
+        Debugger.info(
+            "Hopped over a node - updating active edge from ($edgeSrcOffset, $edgeLabelOffset) " +
                     "to (${edgeSrcOffset + edgeLength}, ${edgeLabelOffset - edgeLength})"
         )
         activePoint.advance(
@@ -707,7 +709,7 @@ abstract class DelegateSrcNode : ActiveNode {
             }
         }
         val srcOffset: Int = endPosition.value() - suffixToAdd.length
-        Debugger.printLine(
+        Debugger.info(
             "Adding leaf with suffixOffset $suffixOffset " +
                     "and offsets $srcOffset, ${endPosition.value()}"
         )
@@ -780,7 +782,7 @@ abstract class DelegateSrcNode : ActiveNode {
         }
     }
 
-    override fun advanceActiveEdge(
+    override fun normalizeActivePoint(
         input: String,
         edgeSrcOffset: Int,
         edgeLabelOffset: Int,
@@ -947,9 +949,16 @@ class TextPosition(private var i: Int) {
 
 object Debugger {
     private var enabled = false
+    private var debug = false
 
-    fun printLine(s: String) {
+    fun info(s: String) {
         if (enabled) {
+            println(s)
+        }
+    }
+
+    fun debug(s: String) {
+        if (enabled && debug) {
             println(s)
         }
     }
@@ -971,10 +980,13 @@ object Debugger {
     }
 
     @Suppress("unused")
-    fun enabledFor(function: () -> Unit) {
+    fun debugFor(function: () -> Unit) {
         val wasEnabled = enabled
+        val wasDebug = debug
         enable()
+        debug = true
         function.invoke()
         enabled = wasEnabled
+        debug = wasDebug
     }
 }
