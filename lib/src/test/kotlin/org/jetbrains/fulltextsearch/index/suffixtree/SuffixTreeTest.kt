@@ -102,6 +102,12 @@ class SuffixTreeTest {
         assertSuffixTreeIsCorrectlyConstructed(input, suffixTree(input))
     }
 
+    @Test
+    internal fun `edge label validation doesn't go beyond the label length`() {
+        val input = "xaxyaxax$"
+        assertSuffixTreeIsCorrectlyConstructed(input, suffixTree(input))
+    }
+
     private fun suffixTree(input: String): SuffixTree {
         val suffixTree = SuffixTree.ukkonenConstruction(input)
         println("\nSuffix Tree for '$input': $suffixTree")
