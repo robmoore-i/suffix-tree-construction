@@ -1,3 +1,5 @@
+@file:Suppress("SpellCheckingInspection")
+
 package org.jetbrains.fulltextsearch.index.suffixtree
 
 import org.junit.jupiter.api.Assertions.*
@@ -148,7 +150,7 @@ class ActivePointTest {
         activePoint.addNextSuffix(3)
 
         assertTrue(
-            root.hasInternalEdge(0, 1) { it ->
+            root.hasInternalEdge(0, 1) {
                 it.hasLeafEdge(3, 4, 2)
                         && it.hasInternalEdge(1, 2) { true }
             },
@@ -515,10 +517,46 @@ class ActivePointTest {
         val canAddMoreSuffixes = activePoint.addNextSuffix(6)
 
         assertEquals(Pair(6, 1), activePoint.activeNodeOffset())
-        assertTrue(activePoint.activeNodeIsInternalNode {
-            it == expectedInternalNode
-        }, "Active point didn't meet expectations.\nInstead, active point was $activePoint;")
+        assertTrue(
+            activePoint.activeNodeIsInternalNode { it == expectedInternalNode },
+            "Active point didn't meet expectations.\nInstead, active point was $activePoint;"
+        )
         assertEquals(2, remainingSuffixes.value())
+        assertFalse(canAddMoreSuffixes)
+    }
+
+    @Test
+    internal fun `doesn't follow suffix link when hopping over an internal node`() {
+        val root = RootNode()
+        val endPosition = TextPosition(8)
+        val suffixLinkSrc = root.addInternalEdge(
+            internalEdgeOffsets = Pair(0, 2),
+            firstLeafEdgeSrcOffset = 2, firstLeafSuffixOffset = 0,
+            secondLeafEdgeSrcOffset = 4, secondLeafSuffixOffset = 2, endPosition = endPosition
+        )
+        val suffixLinkDst = root.addInternalEdge(
+            internalEdgeOffsets = Pair(1, 2),
+            firstLeafEdgeSrcOffset = 2, firstLeafSuffixOffset = 1,
+            secondLeafEdgeSrcOffset = 4, secondLeafSuffixOffset = 3, endPosition = endPosition
+        )
+        root.addLeafEdge(LeafNode(4), TextPosition(4), endPosition)
+        val remainingSuffixes = RemainingSuffixesPointer(remainingSuffixes = 3)
+        val suffixLinkCandidate = SuffixLinkCandidate()
+        suffixLinkCandidate.linkTo(suffixLinkSrc)
+        suffixLinkCandidate.linkTo(suffixLinkDst)
+        val activePoint = ActivePoint(
+            "xyxyzxyz$", root, endPosition, remainingSuffixes, suffixLinkCandidate
+        )
+        activePoint.setActiveNodeOffset(activeEdge = 5, activeLength = 2)
+
+        val canAddMoreSuffixes = activePoint.addNextSuffix(7)
+
+        assertEquals(Pair(7, 1), activePoint.activeNodeOffset())
+        assertTrue(
+            activePoint.activeNodeIsInternalNode { it == suffixLinkSrc },
+            "Active point didn't meet expectations.\nInstead, active point was $activePoint;"
+        )
+        assertEquals(3, remainingSuffixes.value())
         assertFalse(canAddMoreSuffixes)
     }
 
@@ -578,5 +616,29 @@ class ActivePointTest {
         return ActivePoint(
             input, root, endPosition, remainingSuffixesPointer, SuffixLinkCandidate()
         )
+    }
+
+    private fun ActiveNode.hasInternalEdge(
+        srcOffset: Int,
+        dstOffset: Int,
+        internalNodeMatcher: (InternalNode) -> Boolean
+    ): Boolean {
+        return hasEdge { edge ->
+            edge.isInternalEdge { internalEdge ->
+                internalEdge.hasLabelOffsets(Pair(srcOffset, dstOffset))
+                        && internalEdge.dstMatches(internalNodeMatcher)
+            }
+        }
+    }
+
+    private fun ActiveNode.hasLeafEdge(srcOffset: Int, dstOffset: Int, suffixOffset: Int): Boolean {
+        return hasEdge { edge ->
+            edge.isLeafEdge { leafEdge ->
+                leafEdge.hasLabelOffsets(Pair(srcOffset, dstOffset))
+                        && leafEdge.dstMatches {
+                    it.suffixOffset() == suffixOffset
+                }
+            }
+        }
     }
 }

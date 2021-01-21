@@ -4,7 +4,6 @@ package org.jetbrains.fulltextsearch.index.suffixtree
 
 import org.jetbrains.fulltextsearch.randominput.RandomInput
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 
 class SuffixTreeTest {
@@ -80,9 +79,8 @@ class SuffixTreeTest {
     }
 
     @Test
-    @Disabled
-    internal fun `next failing test`() {
-        val input = "pvxwkvxgeafammpqzvxgp"
+    internal fun `doesn't follow suffix links when hopping over internal node`() {
+        val input = "xyxyzxyz$"
         assertSuffixTreeIsCorrectlyConstructed(input, suffixTree(input))
     }
 
@@ -131,8 +129,8 @@ class SuffixTreeTest {
         }
         // Test the full string
         assertQueryIsCorrect(input)
-        // Test 100 random substrings for good measure
-        repeat(100) {
+        // Test 200 random substrings for good measure
+        repeat(200) {
             val randomInput = RandomInput.generateRandomString(
                 alphabet = input + "abcdefghijklmnopqrstuvwxyz$",
                 maxLength = input.length

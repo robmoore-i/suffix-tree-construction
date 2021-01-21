@@ -117,7 +117,7 @@ class ActivePoint(
                     "endPosition=${endPosition.value()}\nActive point=$this"
         )
         if (activeLength == 0) {
-            if (activeNode.hasEdgeWithChar(input, nextChar, 0)) {
+            if (activeNode.hasEdgeWithChar(input, 0, nextChar)) {
                 Debugger.info("Activating edge with leading char '$nextChar'")
                 activeEdge = nextCharOffset
                 activeLength++
@@ -134,32 +134,45 @@ class ActivePoint(
                 return remainingSuffixes.value() > 0
             }
         } else {
-            if (activeNode.edgeHasChar(input, activeEdge, activeLength, nextChar)) {
-                Debugger.info(
-                    "Advancing along active edge $activeEdge " +
-                            "due to next char '$nextChar' at label offset $activeLength"
-                )
-                activeLength++
-                normalizeActivePoint()
-                return false
-            } else {
-                val canAddMoreSuffixes = activeNode.extendEdge(
-                    input, activeEdge, activeLength, suffixLinkCandidate,
-                    nextCharOffset, suffixOffset, endPosition,
-                    this, remainingSuffixes
-                )
-                activeNode.advanceActivePoint(this, suffixOffset + 1)
-                return canAddMoreSuffixes
+            return activeNode.onEdgeWithChar(input, 0, input[activeEdge]) { edge ->
+                val labelLength = edge.labelLength()
+                if (edge.labelHasChar(input, activeLength, nextChar)) {
+                    Debugger.info(
+                        "Advancing along active edge $activeEdge " +
+                                "due to next char '$nextChar' at label offset $activeLength"
+                    )
+                    activeLength++
+                    normalizeActivePoint()
+                    false
+                } else if (labelLength > activeLength) {
+                    remainingSuffixes.decrement()
+                    suffixLinkCandidate.linkTo(
+                        edge.split(nextCharOffset, activeLength, suffixOffset, endPosition)
+                    )
+                    activeNode.advanceActivePoint(this, suffixOffset + 1)
+                    true
+                } else {
+                    // If we reach this branch, we can be sure that this is an internal edge
+                    val internalEdge = edge as InternalEdge
+                    val internalNode = edge.dst() as InternalNode
+                    if (internalNode.hasEdgeWithChar(input, 0, nextChar)) {
+                        activeNode = internalNode
+                        activeEdge += activeLength
+                        activeLength = 1
+                        false
+                    } else {
+                        internalEdge.addToDst(LeafNode(suffixOffset), nextCharOffset, endPosition)
+                        remainingSuffixes.decrement()
+                        activeNode.advanceActivePoint(this, suffixOffset + 1)
+                        true
+                    }
+                }
             }
         }
     }
 
     fun activeNodeOffset(): Pair<Int, Int> {
         return Pair(activeEdge, activeLength)
-    }
-
-    fun setActiveEdgeOffset(edgeSrcOffset: Int) {
-        this.activeEdge = edgeSrcOffset
     }
 
     fun setActiveNodeOffset(activeEdge: Int, activeLength: Int) {
@@ -199,10 +212,22 @@ class ActivePoint(
 
     private fun normalizeActivePoint(eagerNodeHop: Boolean = false) {
         // TODO: Normalise recursively until reaching a node where it's all cool.
-        activeNode.normalizeActivePoint(
-            input, activeEdge, activeLength, this,
-            eagerNodeHop = eagerNodeHop
-        )
+        activeNode.onEdgeWithChar(
+            throwIfNotPresent = false,
+            input, 0, input[activeEdge]
+        ) { edge ->
+            val edgeLength = edge.labelLength()
+            val eagerHopModifier = if (eagerNodeHop) 1 else 0
+            if (activeLength + eagerHopModifier > edgeLength) {
+                Debugger.info(
+                    "Hopped over a node - updating active edge from ($activeEdge, $activeLength) " +
+                            "to (${activeEdge + edgeLength}, ${activeLength - edgeLength})"
+                )
+                activeNode = edge.dst() as InternalNode
+                activeEdge += edgeLength
+                activeLength -= edgeLength
+            }
+        }
     }
 
     fun activeNodeIsRoot(): Boolean {
@@ -251,38 +276,25 @@ interface SrcNode {
  * An ActiveNode is always a SrcNode.
  */
 interface ActiveNode : SrcNode {
-    fun hasEdgeWithChar(input: String, c: Char, labelOffset: Int): Boolean
+    fun hasEdgeWithChar(input: String, labelOffset: Int, c: Char): Boolean
 
     fun edgeHasChar(input: String, edgeSrcOffset: Int, edgeLabelOffset: Int, c: Char): Boolean
 
-    fun hasLeafEdge(srcOffset: Int, dstOffset: Int, suffixOffset: Int): Boolean
+    fun hasEdge(edgeMatcher: (Edge) -> Boolean): Boolean
 
-    fun hasInternalEdge(
-        srcOffset: Int,
-        dstOffset: Int,
-        internalNodeMatcher: (InternalNode) -> Boolean
-    ): Boolean
-
-    fun activateEdge(input: String, edgeLeadingChar: Char, activePoint: ActivePoint)
-
-    fun extendEdge(
+    fun <T> onEdgeWithChar(
         input: String,
-        edgeSrcOffset: Int,
         edgeLabelOffset: Int,
-        suffixLinkCandidate: SuffixLinkCandidate,
-        charToAddOffset: Int,
-        suffixOffset: Int,
-        endPosition: TextPosition,
-        activePoint: ActivePoint,
-        remainingSuffixes: RemainingSuffixesPointer
-    ): Boolean
+        c: Char,
+        function: (Edge) -> T
+    ): T
 
-    fun normalizeActivePoint(
+    fun onEdgeWithChar(
+        throwIfNotPresent: Boolean = true,
         input: String,
-        edgeSrcOffset: Int,
         edgeLabelOffset: Int,
-        activePoint: ActivePoint,
-        eagerNodeHop: Boolean = false
+        c: Char,
+        function: (Edge) -> Unit
     )
 
     fun advanceActivePoint(activePoint: ActivePoint, nextSuffixOffset: Int)
@@ -309,16 +321,18 @@ interface DstNode {
     fun leaves(): Set<LeafNode>
 }
 
-class Edge(
+abstract class Edge(
     private val srcNode: SrcNode, private val dstNode: DstNode,
     private val srcOffset: TextPosition, private val dstOffset: TextPosition
 ) {
-    override fun toString(): String {
-        return "Edge(srcOffset=${srcOffset.value()}, dstOffset=${dstOffset.value()}, dstNode=$dstNode)"
-    }
+    fun labelLength(): Int = dstOffset.value() - srcOffset.value()
 
-    private fun label(input: String) =
-        input.substring(srcOffset.value(), dstOffset.value())
+    fun labelHasChar(input: String, edgeLabelOffset: Int, c: Char): Boolean =
+        input[srcOffset.value() + edgeLabelOffset] == c
+
+    fun descendentSuffixOffsets(): Set<Int> = dstNode.descendentSuffixOffsets()
+
+    fun leaves(): Set<LeafNode> = dstNode.leaves()
 
     /**
      * @return If the queryString is able to be found on this edge, or in any subtree rooted at the
@@ -330,7 +344,7 @@ class Edge(
     fun offsetsOf(input: String, queryString: String): Set<Int>? {
         // If the query string won't go along this edge at all, stop and return null, because no
         // extension is needed here.
-        val label = label(input)
+        val label = input.substring(srcOffset.value(), dstOffset.value())
         if (label[0] != queryString[0]) {
             Debugger.info(
                 "Query string '$queryString' won't go along the edge starting at offset '$srcOffset'. " +
@@ -374,19 +388,7 @@ class Edge(
         return setOf()
     }
 
-    /**
-     * @return The set of suffix offsets in all the leaf nodes in the subtree rooted at the dstNode
-     * of this edge.
-     */
-    fun descendentSuffixOffsets(): Set<Int> {
-        return dstNode.descendentSuffixOffsets()
-    }
-
-    fun labelHasChar(input: String, c: Char, labelOffset: Int): Boolean {
-        return input[srcOffset.value() + labelOffset] == c
-    }
-
-    private fun split(
+    fun split(
         charToAddOffset: Int,
         edgeLabelOffset: Int,
         suffixOffset: Int,
@@ -420,113 +422,68 @@ class Edge(
         return internalNode
     }
 
-    fun leaves(): Set<LeafNode> {
-        return dstNode.leaves()
+    abstract fun isInternalEdge(internalEdgeMatcher: (InternalEdge) -> Boolean): Boolean
+
+    abstract fun isLeafEdge(leafEdgeMatcher: (LeafEdge) -> Boolean): Boolean
+
+    fun hasLabelOffsets(offsets: Pair<Int, Int>): Boolean =
+        offsets == Pair(srcOffset.value(), dstOffset.value())
+
+    fun dst(): DstNode = dstNode
+}
+
+class InternalEdge(
+    srcNode: SrcNode, private val dstNode: InternalNode,
+    srcOffset: TextPosition, dstOffset: TextPosition
+) : Edge(srcNode, dstNode, srcOffset, dstOffset) {
+    fun addToDst(leaf: LeafNode, srcOffset: Int, endPosition: TextPosition) {
+        Debugger.info("Adding leaf $leaf to dst node.")
+        dstNode.addLeafEdge(leaf, TextPosition(srcOffset), endPosition)
     }
 
-    fun isLeafEdge(srcOffset: Int, dstOffset: Int, suffixOffset: Int): Boolean {
-        val offsetsMatch =
-            this.srcOffset.value() == srcOffset && this.dstOffset.value() == dstOffset
-        val dstNodeMatches = (dstNode as? LeafNode)?.suffixOffset() == suffixOffset
-        return offsetsMatch && dstNodeMatches
+    fun dstMatches(internalNodeMatcher: (InternalNode) -> Boolean): Boolean {
+        return internalNodeMatcher(dstNode)
     }
 
-    fun isInternalEdge(srcOffset: Int, dstOffset: Int): Boolean {
-        val offsetsMatch =
-            this.srcOffset.value() == srcOffset && this.dstOffset.value() == dstOffset
-        val dstNodeMatches = dstNode is InternalNode
-        return offsetsMatch && dstNodeMatches
+    override fun isInternalEdge(internalEdgeMatcher: (InternalEdge) -> Boolean): Boolean {
+        return internalEdgeMatcher(this)
     }
 
-    fun leadsToInternalNode(internalNodeMatcher: (InternalNode) -> Boolean): Boolean {
-        return (dstNode as? InternalNode)?.let { internalNodeMatcher(it) } ?: false
+    override fun isLeafEdge(leafEdgeMatcher: (LeafEdge) -> Boolean): Boolean {
+        return false
+    }
+}
+
+class LeafEdge(
+    srcNode: SrcNode, private val dstNode: LeafNode,
+    srcOffset: TextPosition, dstOffset: TextPosition
+) : Edge(srcNode, dstNode, srcOffset, dstOffset) {
+    fun dstMatches(leafNodeMatcher: (LeafNode) -> Boolean): Boolean {
+        return leafNodeMatcher(dstNode)
     }
 
-    fun activateEdge(activePoint: ActivePoint) {
-        activePoint.setActiveEdgeOffset(srcOffset.value())
+    override fun isInternalEdge(internalEdgeMatcher: (InternalEdge) -> Boolean): Boolean {
+        return false
     }
 
-    fun labelLength(): Int {
-        return dstOffset.value() - srcOffset.value()
-    }
-
-    private fun addLeafNodeToChild(
-        suffixOffset: Int,
-        charToAddOffset: Int,
-        endPosition: TextPosition
-    ) {
-        Debugger.info(
-            "Adding leaf [$charToAddOffset, ${endPosition.value()}]($suffixOffset) " +
-                    "to an internal node."
-        )
-        (dstNode as InternalNode).addLeafEdge(
-            LeafNode(suffixOffset),
-            TextPosition(charToAddOffset),
-            endPosition
-        )
-    }
-
-    fun advanceActivePoint(
-        edgeSrcOffset: Int,
-        edgeLabelOffset: Int,
-        activePoint: ActivePoint
-    ) {
-        val edgeLength = labelLength()
-        Debugger.info(
-            "Hopped over a node - updating active edge from ($edgeSrcOffset, $edgeLabelOffset) " +
-                    "to (${edgeSrcOffset + edgeLength}, ${edgeLabelOffset - edgeLength})"
-        )
-        activePoint.advance(
-            dstNode as InternalNode,
-            edgeSrcOffset + edgeLength,
-            edgeLabelOffset - edgeLength
-        )
-    }
-
-    fun extend(
-        input: String,
-        edgeSrcOffset: Int,
-        edgeLabelOffset: Int,
-        suffixLinkCandidate: SuffixLinkCandidate,
-        charToAddOffset: Int,
-        suffixOffset: Int,
-        endPosition: TextPosition,
-        activePoint: ActivePoint,
-        remainingSuffixes: RemainingSuffixesPointer
-    ): Boolean {
-        if (edgeLabelOffset == labelLength()) {
-            val reachedNode = dstNode as InternalNode
-            val nextChar = input[charToAddOffset]
-            return if (reachedNode.hasEdgeWithChar(input, nextChar, 0)) {
-                // These values will then be modified again during active point normalization
-                activePoint.advance(reachedNode, edgeSrcOffset, edgeLabelOffset + 1)
-                // This is an implicit extension and ends the current phase.
-                false
-            } else {
-                addLeafNodeToChild(suffixOffset, charToAddOffset, endPosition)
-                remainingSuffixes.decrement()
-                true
-            }
-        } else {
-            val newNode = split(
-                charToAddOffset, edgeLabelOffset, suffixOffset, endPosition
-            )
-            remainingSuffixes.decrement()
-            suffixLinkCandidate.linkTo(newNode)
-            return true
-        }
+    override fun isLeafEdge(leafEdgeMatcher: (LeafEdge) -> Boolean): Boolean {
+        return leafEdgeMatcher(this)
     }
 }
 
 abstract class DelegateSrcNode : ActiveNode {
     private val edges = mutableSetOf<Edge>()
 
+    override fun toString(): String {
+        return "DelegateSrcNode(edges=${edges.joinToString { "\n${it}" }})"
+    }
+
     override fun addLeafEdge(
         dstNode: LeafNode,
         srcOffset: TextPosition,
         dstOffset: TextPosition
     ) {
-        edges.add(Edge(this, dstNode, srcOffset, dstOffset))
+        edges.add(LeafEdge(this, dstNode, srcOffset, dstOffset))
     }
 
     override fun addInternalEdge(
@@ -534,7 +491,7 @@ abstract class DelegateSrcNode : ActiveNode {
         srcOffset: TextPosition,
         dstOffset: TextPosition
     ) {
-        edges.add(Edge(this, dstNode, srcOffset, dstOffset))
+        edges.add(InternalEdge(this, dstNode, srcOffset, dstOffset))
     }
 
     override fun deleteEdge(edge: Edge) {
@@ -551,8 +508,8 @@ abstract class DelegateSrcNode : ActiveNode {
         return setOf()
     }
 
-    override fun hasEdgeWithChar(input: String, c: Char, labelOffset: Int): Boolean {
-        return edges.any { it.labelHasChar(input, c, labelOffset) }
+    override fun hasEdgeWithChar(input: String, labelOffset: Int, c: Char): Boolean {
+        return edges.any { it.labelHasChar(input, labelOffset, c) }
     }
 
     override fun edgeHasChar(
@@ -561,64 +518,15 @@ abstract class DelegateSrcNode : ActiveNode {
         edgeLabelOffset: Int,
         c: Char
     ): Boolean {
-        val activeEdge = edges.first { it.labelHasChar(input, input[edgeSrcOffset], 0) }
-        return activeEdge.labelHasChar(input, c, edgeLabelOffset)
+        val activeEdge = edges.first { it.labelHasChar(input, 0, input[edgeSrcOffset]) }
+        return activeEdge.labelHasChar(input, edgeLabelOffset, c)
     }
+
+    override fun hasEdge(edgeMatcher: (Edge) -> Boolean): Boolean =
+        edges.any { edgeMatcher(it) }
 
     override fun descendentLeaves(): Set<LeafNode> {
         return edges.flatMapTo(mutableSetOf()) { it.leaves() }
-    }
-
-    override fun hasLeafEdge(srcOffset: Int, dstOffset: Int, suffixOffset: Int): Boolean {
-        return edges.any { it.isLeafEdge(srcOffset, dstOffset, suffixOffset) }
-    }
-
-    override fun hasInternalEdge(
-        srcOffset: Int,
-        dstOffset: Int,
-        internalNodeMatcher: (InternalNode) -> Boolean
-    ): Boolean {
-        val internalEdge: Edge? = edges.firstOrNull { it.isInternalEdge(srcOffset, dstOffset) }
-        return internalEdge?.leadsToInternalNode(internalNodeMatcher) ?: false
-    }
-
-    override fun activateEdge(input: String, edgeLeadingChar: Char, activePoint: ActivePoint) {
-        edges.first { it.labelHasChar(input, edgeLeadingChar, 0) }
-            .activateEdge(activePoint)
-    }
-
-    override fun extendEdge(
-        input: String,
-        edgeSrcOffset: Int,
-        edgeLabelOffset: Int,
-        suffixLinkCandidate: SuffixLinkCandidate,
-        charToAddOffset: Int,
-        suffixOffset: Int,
-        endPosition: TextPosition,
-        activePoint: ActivePoint,
-        remainingSuffixes: RemainingSuffixesPointer
-    ): Boolean {
-        val activeEdge = edges.first { it.labelHasChar(input, input[edgeSrcOffset], 0) }
-        return activeEdge.extend(
-            input, edgeSrcOffset, edgeLabelOffset, suffixLinkCandidate,
-            charToAddOffset, suffixOffset, endPosition,
-            activePoint, remainingSuffixes
-        )
-    }
-
-    override fun normalizeActivePoint(
-        input: String,
-        edgeSrcOffset: Int,
-        edgeLabelOffset: Int,
-        activePoint: ActivePoint,
-        eagerNodeHop: Boolean
-    ) {
-        val activeEdge = edges.firstOrNull { it.labelHasChar(input, input[edgeSrcOffset], 0) }
-            ?: return
-        val eagerHopModifier = if (eagerNodeHop) 1 else 0
-        if (edgeLabelOffset + eagerHopModifier > activeEdge.labelLength()) {
-            activeEdge.advanceActivePoint(edgeSrcOffset, edgeLabelOffset, activePoint)
-        }
     }
 
     fun descendentLeavesSuffixOffsets(): Set<Int> {
@@ -627,8 +535,29 @@ abstract class DelegateSrcNode : ActiveNode {
         }
     }
 
-    override fun toString(): String {
-        return "DelegateSrcNode(edges=${edges.joinToString { "\n${it}" }})"
+    override fun <T> onEdgeWithChar(
+        input: String,
+        edgeLabelOffset: Int,
+        c: Char,
+        function: (Edge) -> T
+    ): T = function(edges.first { it.labelHasChar(input, edgeLabelOffset, c) })
+
+    override fun onEdgeWithChar(
+        throwIfNotPresent: Boolean,
+        input: String,
+        edgeLabelOffset: Int,
+        c: Char,
+        function: (Edge) -> Unit
+    ) {
+        val edge = edges.firstOrNull { it.labelHasChar(input, edgeLabelOffset, c) }
+        if (edge == null && throwIfNotPresent) {
+            throw IllegalStateException(
+                "The specified edge wasn't found. This node has no edge " +
+                        "with character '$c' at label offset $edgeLabelOffset"
+            )
+        } else if (edge != null) {
+            return function(edge)
+        }
     }
 }
 
