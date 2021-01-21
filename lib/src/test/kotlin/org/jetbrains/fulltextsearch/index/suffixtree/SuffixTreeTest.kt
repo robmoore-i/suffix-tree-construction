@@ -4,7 +4,6 @@ package org.jetbrains.fulltextsearch.index.suffixtree
 
 import org.jetbrains.fulltextsearch.randominput.RandomInput
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 
 class SuffixTreeTest {
@@ -86,8 +85,7 @@ class SuffixTreeTest {
     }
 
     @Test
-    @Disabled
-    internal fun `next failing test`() {
+    internal fun `don't eagerly hop into internal nodes after reverting to root`() {
         val input = "xyyzxyzxy"
         assertSuffixTreeIsCorrectlyConstructed(input, suffixTree(input))
     }

@@ -13,7 +13,9 @@ class SuffixTree(private val terminatedInputString: String, private val root: Ro
 
             // Initialise suffix tree
             val root = RootNode()
-            val endPosition = TextPosition(1)
+            val endPosition = object : TextPosition(1) {
+                override fun toString(): String = "#"
+            }
             root.addLeafEdge(LeafNode(0), TextPosition(0), endPosition)
 
             // Prepare variables
@@ -25,7 +27,6 @@ class SuffixTree(private val terminatedInputString: String, private val root: Ro
 
             // Phases
             (2..input.length).forEach { phaseNumber ->
-                Debugger.enableIf { false }
                 val nextCharOffset = phaseNumber - 1
                 Debugger.info(
                     "\nStarting phase $phaseNumber for character '${input[nextCharOffset]}'\n" +
@@ -114,7 +115,7 @@ class ActivePoint(
                 )
             }' with offset $suffixOffset for char '$nextChar' at index $nextCharOffset, " +
                     "and there are ${remainingSuffixes.value()} suffixes remaining. " +
-                    "endPosition=${endPosition.value()}\nActive point=$this"
+                    "endPosition=$endPosition\nActive point=$this"
         )
         if (activeLength == 0) {
             if (activeNode.hasEdgeWithChar(input, 0, nextChar)) {
@@ -123,7 +124,7 @@ class ActivePoint(
                 activeLength++
                 return false
             } else {
-                Debugger.info("Adding leaf node [$nextCharOffset, ${endPosition.value()}]($suffixOffset)")
+                Debugger.info("Adding leaf node [$nextCharOffset, $endPosition]($suffixOffset)")
                 activeNode.addLeafEdge(
                     LeafNode(suffixOffset),
                     TextPosition(nextCharOffset),
@@ -202,7 +203,7 @@ class ActivePoint(
     fun shiftActiveEdge(nextSuffixOffset: Int) {
         activeEdge = nextSuffixOffset
         activeLength--
-        normalizeActivePoint(eagerNodeHop = true)
+        normalizeActivePoint(eagerNodeHop = false)
     }
 
     fun followSuffixLink(suffixLink: InternalNode?) {
@@ -380,17 +381,17 @@ abstract class Edge(
         val dstOffsetOfSrcNode = TextPosition(srcOffset.value() + edgeLabelOffset)
         Debugger.info(
             "Splitting to create a new internal edge of " +
-                    "${srcOffset.value()} -> ${dstOffsetOfSrcNode.value()}"
+                    "$srcOffset -> $dstOffsetOfSrcNode"
         )
         srcNode.addInternalEdge(internalNode, srcOffset, dstOffsetOfSrcNode)
         // Preserve the existing edge
         Debugger.info(
-            "Preserving dstNode under new edge ${dstOffsetOfSrcNode.value()} -> ${dstOffset.value()}"
+            "Preserving dstNode under new edge $dstOffsetOfSrcNode -> $dstOffset"
         )
         dstNode.addAsDstOf(internalNode, dstOffsetOfSrcNode, dstOffset)
         // Add the new leaf edge
         Debugger.info(
-            "Adding new leaf edge from $charToAddOffset -> ${endPosition.value()}," +
+            "Adding new leaf edge from $charToAddOffset -> $endPosition," +
                     "for suffix with offset $suffixOffset"
         )
         internalNode.addLeafEdge(
@@ -416,7 +417,7 @@ class InternalEdge(
     private val srcOffset: TextPosition, private val dstOffset: TextPosition
 ) : Edge(srcNode, dstNode, srcOffset, dstOffset) {
     override fun toString(): String {
-        return "<InternalEdge [${srcOffset.value()}, ${dstOffset.value()}] => dstNode=${dstNode}>"
+        return "<InternalEdge [$srcOffset, $dstOffset] => dstNode=${dstNode}>"
     }
 
     fun addToDst(leaf: LeafNode, srcOffset: Int, endPosition: TextPosition) {
@@ -442,7 +443,7 @@ class LeafEdge(
     private val srcOffset: TextPosition, private val dstOffset: TextPosition
 ) : Edge(srcNode, dstNode, srcOffset, dstOffset) {
     override fun toString(): String {
-        return "<LeafEdge [${srcOffset.value()}, ${dstOffset.value()}](${dstNode.suffixOffset()})>"
+        return "<LeafEdge [$srcOffset, $dstOffset](${dstNode.suffixOffset()})>"
     }
 
     fun dstMatches(leafNodeMatcher: (LeafNode) -> Boolean): Boolean {
@@ -629,7 +630,7 @@ class LeafNode(private val suffixOffset: Int) : DstNode {
     fun suffixOffset() = suffixOffset
 }
 
-class TextPosition(private var i: Int) {
+open class TextPosition(private var i: Int) {
     fun increment() {
         i++
     }
@@ -641,7 +642,7 @@ class TextPosition(private var i: Int) {
     operator fun plus(fromOffset: TextPosition) = TextPosition(i + fromOffset.i)
 
     override fun toString(): String {
-        return "TextPosition(i=$i)"
+        return "$i"
     }
 
     override fun equals(other: Any?): Boolean {

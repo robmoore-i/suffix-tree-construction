@@ -560,6 +560,36 @@ class ActivePointTest {
         assertFalse(canAddMoreSuffixes)
     }
 
+    @Test
+    internal fun `don't eagerly hop into internal nodes after reverting to root`() {
+        val root = RootNode()
+        val endPosition = TextPosition(10)
+        val ySubtree = InternalNode()
+        ySubtree.addLeafEdge(LeafNode(1), TextPosition(2), endPosition)
+        val yzxySubtree = InternalNode()
+        yzxySubtree.addLeafEdge(LeafNode(2), TextPosition(6), endPosition)
+        yzxySubtree.addLeafEdge(LeafNode(5), TextPosition(9), endPosition)
+        ySubtree.addInternalEdge(yzxySubtree, TextPosition(3), TextPosition(6))
+        root.addInternalEdge(
+            internalEdgeOffsets = Pair(0, 2),
+            firstLeafEdgeSrcOffset = 2, firstLeafSuffixOffset = 0,
+            secondLeafEdgeSrcOffset = 6, secondLeafSuffixOffset = 4, endPosition = endPosition
+        )
+        root.addLeafEdge(LeafNode(3), TextPosition(3), endPosition)
+        val activePoint = ActivePoint.positionedAt(
+            "xyyzxyzxy$", root, endPosition,
+            remainingSuffixes = 4, activeEdge = 6, activeLength = 3
+        )
+
+        activePoint.addNextSuffix(9)
+
+        assertTrue(
+            activePoint.activeNodeIsRoot(),
+            "Active point didn't meet expectations.\nInstead, active point was $activePoint;"
+        )
+        assertEquals(Pair(7, 2), activePoint.activeNodeOffset())
+    }
+
     private fun RootNode.addInternalEdge(
         internalEdgeOffsets: Pair<Int, Int>, firstLeafSuffixOffset: Int,
         firstLeafEdgeSrcOffset: Int, secondLeafSuffixOffset: Int,
