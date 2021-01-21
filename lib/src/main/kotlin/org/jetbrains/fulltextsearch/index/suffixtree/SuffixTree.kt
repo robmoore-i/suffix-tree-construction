@@ -266,7 +266,7 @@ class ActivePoint(
                 activeEdge += edgeLength
                 activeLength -= edgeLength
                 Debugger.debug("Active point is now $this")
-                normalizeActivePoint(eagerNodeHop)
+                normalizeActivePoint(eagerNodeHop = eagerNodeHop)
             }
         }
     }
