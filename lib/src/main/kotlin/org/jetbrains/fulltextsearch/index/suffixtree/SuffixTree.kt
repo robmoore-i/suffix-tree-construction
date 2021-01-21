@@ -57,6 +57,7 @@ class SuffixTree(private val terminatedInputString: String, private val root: Ro
 
             // Phases
             (2..input.length).forEach { phaseNumber ->
+                Debugger.enableIf { true }
                 val nextCharOffset = phaseNumber - 1
                 Debugger.printLine(
                     "\nStarting phase $phaseNumber for character '${input[nextCharOffset]}'\n" +
@@ -150,7 +151,7 @@ class ActivePoint(
         if (activeLength == 0) {
             if (activeNode.hasEdgeWithChar(input, nextChar, 0)) {
                 Debugger.printLine("Activating edge with leading char '$nextChar'")
-                activeNode.activateEdge(input, nextChar, this)
+                activeEdge = nextCharOffset
                 activeLength++
                 return false
             } else {
@@ -262,10 +263,7 @@ interface SrcNode {
 
     fun addInternalEdge(dstNode: InternalNode, srcOffset: TextPosition, dstOffset: TextPosition)
 
-    /**
-     * Deletes the outbound edge whose srcOffset equals the given value.
-     */
-    fun deleteEdge(srcOffset: TextPosition)
+    fun deleteEdge(edge: Edge)
 
     /**
      * Performs a suffix extension in the subtree rooted at this node. It adds the String stored in
@@ -478,7 +476,7 @@ class Edge(
             )
             return SuffixExtension { srcNode ->
                 // Remove the edge that is being replaced
-                srcNode.deleteEdge(srcOffset)
+                srcNode.deleteEdge(this)
                 // Add an internal edge for the new internal node
                 val internalNode = InternalNode()
                 val dstOffsetOfSrcNode = TextPosition(srcOffset.value() + matchLength)
@@ -507,10 +505,6 @@ class Edge(
 
         // Throw an exception if we exhaust all the cases - it means there is a bug
         throw RuntimeException("There's a bug in Edge::suffixExtension")
-    }
-
-    fun hasSrcOffset(srcOffset: TextPosition): Boolean {
-        return this.srcOffset == srcOffset
     }
 
     /**
@@ -586,7 +580,7 @@ class Edge(
         endPosition: TextPosition
     ): InternalNode {
         // Remove the edge that is being replaced (this edge)
-        srcNode.deleteEdge(srcOffset)
+        srcNode.deleteEdge(this)
         // Add an internal edge for the new internal node
         val internalNode = InternalNode()
         val dstOffsetOfSrcNode = TextPosition(srcOffset.value() + edgeLabelOffset)
@@ -694,8 +688,8 @@ abstract class DelegateSrcNode : ActiveNode {
         edges.add(Edge(this, dstNode, srcOffset, dstOffset))
     }
 
-    override fun deleteEdge(srcOffset: TextPosition) {
-        edges.removeIf { it.hasSrcOffset(srcOffset) }
+    override fun deleteEdge(edge: Edge) {
+        edges.remove(edge)
     }
 
     override fun addSuffix(
@@ -793,7 +787,8 @@ abstract class DelegateSrcNode : ActiveNode {
         activePoint: ActivePoint,
         eagerNodeHop: Boolean
     ) {
-        val activeEdge = edges.first { it.labelHasChar(input, input[edgeSrcOffset], 0) }
+        val activeEdge = edges.firstOrNull { it.labelHasChar(input, input[edgeSrcOffset], 0) }
+            ?: return
         val eagerHopModifier = if (eagerNodeHop) 1 else 0
         if (edgeLabelOffset + eagerHopModifier > activeEdge.labelLength()) {
             activeEdge.advanceActivePoint(edgeSrcOffset, edgeLabelOffset, activePoint)

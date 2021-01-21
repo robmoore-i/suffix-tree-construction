@@ -75,7 +75,7 @@ class SuffixTreeTest {
 
     @Test
     @Disabled
-    internal fun `sets suffix link candidates only when splitting an edge`() {
+    internal fun `advances active edge in line with phase number`() {
         val inputString = "xxyzyxyz$"
         assertSuffixTreeIsCorrectlyConstructed(inputString, suffixTree(inputString))
     }

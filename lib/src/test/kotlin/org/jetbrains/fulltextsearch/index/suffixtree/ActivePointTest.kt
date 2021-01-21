@@ -69,7 +69,7 @@ class ActivePointTest {
 
         activePoint.addNextSuffix(2)
 
-        assertEquals(Pair(0, 1), activePoint.activeNodeOffset())
+        assertEquals(Pair(2, 1), activePoint.activeNodeOffset())
     }
 
     @Test
@@ -84,7 +84,7 @@ class ActivePointTest {
 
         activePoint.addNextSuffix(2)
 
-        assertEquals(Pair(1, 1), activePoint.activeNodeOffset())
+        assertEquals(Pair(2, 1), activePoint.activeNodeOffset())
     }
 
     @Test
@@ -110,7 +110,7 @@ class ActivePointTest {
     }
 
     @Test
-    internal fun `active edge advances after an insertion from root`() {
+    internal fun `after insertion from root, advance active edge`() {
         val root = RootNode()
         val endPosition = TextPosition(4)
         root.addLeafEdge(LeafNode(0), TextPosition(0), endPosition)
@@ -188,7 +188,7 @@ class ActivePointTest {
     }
 
     @Test
-    internal fun `decrements the number of remaining suffixes after splitting an edge`() {
+    internal fun `after splitting edge, decrement the number of remaining suffixes`() {
         val root = RootNode()
         val endPosition = TextPosition(4)
         root.addLeafEdge(LeafNode(0), TextPosition(0), endPosition)
@@ -205,7 +205,7 @@ class ActivePointTest {
     }
 
     @Test
-    internal fun `can make insertion from root with a jump into an internal node`() {
+    internal fun `makes leaf insertion from root with a hop into an internal node`() {
         val root = RootNode()
         val endPosition = TextPosition(9)
         root.addInternalEdge(
@@ -235,7 +235,7 @@ class ActivePointTest {
     }
 
     @Test
-    internal fun `update active node when jumping over internal node during active edge extension`() {
+    internal fun `update active node when hopping over internal node during active edge extension`() {
         val root = RootNode()
         val endPosition = TextPosition(9)
         root.addInternalEdge(
@@ -261,7 +261,7 @@ class ActivePointTest {
     }
 
     @Test
-    internal fun `creates suffix link between internal nodes after splitting an edge`() {
+    internal fun `after splitting edge, create suffix link between internal nodes`() {
         val root = RootNode()
         val endPosition = TextPosition(6)
         val suffixLinkCandidate = SuffixLinkCandidate()
@@ -293,7 +293,7 @@ class ActivePointTest {
     }
 
     @Test
-    internal fun `follows suffix link without altering active edge, after insertion from internal node`() {
+    internal fun `after insertion from internal node, follow suffix link without altering active edge`() {
         val root = RootNode()
         val endPosition = TextPosition(9)
         val suffixLinkSrc = root.addInternalEdge(
@@ -324,7 +324,7 @@ class ActivePointTest {
     }
 
     @Test
-    internal fun `jumps over an internal node after following suffix link if necessary`() {
+    internal fun `hops over an internal node after following suffix link if necessary`() {
         val root = RootNode()
         val endPosition = TextPosition(9)
         val activeNode = root.addInternalEdge(
@@ -375,7 +375,7 @@ class ActivePointTest {
     }
 
     @Test
-    internal fun `phase continues after inserting a leaf from an internal node`() {
+    internal fun `after leaf insertion from internal node, continue current phase`() {
         val root = RootNode()
         val endPosition = TextPosition(6)
         val nestedInternalNode = InternalNode()
@@ -397,7 +397,7 @@ class ActivePointTest {
     }
 
     @Test
-    internal fun `follows suffix link after inserting a leaf from an internal node`() {
+    internal fun `after leaf insertion from internal node, follow suffix link`() {
         val root = RootNode()
         val endPosition = TextPosition(6)
         val nestedInternalNode = InternalNode()
@@ -441,6 +441,32 @@ class ActivePointTest {
                     && it.hasLeafEdge(4, endPosition.value(), 3)
         }, "Active point didn't meet expectations.\nInstead, active point was $activePoint;")
         assertEquals(Pair(4, 1), activePoint.activeNodeOffset())
+    }
+
+    @Test
+    internal fun `after insertion from root, active edge pointer keeps up with the phase number`() {
+        val root = RootNode()
+        val endPosition = TextPosition(6)
+        root.addInternalEdge(
+            internalEdgeOffsets = Pair(0, 1),
+            firstLeafEdgeSrcOffset = 1, firstLeafSuffixOffset = 0,
+            secondLeafEdgeSrcOffset = 2, secondLeafSuffixOffset = 1, endPosition = endPosition
+        )
+        root.addInternalEdge(
+            internalEdgeOffsets = Pair(2, 3),
+            firstLeafEdgeSrcOffset = 3, firstLeafSuffixOffset = 2,
+            secondLeafEdgeSrcOffset = 5, secondLeafSuffixOffset = 4, endPosition = endPosition
+        )
+        root.addLeafEdge(LeafNode(3), TextPosition(3), endPosition)
+        val activePoint = ActivePoint.positionedAt(
+            "xxyzyxyz$", root, endPosition,
+            remainingSuffixes = 1, activeEdge = 3, activeLength = 0
+        )
+
+        activePoint.addNextSuffix(5)
+
+        assertEquals(Pair(5, 1), activePoint.activeNodeOffset())
+        assertTrue(activePoint.activeNodeIsRoot())
     }
 
     private fun RootNode.addInternalEdge(
