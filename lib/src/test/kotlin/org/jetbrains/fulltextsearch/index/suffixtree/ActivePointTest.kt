@@ -566,6 +566,7 @@ class ActivePointTest {
         val endPosition = TextPosition(10)
         val ySubtree = InternalNode()
         ySubtree.addLeafEdge(LeafNode(1), TextPosition(2), endPosition)
+        // TODO: Use the extension function defined at the bottom of this file.
         val yzxySubtree = InternalNode()
         yzxySubtree.addLeafEdge(LeafNode(2), TextPosition(6), endPosition)
         yzxySubtree.addLeafEdge(LeafNode(5), TextPosition(9), endPosition)
@@ -590,7 +591,38 @@ class ActivePointTest {
         assertEquals(Pair(7, 2), activePoint.activeNodeOffset())
     }
 
-    private fun RootNode.addInternalEdge(
+    @Test
+    internal fun `create suffix links when passing through internal nodes`() {
+        val root = RootNode()
+        val endPosition = TextPosition(6)
+        val suffixLinkCandidate = SuffixLinkCandidate()
+        val xSubtree = InternalNode()
+        xSubtree.addLeafEdge(LeafNode(1), TextPosition(2), endPosition)
+        val xxSubtree = xSubtree.addInternalEdge(
+            internalEdgeOffsets = Pair(1, 2),
+            firstLeafEdgeSrcOffset = 2, firstLeafSuffixOffset = 0,
+            secondLeafEdgeSrcOffset = 5, secondLeafSuffixOffset = 3, endPosition = endPosition
+        )
+        root.addInternalEdge(xSubtree, TextPosition(0), TextPosition(1))
+        root.addLeafEdge(LeafNode(2), TextPosition(2), endPosition)
+        suffixLinkCandidate.linkTo(xxSubtree)
+        val activePoint = ActivePoint.positionedAt(
+            "xxzxxxx$", root, endPosition,
+            activeEdge = 5, activeLength = 0, activeNode = xSubtree,
+            remainingSuffixes = 2, suffixLinkCandidate = suffixLinkCandidate
+        )
+
+        activePoint.addNextSuffix(5)
+
+        assertTrue(
+            xxSubtree.hasSuffixLink { it == xSubtree },
+            "The subtree rooted at 'xx' didn't have the expected suffix link to its parent, " +
+                    "the 'x' subtree, which should have been created while advancing the " +
+                    "active point."
+        )
+    }
+
+    private fun SrcNode.addInternalEdge(
         internalEdgeOffsets: Pair<Int, Int>, firstLeafSuffixOffset: Int,
         firstLeafEdgeSrcOffset: Int, secondLeafSuffixOffset: Int,
         secondLeafEdgeSrcOffset: Int, endPosition: TextPosition

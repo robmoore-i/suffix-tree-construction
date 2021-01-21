@@ -115,13 +115,16 @@ class ActivePoint(
                 )
             }' with offset $suffixOffset for char '$nextChar' at index $nextCharOffset, " +
                     "and there are ${remainingSuffixes.value()} suffixes remaining. " +
-                    "endPosition=$endPosition\nActive point=$this"
+                    "endPosition=${endPosition.value()}\nActive point=$this"
         )
         if (activeLength == 0) {
             if (activeNode.hasEdgeWithChar(input, 0, nextChar)) {
                 Debugger.info("Activating edge with leading char '$nextChar'")
                 activeEdge = nextCharOffset
                 activeLength++
+                if (!activeNodeIsRoot()) {
+                    suffixLinkCandidate.linkTo(activeNode as InternalNode)
+                }
                 return false
             } else {
                 Debugger.info("Adding leaf node [$nextCharOffset, $endPosition]($suffixOffset)")
@@ -146,22 +149,35 @@ class ActivePoint(
                     normalizeActivePoint()
                     false
                 } else if (labelLength > activeLength) {
-                    remainingSuffixes.decrement()
                     suffixLinkCandidate.linkTo(
                         edge.split(nextCharOffset, activeLength, suffixOffset, endPosition)
                     )
+                    remainingSuffixes.decrement()
                     activeNode.advanceActivePoint(this, suffixOffset + 1)
                     true
                 } else {
-                    // If we reach this branch, we can be sure that this is an internal edge
+                    // If we reach this branch, we can be sure that this is an internal edge,
+                    // because we have passed the end of it - this can never happen for leaf edges.
                     val internalEdge = edge as InternalEdge
                     val internalNode = edge.dst() as InternalNode
                     if (internalNode.hasEdgeWithChar(input, 0, nextChar)) {
+                        Debugger.info(
+                            "Reached end of internal edge with label '${
+                                input.substring(
+                                    activeEdge,
+                                    activeEdge + labelLength
+                                )
+                            }' with activeLength=$activeLength. The edge is $edge."
+                        )
                         activeNode = internalNode
                         activeEdge += activeLength
                         activeLength = 1
                         false
                     } else {
+                        Debugger.info(
+                            "Adding leaf node to the internal node that is just " +
+                                    "in-front of us at the end of edge $edge"
+                        )
                         internalEdge.addToDst(LeafNode(suffixOffset), nextCharOffset, endPosition)
                         remainingSuffixes.decrement()
                         activeNode.advanceActivePoint(this, suffixOffset + 1)
@@ -677,6 +693,7 @@ object Debugger {
         }
     }
 
+    @Suppress("unused")
     fun enableIf(function: () -> Boolean) {
         if (function()) {
             enable()
