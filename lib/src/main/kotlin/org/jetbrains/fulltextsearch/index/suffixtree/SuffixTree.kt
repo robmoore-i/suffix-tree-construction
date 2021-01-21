@@ -252,30 +252,9 @@ class SuffixLinkCandidate {
     }
 }
 
-interface SrcNode {
+interface ActiveNode {
     fun addLeafEdge(dstNode: LeafNode, srcOffset: TextPosition, dstOffset: TextPosition)
 
-    fun addInternalEdge(dstNode: InternalNode, srcOffset: TextPosition, dstOffset: TextPosition)
-
-    fun deleteEdge(edge: Edge)
-
-    /**
-     * @return The set of all offsets into the input which correspond to matches of the
-     * queryString.
-     */
-    fun offsetsOf(input: String, queryString: String): Set<Int>
-
-    /**
-     * @return The set of all the leaf nodes in the subtree rooted at this node.
-     */
-    fun descendentLeaves(): Set<LeafNode>
-}
-
-/**
- * This defines the set of responsibilities that an ActiveNode must support.
- * An ActiveNode is always a SrcNode.
- */
-interface ActiveNode : SrcNode {
     fun hasEdgeWithChar(input: String, labelOffset: Int, c: Char): Boolean
 
     fun edgeHasChar(input: String, edgeSrcOffset: Int, edgeLabelOffset: Int, c: Char): Boolean
@@ -434,8 +413,12 @@ abstract class Edge(
 
 class InternalEdge(
     srcNode: SrcNode, private val dstNode: InternalNode,
-    srcOffset: TextPosition, dstOffset: TextPosition
+    private val srcOffset: TextPosition, private val dstOffset: TextPosition
 ) : Edge(srcNode, dstNode, srcOffset, dstOffset) {
+    override fun toString(): String {
+        return "<InternalEdge [${srcOffset.value()}, ${dstOffset.value()}] => dstNode=${dstNode}>"
+    }
+
     fun addToDst(leaf: LeafNode, srcOffset: Int, endPosition: TextPosition) {
         Debugger.info("Adding leaf $leaf to dst node.")
         dstNode.addLeafEdge(leaf, TextPosition(srcOffset), endPosition)
@@ -456,8 +439,12 @@ class InternalEdge(
 
 class LeafEdge(
     srcNode: SrcNode, private val dstNode: LeafNode,
-    srcOffset: TextPosition, dstOffset: TextPosition
+    private val srcOffset: TextPosition, private val dstOffset: TextPosition
 ) : Edge(srcNode, dstNode, srcOffset, dstOffset) {
+    override fun toString(): String {
+        return "<LeafEdge [${srcOffset.value()}, ${dstOffset.value()}](${dstNode.suffixOffset()})>"
+    }
+
     fun dstMatches(leafNodeMatcher: (LeafNode) -> Boolean): Boolean {
         return leafNodeMatcher(dstNode)
     }
@@ -471,11 +458,11 @@ class LeafEdge(
     }
 }
 
-abstract class DelegateSrcNode : ActiveNode {
+abstract class SrcNode : ActiveNode {
     private val edges = mutableSetOf<Edge>()
 
     override fun toString(): String {
-        return "DelegateSrcNode(edges=${edges.joinToString { "\n${it}" }})"
+        return "SrcNode(edges=${edges.joinToString { "\n${it}" }})"
     }
 
     override fun addLeafEdge(
@@ -486,7 +473,7 @@ abstract class DelegateSrcNode : ActiveNode {
         edges.add(LeafEdge(this, dstNode, srcOffset, dstOffset))
     }
 
-    override fun addInternalEdge(
+    fun addInternalEdge(
         dstNode: InternalNode,
         srcOffset: TextPosition,
         dstOffset: TextPosition
@@ -494,11 +481,15 @@ abstract class DelegateSrcNode : ActiveNode {
         edges.add(InternalEdge(this, dstNode, srcOffset, dstOffset))
     }
 
-    override fun deleteEdge(edge: Edge) {
+    fun deleteEdge(edge: Edge) {
         edges.remove(edge)
     }
 
-    override fun offsetsOf(input: String, queryString: String): Set<Int> {
+    /**
+     * @return The set of all offsets into the input which correspond to matches of the
+     * queryString.
+     */
+    fun offsetsOf(input: String, queryString: String): Set<Int> {
         for (edge in edges) {
             val offsets: Set<Int>? = edge.offsetsOf(input, queryString)
             if (offsets != null) {
@@ -525,7 +516,10 @@ abstract class DelegateSrcNode : ActiveNode {
     override fun hasEdge(edgeMatcher: (Edge) -> Boolean): Boolean =
         edges.any { edgeMatcher(it) }
 
-    override fun descendentLeaves(): Set<LeafNode> {
+    /**
+     * @return The set of all the leaf nodes in the subtree rooted at this node.
+     */
+    fun descendentLeaves(): Set<LeafNode> {
         return edges.flatMapTo(mutableSetOf()) { it.leaves() }
     }
 
@@ -561,7 +555,7 @@ abstract class DelegateSrcNode : ActiveNode {
     }
 }
 
-class RootNode : DelegateSrcNode() {
+class RootNode : SrcNode() {
     override fun toString(): String {
         return "RootNode(${super.toString()})"
     }
@@ -571,7 +565,7 @@ class RootNode : DelegateSrcNode() {
     }
 }
 
-class InternalNode : DelegateSrcNode(), DstNode {
+class InternalNode : SrcNode(), DstNode {
     private var suffixLink: InternalNode? = null
 
     override fun toString(): String {

@@ -13,7 +13,7 @@ class SuffixTreeFuzzTest {
     @Disabled
     internal fun `find bugs`() {
         repeat(100000) {
-            val fileContent = generateRandomString(minLength = 21, maxLength = 30)
+            val fileContent = generateRandomString(minLength = 20, maxLength = 30)
             val naiveIndexedFile = NaiveIndexedFile("some-file.txt", fileContent)
 
             fun getSuffixTreeIndexedFile(): SuffixTreeIndexedFile {
@@ -27,7 +27,7 @@ class SuffixTreeFuzzTest {
 
             val suffixTreeIndexedFile = getSuffixTreeIndexedFile()
 
-            repeat(1) {
+            repeat(100) {
                 val queryString = generateRandomString(maxLength = 10)
                 assertQueryResultsMatch(
                     fileContent,
