@@ -108,6 +108,12 @@ class SuffixTreeTest {
         assertSuffixTreeIsCorrectlyConstructed(input, suffixTree(input))
     }
 
+    @Test
+    internal fun `recursively normalizes the active node`() {
+        val input = "xyyyxyyy$"
+        assertSuffixTreeIsCorrectlyConstructed(input, suffixTree(input))
+    }
+
     private fun suffixTree(input: String): SuffixTree {
         val suffixTree = SuffixTree.ukkonenConstruction(input)
         println("\nSuffix Tree for '$input': $suffixTree")
