@@ -171,7 +171,7 @@ class ActivePoint(
                             "due to next char '$nextChar' at label offset $activeLength"
                 )
                 activeLength++
-                activeNode.advanceActiveEdge(input, activeEdge, activeLength, this)
+                advanceActiveEdge()
                 return false
             } else {
                 activeNode.extendEdge(
@@ -220,17 +220,18 @@ class ActivePoint(
     fun shiftActiveEdge() {
         activeEdge++
         activeLength--
-        activeNode.advanceActiveEdge(
-            input, activeEdge, activeLength, this,
-            eagerNodeHop = true
-        )
+        advanceActiveEdge(eagerNodeHop = true)
     }
 
     fun followSuffixLink(suffixLink: InternalNode?) {
         activeNode = suffixLink ?: root
+        advanceActiveEdge(eagerNodeHop = true)
+    }
+
+    private fun advanceActiveEdge(eagerNodeHop: Boolean = false) {
         activeNode.advanceActiveEdge(
             input, activeEdge, activeLength, this,
-            eagerNodeHop = true
+            eagerNodeHop = eagerNodeHop
         )
     }
 
