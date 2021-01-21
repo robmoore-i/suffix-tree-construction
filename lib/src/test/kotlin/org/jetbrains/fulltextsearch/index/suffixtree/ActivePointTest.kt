@@ -351,6 +351,29 @@ class ActivePointTest {
         )
     }
 
+    @Test
+    internal fun `doesn't moves down active edge if character is not matching`() {
+        val root = RootNode()
+        val endPosition = TextPosition(4)
+        root.addLeafEdge(LeafNode(0), TextPosition(0), endPosition)
+        root.addLeafEdge(LeafNode(1), TextPosition(1), endPosition)
+        val activePoint = ActivePoint.positionedAt(
+            "xyxxz", root, endPosition,
+            remainingSuffixes = 2, activeEdge = 0, activeLength = 1
+        )
+
+        activePoint.addNextSuffix(3)
+
+        assertEquals(Pair(1, 0), activePoint.activeNodeOffset())
+        assertTrue(
+            root.hasInternalEdge(0, 1) {
+                it.hasLeafEdge(1, 4, 0)
+                        && it.hasLeafEdge(3, 4, 2)
+            },
+            "Root didn't have the expected edges\nInstead, root was $root;"
+        )
+    }
+
     private fun RootNode.addInternalEdge(
         internalEdgeOffsets: Pair<Int, Int>, firstLeafSuffixOffset: Int,
         firstLeafEdgeSrcOffset: Int, secondLeafSuffixOffset: Int,

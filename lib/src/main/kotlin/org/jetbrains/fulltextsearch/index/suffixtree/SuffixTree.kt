@@ -140,7 +140,7 @@ class ActivePoint(
         val suffixOffset = endPosition.value() - remainingSuffixes.value()
         if (activeLength == 0) {
             if (activeNode.hasEdgeWithChar(input, nextChar, 0)) {
-                Debugger.printLine("Activating edge $activeEdge with leading char '$nextChar'")
+                Debugger.printLine("Activating edge with leading char '$nextChar'")
                 activeNode.activateEdge(input, nextChar, this)
                 activeLength++
                 return false
@@ -155,7 +155,7 @@ class ActivePoint(
                 return false
             }
         } else {
-            if (activeNode.hasEdgeWithChar(input, nextChar, activeLength)) {
+            if (activeNode.edgeHasChar(input, activeEdge, activeLength, nextChar)) {
                 Debugger.printLine(
                     "Advancing along active edge $activeEdge " +
                             "due to next char '$nextChar' at label offset $activeLength"
@@ -278,6 +278,8 @@ interface SrcNode {
  */
 interface ActiveNode : SrcNode {
     fun hasEdgeWithChar(input: String, c: Char, labelOffset: Int): Boolean
+
+    fun edgeHasChar(input: String, edgeSrcOffset: Int, edgeLabelOffset: Int, c: Char): Boolean
 
     fun hasLeafEdge(srcOffset: Int, dstOffset: Int, suffixOffset: Int): Boolean
 
@@ -555,6 +557,7 @@ class Edge(
     }
 
     fun labelHasChar(input: String, c: Char, labelOffset: Int): Boolean {
+        Debugger.printLine("Checking if edge '${label(input)}' has character '$c' at offset $labelOffset")
         return input[srcOffset.value() + labelOffset] == c
     }
 
@@ -711,6 +714,16 @@ abstract class DelegateSrcNode : ActiveNode {
 
     override fun hasEdgeWithChar(input: String, c: Char, labelOffset: Int): Boolean {
         return edges.any { it.labelHasChar(input, c, labelOffset) }
+    }
+
+    override fun edgeHasChar(
+        input: String,
+        edgeSrcOffset: Int,
+        edgeLabelOffset: Int,
+        c: Char
+    ): Boolean {
+        val activeEdge = edges.first { it.labelHasChar(input, input[edgeSrcOffset], 0) }
+        return activeEdge.labelHasChar(input, c, edgeLabelOffset)
     }
 
     override fun descendentLeaves(): Set<LeafNode> {
