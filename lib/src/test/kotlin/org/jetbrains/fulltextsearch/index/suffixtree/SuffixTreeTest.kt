@@ -60,7 +60,6 @@ class SuffixTreeTest {
     }
 
     @Test
-    @Disabled
     internal fun `checks for active node hop after root node insertion`() {
         val inputString = "xzyxyxy$"
         val suffixTree = suffixTree(inputString)
@@ -69,7 +68,6 @@ class SuffixTreeTest {
     }
 
     @Test
-    @Disabled
     internal fun `resets active length and edge when reverting to root after internal node insertion`() {
         val inputString = "xyyxyyy$"
         assertSuffixTreeIsCorrectlyConstructed(inputString, suffixTree(inputString))

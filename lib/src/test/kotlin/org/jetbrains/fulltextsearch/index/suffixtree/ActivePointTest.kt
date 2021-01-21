@@ -318,7 +318,7 @@ class ActivePointTest {
 
         assertEquals(Pair(2, 1), activePoint.activeNodeOffset())
         assertTrue(
-            activePoint.activePointIsInternalNode { it == suffixLinkDst },
+            activePoint.activeNodeIsInternalNode { it == suffixLinkDst },
             "Active point didn't meet expectations.\nInstead, active point was $activePoint;"
         )
     }
@@ -346,7 +346,7 @@ class ActivePointTest {
 
         assertEquals(Pair(2, 0), activePoint.activeNodeOffset())
         assertTrue(
-            activePoint.activePointIsInternalNode { it == expectedNextActiveNode },
+            activePoint.activeNodeIsInternalNode { it == expectedNextActiveNode },
             "Active point didn't meet expectations.\nInstead, active point was $activePoint;"
         )
     }
@@ -416,6 +416,31 @@ class ActivePointTest {
         activePoint.addNextSuffix(5)
 
         assertTrue(activePoint.activeNodeIsRoot())
+    }
+
+    @Test
+    internal fun `after insertion from root, active point jumps over nodes, if necessary`() {
+        val root = RootNode()
+        val endPosition = TextPosition(8)
+        root.addInternalEdge(
+            internalEdgeOffsets = Pair(0, 1),
+            firstLeafEdgeSrcOffset = 1, firstLeafSuffixOffset = 0,
+            secondLeafEdgeSrcOffset = 4, secondLeafSuffixOffset = 3, endPosition = endPosition
+        )
+        root.addLeafEdge(LeafNode(1), TextPosition(1), endPosition)
+        root.addLeafEdge(LeafNode(2), TextPosition(2), endPosition)
+        val activePoint = ActivePoint.positionedAt(
+            "xzyxyxy$", root, endPosition,
+            remainingSuffixes = 4, activeEdge = 2, activeLength = 3
+        )
+
+        activePoint.addNextSuffix(7)
+
+        assertTrue(activePoint.activeNodeIsInternalNode {
+            it.hasLeafEdge(1, endPosition.value(), 0)
+                    && it.hasLeafEdge(4, endPosition.value(), 3)
+        }, "Active point didn't meet expectations.\nInstead, active point was $activePoint;")
+        assertEquals(Pair(4, 1), activePoint.activeNodeOffset())
     }
 
     private fun RootNode.addInternalEdge(

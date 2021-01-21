@@ -57,7 +57,6 @@ class SuffixTree(private val terminatedInputString: String, private val root: Ro
 
             // Phases
             (2..input.length).forEach { phaseNumber ->
-                Debugger.enableIf { true }
                 val nextCharOffset = phaseNumber - 1
                 Debugger.printLine(
                     "\nStarting phase $phaseNumber for character '${input[nextCharOffset]}'\n" +
@@ -209,7 +208,7 @@ class ActivePoint(
         this.activeLength = activeLength
     }
 
-    fun activePointIsInternalNode(activeNodeMatcher: (InternalNode) -> Boolean): Boolean {
+    fun activeNodeIsInternalNode(activeNodeMatcher: (InternalNode) -> Boolean): Boolean {
         val internalNode = activeNode as? InternalNode
         return if (internalNode == null) {
             false
@@ -221,6 +220,10 @@ class ActivePoint(
     fun shiftActiveEdge() {
         activeEdge++
         activeLength--
+        activeNode.advanceActiveEdge(
+            input, activeEdge, activeLength, this,
+            eagerNodeHop = true
+        )
     }
 
     fun followSuffixLink(suffixLink: InternalNode?) {
