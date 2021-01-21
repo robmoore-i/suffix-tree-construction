@@ -12,8 +12,8 @@ class SuffixTreeFuzzTest {
     @Test
     @Disabled
     internal fun `find bugs`() {
-        repeat(1000) {
-            val fileContent = generateRandomString(minLength = 11, maxLength = 20)
+        repeat(100000) {
+            val fileContent = generateRandomString(minLength = 21, maxLength = 30)
             val naiveIndexedFile = NaiveIndexedFile("some-file.txt", fileContent)
 
             fun getSuffixTreeIndexedFile(): SuffixTreeIndexedFile {

@@ -57,7 +57,7 @@ class SuffixTree(private val terminatedInputString: String, private val root: Ro
 
             // Phases
             (2..input.length).forEach { phaseNumber ->
-                Debugger.enableIf { true }
+                Debugger.enableIf { false }
                 val nextCharOffset = phaseNumber - 1
                 Debugger.info(
                     "\nStarting phase $phaseNumber for character '${input[nextCharOffset]}'\n" +
@@ -162,7 +162,7 @@ class ActivePoint(
                     endPosition
                 )
                 remainingSuffixes.decrement()
-                (activeNode as? InternalNode)?.advanceActivePoint(this)
+                (activeNode as? InternalNode)?.advanceActivePoint(this, suffixOffset + 1)
                 return remainingSuffixes.value() > 0
             }
         } else {
@@ -175,13 +175,13 @@ class ActivePoint(
                 normalizeActivePoint()
                 return false
             } else {
-                activeNode.extendEdge(
+                val canAddMoreSuffixes = activeNode.extendEdge(
                     input, activeEdge, activeLength, suffixLinkCandidate,
-                    nextCharOffset, suffixOffset, endPosition
+                    nextCharOffset, suffixOffset, endPosition,
+                    this, remainingSuffixes
                 )
-                remainingSuffixes.decrement()
-                activeNode.advanceActivePoint(this)
-                return true
+                activeNode.advanceActivePoint(this, suffixOffset + 1)
+                return canAddMoreSuffixes
             }
         }
     }
@@ -218,8 +218,8 @@ class ActivePoint(
         }
     }
 
-    fun shiftActiveEdge() {
-        activeEdge++
+    fun shiftActiveEdge(nextSuffixOffset: Int) {
+        activeEdge = nextSuffixOffset
         activeLength--
         normalizeActivePoint(eagerNodeHop = true)
     }
@@ -315,8 +315,10 @@ interface ActiveNode : SrcNode {
         suffixLinkCandidate: SuffixLinkCandidate,
         charToAddOffset: Int,
         suffixOffset: Int,
-        endPosition: TextPosition
-    )
+        endPosition: TextPosition,
+        activePoint: ActivePoint,
+        remainingSuffixes: RemainingSuffixesPointer
+    ): Boolean
 
     fun normalizeActivePoint(
         input: String,
@@ -326,7 +328,7 @@ interface ActiveNode : SrcNode {
         eagerNodeHop: Boolean = false
     )
 
-    fun advanceActivePoint(activePoint: ActivePoint)
+    fun advanceActivePoint(activePoint: ActivePoint, nextSuffixOffset: Int)
 }
 
 interface DstNode {
@@ -669,6 +671,40 @@ class Edge(
             edgeLabelOffset - edgeLength
         )
     }
+
+    fun extend(
+        input: String,
+        edgeSrcOffset: Int,
+        edgeLabelOffset: Int,
+        suffixLinkCandidate: SuffixLinkCandidate,
+        charToAddOffset: Int,
+        suffixOffset: Int,
+        endPosition: TextPosition,
+        activePoint: ActivePoint,
+        remainingSuffixes: RemainingSuffixesPointer
+    ): Boolean {
+        if (edgeLabelOffset == labelLength()) {
+            val reachedNode = dstNode as InternalNode
+            val nextChar = input[charToAddOffset]
+            if (reachedNode.hasEdgeWithChar(input, nextChar, 0)) {
+                // These values will then be modified again during active point normalization
+                activePoint.advance(reachedNode, edgeSrcOffset, edgeLabelOffset + 1)
+                // This is an implicit extension and ends the current phase.
+                return false
+            } else {
+                addLeafNodeToChild(suffixOffset, charToAddOffset, endPosition)
+                remainingSuffixes.decrement()
+                return true
+            }
+        } else {
+            val newNode = split(
+                charToAddOffset, edgeLabelOffset, suffixOffset, endPosition
+            )
+            remainingSuffixes.decrement()
+            suffixLinkCandidate.linkTo(newNode)
+            return true
+        }
+    }
 }
 
 abstract class DelegateSrcNode : ActiveNode {
@@ -769,17 +805,16 @@ abstract class DelegateSrcNode : ActiveNode {
         suffixLinkCandidate: SuffixLinkCandidate,
         charToAddOffset: Int,
         suffixOffset: Int,
-        endPosition: TextPosition
-    ) {
+        endPosition: TextPosition,
+        activePoint: ActivePoint,
+        remainingSuffixes: RemainingSuffixesPointer
+    ): Boolean {
         val activeEdge = edges.first { it.labelHasChar(input, input[edgeSrcOffset], 0) }
-        if (edgeLabelOffset == activeEdge.labelLength()) {
-            activeEdge.addLeafNodeToChild(suffixOffset, charToAddOffset, endPosition)
-        } else {
-            val newNode = activeEdge.split(
-                charToAddOffset, edgeLabelOffset, suffixOffset, endPosition
-            )
-            suffixLinkCandidate.linkTo(newNode)
-        }
+        return activeEdge.extend(
+            input, edgeSrcOffset, edgeLabelOffset, suffixLinkCandidate,
+            charToAddOffset, suffixOffset, endPosition,
+            activePoint, remainingSuffixes
+        )
     }
 
     override fun normalizeActivePoint(
@@ -813,8 +848,8 @@ class RootNode : DelegateSrcNode() {
         return "RootNode(${super.toString()})"
     }
 
-    override fun advanceActivePoint(activePoint: ActivePoint) {
-        activePoint.shiftActiveEdge()
+    override fun advanceActivePoint(activePoint: ActivePoint, nextSuffixOffset: Int) {
+        activePoint.shiftActiveEdge(nextSuffixOffset)
     }
 }
 
@@ -825,7 +860,7 @@ class InternalNode : DelegateSrcNode(), DstNode {
         return "InternalNode(${super.toString()}, suffixLink.null?=${suffixLink == null})"
     }
 
-    override fun advanceActivePoint(activePoint: ActivePoint) {
+    override fun advanceActivePoint(activePoint: ActivePoint, nextSuffixOffset: Int) {
         activePoint.followSuffixLink(suffixLink)
     }
 
@@ -988,5 +1023,13 @@ object Debugger {
         function.invoke()
         enabled = wasEnabled
         debug = wasDebug
+    }
+
+    @Suppress("unused")
+    fun enableFor(function: () -> Unit) {
+        val wasEnabled = enabled
+        enable()
+        function.invoke()
+        enabled = wasEnabled
     }
 }

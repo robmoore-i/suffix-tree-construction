@@ -4,7 +4,6 @@ package org.jetbrains.fulltextsearch.index.suffixtree
 
 import org.jetbrains.fulltextsearch.randominput.RandomInput
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 
 class SuffixTreeTest {
@@ -74,19 +73,9 @@ class SuffixTreeTest {
     }
 
     @Test
-    @Disabled
-    internal fun `advances active edge in line with phase number`() {
+    internal fun `hopping over internal nodes without adding a new leaf`() {
         val inputString = "xxyzyxyz$"
         assertSuffixTreeIsCorrectlyConstructed(inputString, suffixTree(inputString))
-    }
-
-    @Test
-    @Disabled
-    internal fun `next failing test`() {
-        val inputString = "abcdefggg$"
-        val suffixTree = suffixTree(inputString)
-        assertEquals(setOf(6), suffixTree.offsetsOf("eee$"))
-        assertSuffixTreeIsCorrectlyConstructed(inputString, suffixTree)
     }
 
     private fun suffixTree(inputString: String): SuffixTree {

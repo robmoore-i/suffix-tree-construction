@@ -128,7 +128,7 @@ class ActivePointTest {
             },
             "Root didn't have the expected edges\nInstead, root was $root;"
         )
-        assertEquals(Pair(1, 1), activePoint.activeNodeOffset())
+        assertEquals(Pair(2, 1), activePoint.activeNodeOffset())
     }
 
     @Test
@@ -364,7 +364,7 @@ class ActivePointTest {
 
         activePoint.addNextSuffix(3)
 
-        assertEquals(Pair(1, 0), activePoint.activeNodeOffset())
+        assertEquals(Pair(3, 0), activePoint.activeNodeOffset())
         assertTrue(
             root.hasInternalEdge(0, 1) {
                 it.hasLeafEdge(1, 4, 0)
@@ -440,11 +440,11 @@ class ActivePointTest {
             it.hasLeafEdge(1, endPosition.value(), 0)
                     && it.hasLeafEdge(4, endPosition.value(), 3)
         }, "Active point didn't meet expectations.\nInstead, active point was $activePoint;")
-        assertEquals(Pair(4, 1), activePoint.activeNodeOffset())
+        assertEquals(Pair(6, 1), activePoint.activeNodeOffset())
     }
 
     @Test
-    internal fun `after insertion from root, active edge pointer keeps up with the phase number`() {
+    internal fun `after insertion from root, active edge pointer normalizes and keeps up with the phase number`() {
         val root = RootNode()
         val endPosition = TextPosition(6)
         root.addInternalEdge(
@@ -467,6 +467,59 @@ class ActivePointTest {
 
         assertEquals(Pair(5, 1), activePoint.activeNodeOffset())
         assertTrue(activePoint.activeNodeIsRoot())
+    }
+
+    @Test
+    internal fun `after splitting edge from root insertion, active length decrements`() {
+        val root = RootNode()
+        val endPosition = TextPosition(6)
+        root.addInternalEdge(
+            internalEdgeOffsets = Pair(0, 1),
+            firstLeafEdgeSrcOffset = 1, firstLeafSuffixOffset = 0,
+            secondLeafEdgeSrcOffset = 2, secondLeafSuffixOffset = 1, endPosition = endPosition
+        )
+        root.addLeafEdge(LeafNode(2), TextPosition(2), endPosition)
+        root.addLeafEdge(LeafNode(3), TextPosition(3), endPosition)
+        val activePoint = ActivePoint.positionedAt(
+            "xxyzyxyz$", root, endPosition,
+            remainingSuffixes = 2, activeEdge = 2, activeLength = 1
+        )
+
+        activePoint.addNextSuffix(5)
+
+        assertEquals(Pair(5, 0), activePoint.activeNodeOffset())
+        assertTrue(activePoint.activeNodeIsRoot())
+    }
+
+    @Test
+    internal fun `when extending an edge from root, it traverses down a matching edge if there is one`() {
+        val root = RootNode()
+        val endPosition = TextPosition(7)
+        val expectedInternalNode = root.addInternalEdge(
+            internalEdgeOffsets = Pair(0, 1),
+            firstLeafEdgeSrcOffset = 1, firstLeafSuffixOffset = 0,
+            secondLeafEdgeSrcOffset = 2, secondLeafSuffixOffset = 1, endPosition = endPosition
+        )
+        root.addInternalEdge(
+            internalEdgeOffsets = Pair(2, 3),
+            firstLeafEdgeSrcOffset = 3, firstLeafSuffixOffset = 2,
+            secondLeafEdgeSrcOffset = 5, secondLeafSuffixOffset = 4, endPosition = endPosition
+        )
+        root.addLeafEdge(LeafNode(3), TextPosition(3), endPosition)
+        val remainingSuffixes = RemainingSuffixesPointer(remainingSuffixes = 2)
+        val activePoint = ActivePoint(
+            "xxyzyxyz$", root, endPosition, remainingSuffixes, SuffixLinkCandidate()
+        )
+        activePoint.setActiveNodeOffset(activeEdge = 5, activeLength = 1)
+
+        val canAddMoreSuffixes = activePoint.addNextSuffix(6)
+
+        assertEquals(Pair(6, 1), activePoint.activeNodeOffset())
+        assertTrue(activePoint.activeNodeIsInternalNode {
+            it == expectedInternalNode
+        }, "Active point didn't meet expectations.\nInstead, active point was $activePoint;")
+        assertEquals(2, remainingSuffixes.value())
+        assertFalse(canAddMoreSuffixes)
     }
 
     private fun RootNode.addInternalEdge(
