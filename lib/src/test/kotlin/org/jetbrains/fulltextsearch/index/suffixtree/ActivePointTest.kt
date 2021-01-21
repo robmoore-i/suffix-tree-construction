@@ -566,11 +566,11 @@ class ActivePointTest {
         val endPosition = TextPosition(10)
         val ySubtree = InternalNode()
         ySubtree.addLeafEdge(LeafNode(1), TextPosition(2), endPosition)
-        // TODO: Use the extension function defined at the bottom of this file.
-        val yzxySubtree = InternalNode()
-        yzxySubtree.addLeafEdge(LeafNode(2), TextPosition(6), endPosition)
-        yzxySubtree.addLeafEdge(LeafNode(5), TextPosition(9), endPosition)
-        ySubtree.addInternalEdge(yzxySubtree, TextPosition(3), TextPosition(6))
+        ySubtree.addInternalEdge(
+            internalEdgeOffsets = Pair(3, 6),
+            firstLeafEdgeSrcOffset = 6, firstLeafSuffixOffset = 2,
+            secondLeafEdgeSrcOffset = 9, secondLeafSuffixOffset = 5, endPosition = endPosition
+        )
         root.addInternalEdge(
             internalEdgeOffsets = Pair(0, 2),
             firstLeafEdgeSrcOffset = 2, firstLeafSuffixOffset = 0,
@@ -592,7 +592,7 @@ class ActivePointTest {
     }
 
     @Test
-    internal fun `create suffix links when passing through internal nodes`() {
+    internal fun `create suffix links when advancing along a new edge from an internal node`() {
         val root = RootNode()
         val endPosition = TextPosition(6)
         val suffixLinkCandidate = SuffixLinkCandidate()
@@ -619,6 +619,41 @@ class ActivePointTest {
             "The subtree rooted at 'xx' didn't have the expected suffix link to its parent, " +
                     "the 'x' subtree, which should have been created while advancing the " +
                     "active point."
+        )
+    }
+
+    @Test
+    internal fun `create suffix links when reaching end of edge between internal nodes`() {
+        val root = RootNode()
+        val endPosition = TextPosition(7)
+        val zSubtree = root.addInternalEdge(
+            internalEdgeOffsets = Pair(2, 3),
+            firstLeafEdgeSrcOffset = 3, firstLeafSuffixOffset = 2,
+            secondLeafEdgeSrcOffset = 4, secondLeafSuffixOffset = 3, endPosition = endPosition
+        )
+        val xzSubtree = root.addInternalEdge(
+            internalEdgeOffsets = Pair(1, 3),
+            firstLeafEdgeSrcOffset = 3, firstLeafSuffixOffset = 1,
+            secondLeafEdgeSrcOffset = 6, secondLeafSuffixOffset = 4, endPosition = endPosition
+        )
+        root.addLeafEdge(LeafNode(0), TextPosition(0), endPosition)
+        val suffixLinkCandidate = SuffixLinkCandidate()
+        suffixLinkCandidate.linkTo(xzSubtree)
+        val activePoint = ActivePoint.positionedAt(
+            "yxzzxzxz$", root, endPosition,
+            activeEdge = 5, activeLength = 1,
+            remainingSuffixes = 2, suffixLinkCandidate = suffixLinkCandidate
+        )
+
+        Debugger.debugFor {
+            activePoint.addNextSuffix(6)
+        }
+
+        assertTrue(
+            xzSubtree.hasSuffixLink { it == zSubtree },
+            "The subtree rooted at 'xz' didn't have the expected suffix link to the 'z' subtree, " +
+                    "which should have been created after resetting to root and subsequently " +
+                    "advancing the active node to the root of the 'z' subtree."
         )
     }
 

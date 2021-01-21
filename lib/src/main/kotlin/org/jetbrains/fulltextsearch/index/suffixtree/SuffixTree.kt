@@ -108,14 +108,14 @@ class ActivePoint(
         val nextChar = input[nextCharOffset]
         val suffixOffset = endPosition.value() - remainingSuffixes.value()
         Debugger.debug(
-            "Adding suffix '${
+            "\nAdding suffix '${
                 input.substring(
                     suffixOffset,
                     endPosition.value()
                 )
             }' with offset $suffixOffset for char '$nextChar' at index $nextCharOffset, " +
                     "and there are ${remainingSuffixes.value()} suffixes remaining. " +
-                    "endPosition=${endPosition.value()}\nActive point=$this"
+                    "endPosition=${endPosition.value()}\nActive point=$this;\nroot=$root"
         )
         if (activeLength == 0) {
             if (activeNode.hasEdgeWithChar(input, 0, nextChar)) {
@@ -172,6 +172,9 @@ class ActivePoint(
                         activeNode = internalNode
                         activeEdge += activeLength
                         activeLength = 1
+                        if (!activeNodeIsRoot()) {
+                            suffixLinkCandidate.linkTo(activeNode as InternalNode)
+                        }
                         false
                     } else {
                         Debugger.info(

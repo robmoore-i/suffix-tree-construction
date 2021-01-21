@@ -96,6 +96,12 @@ class SuffixTreeTest {
         assertSuffixTreeIsCorrectlyConstructed(input, suffixTree(input))
     }
 
+    @Test
+    internal fun `create suffix links when reaching end of edge between internal nodes`() {
+        val input = "yxzzxzxz$"
+        assertSuffixTreeIsCorrectlyConstructed(input, suffixTree(input))
+    }
+
     private fun suffixTree(input: String): SuffixTree {
         val suffixTree = SuffixTree.ukkonenConstruction(input)
         println("\nSuffix Tree for '$input': $suffixTree")
