@@ -162,6 +162,7 @@ class ActivePoint(
                     endPosition
                 )
                 remainingSuffixes.decrement()
+                (activeNode as? InternalNode)?.advanceActivePoint(this)
                 return remainingSuffixes.value() > 0
             }
         } else {
@@ -228,6 +229,10 @@ class ActivePoint(
             input, activeEdge, activeLength, this,
             eagerNodeHop = true
         )
+    }
+
+    fun activeNodeIsRoot(): Boolean {
+        return activeNode is RootNode
     }
 }
 

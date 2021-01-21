@@ -48,14 +48,12 @@ class SuffixTreeTest {
     }
 
     @Test
-    @Disabled
     internal fun `reverts to root after internal node insertion`() {
         val inputString = "yyxyyz"
         assertSuffixTreeIsCorrectlyConstructed(inputString, suffixTree(inputString))
     }
 
     @Test
-    @Disabled
     internal fun `checks for active node hop after following a suffix link`() {
         val inputString = "xyzxzyxy$"
         assertSuffixTreeIsCorrectlyConstructed(inputString, suffixTree(inputString))

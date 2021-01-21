@@ -396,6 +396,28 @@ class ActivePointTest {
         assertTrue(canAddMoreSuffixes)
     }
 
+    @Test
+    internal fun `follows suffix link after inserting a leaf from an internal node`() {
+        val root = RootNode()
+        val endPosition = TextPosition(6)
+        val nestedInternalNode = InternalNode()
+        nestedInternalNode.addLeafEdge(LeafNode(0), TextPosition(2), endPosition)
+        nestedInternalNode.addLeafEdge(LeafNode(3), TextPosition(5), endPosition)
+        val internalNode = InternalNode()
+        internalNode.addInternalEdge(nestedInternalNode, TextPosition(1), TextPosition(2))
+        internalNode.addLeafEdge(LeafNode(1), TextPosition(2), endPosition)
+        root.addInternalEdge(internalNode, TextPosition(0), TextPosition(1))
+        root.addLeafEdge(LeafNode(2), TextPosition(2), endPosition)
+        val activePoint = ActivePoint.positionedAt(
+            "yyxyyz", root, endPosition,
+            remainingSuffixes = 2, activeEdge = 2, activeLength = 0, activeNode = internalNode
+        )
+
+        activePoint.addNextSuffix(5)
+
+        assertTrue(activePoint.activeNodeIsRoot())
+    }
+
     private fun RootNode.addInternalEdge(
         internalEdgeOffsets: Pair<Int, Int>, firstLeafSuffixOffset: Int,
         firstLeafEdgeSrcOffset: Int, secondLeafSuffixOffset: Int,
