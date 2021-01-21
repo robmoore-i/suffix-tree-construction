@@ -57,7 +57,7 @@ class SuffixTree(private val terminatedInputString: String, private val root: Ro
 
             // Phases
             (2..input.length).forEach { phaseNumber ->
-                Debugger.enableIf { false }
+                Debugger.enableIf { true }
                 val nextCharOffset = phaseNumber - 1
                 Debugger.printLine(
                     "\nStarting phase $phaseNumber for character '${input[nextCharOffset]}'\n" +
@@ -138,6 +138,16 @@ class ActivePoint(
     fun addNextSuffix(nextCharOffset: Int): Boolean {
         val nextChar = input[nextCharOffset]
         val suffixOffset = endPosition.value() - remainingSuffixes.value()
+        Debugger.printLine(
+            "Adding suffix '${
+                input.substring(
+                    suffixOffset,
+                    endPosition.value()
+                )
+            }' with offset $suffixOffset. " +
+                    "${remainingSuffixes.value()} suffixes remaining. " +
+                    "End position = ${endPosition.value()}\nActive point=$this"
+        )
         if (activeLength == 0) {
             if (activeNode.hasEdgeWithChar(input, nextChar, 0)) {
                 Debugger.printLine("Activating edge with leading char '$nextChar'")
@@ -152,7 +162,7 @@ class ActivePoint(
                     endPosition
                 )
                 remainingSuffixes.decrement()
-                return false
+                return remainingSuffixes.value() > 0
             }
         } else {
             if (activeNode.edgeHasChar(input, activeEdge, activeLength, nextChar)) {
@@ -189,7 +199,7 @@ class ActivePoint(
     }
 
     override fun toString(): String {
-        return "ActivePoint(activeEdge=$activeEdge, activeLength=$activeLength)"
+        return "ActivePoint(activeEdge=$activeEdge, activeLength=$activeLength, activeNode=$activeNode)"
     }
 
     fun advance(internalNode: InternalNode, activeEdge: Int, activeLength: Int) {
@@ -557,7 +567,6 @@ class Edge(
     }
 
     fun labelHasChar(input: String, c: Char, labelOffset: Int): Boolean {
-        Debugger.printLine("Checking if edge '${label(input)}' has character '$c' at offset $labelOffset")
         return input[srcOffset.value() + labelOffset] == c
     }
 
