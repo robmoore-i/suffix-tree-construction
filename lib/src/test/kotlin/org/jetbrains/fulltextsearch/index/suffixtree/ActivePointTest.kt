@@ -11,7 +11,7 @@ class ActivePointTest {
         val root = RootNode()
         val remainingSuffixes = RemainingSuffixesPointer(remainingSuffixes = 1)
 
-        val canAddMoreSuffixes = ActivePoint.default(
+        val suffixExtensionType = ActivePoint.default(
             "xy", root, TextPosition(2), remainingSuffixes
         ).addNextSuffix(1)
 
@@ -20,7 +20,7 @@ class ActivePointTest {
             "The expected leaf [1, 2](1) wasn't created on the root node.\nInstead, root was $root."
         )
         assertEquals(remainingSuffixes.value(), 0)
-        assertFalse(canAddMoreSuffixes)
+        assertEquals(SuffixExtensionType.RULE_TWO, suffixExtensionType)
     }
 
     @Test
@@ -28,7 +28,7 @@ class ActivePointTest {
         val root = RootNode()
         val remainingSuffixes = RemainingSuffixesPointer(remainingSuffixes = 1)
 
-        val canAddMoreSuffixes = ActivePoint.default(
+        val suffixExtensionType = ActivePoint.default(
             "xyzabc", root, TextPosition(4), remainingSuffixes
         ).addNextSuffix(3)
 
@@ -37,7 +37,7 @@ class ActivePointTest {
             "The expected leaf [3, 4](3) wasn't created on the root node.\nInstead, root was $root."
         )
         assertEquals(remainingSuffixes.value(), 0)
-        assertFalse(canAddMoreSuffixes)
+        assertEquals(SuffixExtensionType.RULE_TWO, suffixExtensionType)
     }
 
     @Test
@@ -47,7 +47,7 @@ class ActivePointTest {
         root.addLeafEdge(LeafNode(0), TextPosition(0), endPosition)
         val remainingSuffixes = RemainingSuffixesPointer(remainingSuffixes = 1)
 
-        val canAddMoreSuffixes = ActivePoint.default(
+        val suffixExtensionType = ActivePoint.default(
             "xyx", root, endPosition, remainingSuffixes
         ).addNextSuffix(2)
 
@@ -56,7 +56,7 @@ class ActivePointTest {
             "Unexpected leaf [2, 3](2) was created on the root node.\nInstead, root was $root."
         )
         assertEquals(remainingSuffixes.value(), 1)
-        assertFalse(canAddMoreSuffixes)
+        assertEquals(SuffixExtensionType.RULE_THREE, suffixExtensionType)
     }
 
     @Test
@@ -184,9 +184,9 @@ class ActivePointTest {
             remainingSuffixes = 3, activeEdge = 0, activeLength = 2
         )
 
-        val canAddMoreSuffixes = activePoint.addNextSuffix(3)
+        val suffixExtensionType = activePoint.addNextSuffix(3)
 
-        assertTrue(canAddMoreSuffixes)
+        assertEquals(SuffixExtensionType.RULE_TWO, suffixExtensionType)
     }
 
     @Test
@@ -393,13 +393,13 @@ class ActivePointTest {
             remainingSuffixes = 2, activeEdge = 2, activeLength = 0, activeNode = internalNode
         )
 
-        val canAddMoreSuffixes = activePoint.addNextSuffix(5)
+        val suffixExtensionType = activePoint.addNextSuffix(5)
 
-        assertTrue(canAddMoreSuffixes)
+        assertEquals(SuffixExtensionType.RULE_TWO, suffixExtensionType)
     }
 
     @Test
-    internal fun `after leaf insertion from internal node, follow suffix link`() {
+    internal fun `after leaf insertion from internal node, follow default suffix link to root`() {
         val root = RootNode()
         val endPosition = TextPosition(6)
         val nestedInternalNode = InternalNode()
@@ -514,7 +514,7 @@ class ActivePointTest {
         )
         activePoint.setActiveNodeOffset(activeEdge = 5, activeLength = 1)
 
-        val canAddMoreSuffixes = activePoint.addNextSuffix(6)
+        val suffixExtensionType = activePoint.addNextSuffix(6)
 
         assertEquals(Pair(6, 1), activePoint.activeNodeOffset())
         assertTrue(
@@ -522,7 +522,7 @@ class ActivePointTest {
             "Active point didn't meet expectations.\nInstead, active point was $activePoint;"
         )
         assertEquals(2, remainingSuffixes.value())
-        assertFalse(canAddMoreSuffixes)
+        assertEquals(SuffixExtensionType.RULE_THREE, suffixExtensionType)
     }
 
     @Test
@@ -549,7 +549,7 @@ class ActivePointTest {
         )
         activePoint.setActiveNodeOffset(activeEdge = 5, activeLength = 2)
 
-        val canAddMoreSuffixes = activePoint.addNextSuffix(7)
+        val suffixExtensionType = activePoint.addNextSuffix(7)
 
         assertEquals(Pair(7, 1), activePoint.activeNodeOffset())
         assertTrue(
@@ -557,7 +557,7 @@ class ActivePointTest {
             "Active point didn't meet expectations.\nInstead, active point was $activePoint;"
         )
         assertEquals(3, remainingSuffixes.value())
-        assertFalse(canAddMoreSuffixes)
+        assertEquals(SuffixExtensionType.RULE_THREE, suffixExtensionType)
     }
 
     @Test

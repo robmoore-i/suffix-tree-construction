@@ -27,6 +27,7 @@ class SuffixTree(private val terminatedInputString: String, private val root: Ro
 
             // Phases
             (2..input.length).forEach { phaseNumber ->
+                Debugger.enableIf { true }
                 val nextCharOffset = phaseNumber - 1
                 Debugger.info(
                     "\nStarting phase $phaseNumber for character '${input[nextCharOffset]}'\n" +
@@ -41,13 +42,7 @@ class SuffixTree(private val terminatedInputString: String, private val root: Ro
                 // Suffix links should only be created within a phase
                 suffixLinkCandidate.reset()
 
-                // The phase ends when it is no longer possible to add more suffixes into the tree in
-                // the current phase. This happens either when we run out of remaining suffixes to add,
-                // i.e. when remainder == 0, or when we perform a rule three suffix extension.
-                var canAddMoreSuffixes = true
-                while (canAddMoreSuffixes) {
-                    canAddMoreSuffixes = activePoint.addNextSuffix(nextCharOffset)
-                }
+                activePoint.addRemainingSuffixes(nextCharOffset)
             }
             return SuffixTree(input, root)
         }
@@ -88,6 +83,12 @@ class RemainingSuffixesPointer(private var remainingSuffixes: Int = 0) {
     }
 }
 
+enum class SuffixExtensionType {
+    RULE_ONE,
+    RULE_TWO,
+    RULE_THREE
+}
+
 class ActivePoint(
     private val input: String,
     private val root: RootNode,
@@ -101,10 +102,19 @@ class ActivePoint(
     private var activeLength = 0
     private var activeNode: ActiveNode = root
 
+    fun addRemainingSuffixes(nextCharOffset: Int) {
+        var canAddMoreSuffixes = true
+        while (canAddMoreSuffixes) {
+            val extensionType = addNextSuffix(nextCharOffset)
+            canAddMoreSuffixes = remainingSuffixes.value() > 0
+                    && extensionType != SuffixExtensionType.RULE_THREE
+        }
+    }
+
     /**
-     * @return Whether or not more suffixes can be added in the current phase.
+     * @return Which type of suffix extension was applied in adding this character
      */
-    fun addNextSuffix(nextCharOffset: Int): Boolean {
+    fun addNextSuffix(nextCharOffset: Int): SuffixExtensionType {
         val nextChar = input[nextCharOffset]
         val suffixOffset = endPosition.value() - remainingSuffixes.value()
         Debugger.debug(
@@ -114,7 +124,7 @@ class ActivePoint(
                     endPosition.value()
                 )
             }' with offset $suffixOffset for char '$nextChar' at index $nextCharOffset, " +
-                    "and there are ${remainingSuffixes.value()} suffixes remaining. " +
+                    "and there are $remainingSuffixes suffixes remaining. " +
                     "endPosition=${endPosition.value()}\nActive point=$this;\nroot=$root"
         )
         if (activeLength == 0) {
@@ -127,7 +137,7 @@ class ActivePoint(
                 activeEdge = nextCharOffset
                 activeLength++
                 activeNode.linkFrom(suffixLinkCandidate)
-                return false
+                return SuffixExtensionType.RULE_THREE
             } else {
                 /*
                 The node hasn't got an edge starting with the next character, so we create one.
@@ -138,9 +148,9 @@ class ActivePoint(
                     TextPosition(nextCharOffset),
                     endPosition
                 )
+                activeNode.advanceActivePoint(this)
                 remainingSuffixes.decrement()
-                (activeNode as? InternalNode)?.advanceActivePoint(this)
-                return remainingSuffixes.value() > 0
+                return SuffixExtensionType.RULE_TWO
             }
         } else {
             return activeNode.onEdgeWithChar(input, 0, input[activeEdge]) { edge ->
@@ -155,7 +165,7 @@ class ActivePoint(
                     )
                     activeLength++
                     normalizeActivePoint()
-                    false
+                    SuffixExtensionType.RULE_THREE
                 } else if (labelLength > activeLength) {
                     /*
                     The edge doesn't have the character, and there are more characters left in
@@ -167,7 +177,7 @@ class ActivePoint(
                     suffixLinkCandidate.linkTo(newInternalNode)
                     remainingSuffixes.decrement()
                     activeNode.advanceActivePoint(this)
-                    true
+                    SuffixExtensionType.RULE_TWO
                 } else {
                     Debugger.info(
                         "Reached end of internal edge with label '${
@@ -189,7 +199,7 @@ class ActivePoint(
                         activeEdge += activeLength
                         activeLength = 1
                         activeNode.linkFrom(suffixLinkCandidate)
-                        false
+                        SuffixExtensionType.RULE_THREE
                     } else {
                         /*
                         The node at the end of the internal label doesn't have an edge matching our
@@ -202,7 +212,7 @@ class ActivePoint(
                         internalEdge.addToDst(LeafNode(suffixOffset), nextCharOffset, endPosition)
                         remainingSuffixes.decrement()
                         activeNode.advanceActivePoint(this)
-                        true
+                        SuffixExtensionType.RULE_TWO
                     }
                 }
             }
@@ -238,9 +248,11 @@ class ActivePoint(
     }
 
     fun shiftActiveEdge() {
-        activeEdge = endPosition.value() - remainingSuffixes.value()
-        activeLength--
-        normalizeActivePoint(eagerNodeHop = false)
+        if (activeLength > 0) {
+            activeEdge = endPosition.value() - remainingSuffixes.value()
+            activeLength--
+            normalizeActivePoint(eagerNodeHop = false)
+        }
     }
 
     fun followSuffixLink(suffixLink: InternalNode?) {
