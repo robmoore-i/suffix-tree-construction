@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# USAGE: ./scripts/fetch-performance-test-data.sh [LSystems | kotlin | kotlin-web-site]
+
 # This script is for fetching the input data for the full-text-search library's
 # performance tests. The directories it uses are quite large, so checking them
 # into this repository is impractical. Instead, we fetch them from GitHub lazily

@@ -26,6 +26,9 @@ class SuffixTreeIndexedFile(
     }
 
     override fun query(queryString: String): List<QueryMatch> {
+        if (queryString.isEmpty()) {
+            return listOf()
+        }
         @Suppress("IfThenToElvis") // I find this easier to read than the elvis statement.
         return if (suffixTree != null) {
             suffixTree.offsetsOf(queryString)

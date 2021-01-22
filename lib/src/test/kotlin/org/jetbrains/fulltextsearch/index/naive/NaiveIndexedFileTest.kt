@@ -2,10 +2,17 @@
 
 package org.jetbrains.fulltextsearch.index.naive
 
+import org.jetbrains.fulltextsearch.search.QueryMatch
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
 class NaiveIndexedFileTest {
+    @Test
+    internal fun `returns no matches for empty input`() {
+        val indexedFile = NaiveIndexedFile("some-file.txt", "my file text")
+        assertEquals(listOf<QueryMatch>(), indexedFile.query(""))
+    }
+
     @Test
     internal fun `can query for string 'memo'`() {
         val indexedFile = NaiveIndexedFile("file.txt", "memo")

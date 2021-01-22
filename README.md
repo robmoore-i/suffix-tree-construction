@@ -1,39 +1,33 @@
 # JetBrains Test Task: Full-text search
 
-## Task Description
-
-Please implement a library for full-text search.
-
-This library is supposed to consist of two parts: text index builder and search
-query executor.
-
-Text index builder should:
-
-- Be able to build a text index for a given folder in a file system.
-- Show progress while building the index.
-- Build the index using several threads in parallel.
-- Be cancellable. It should be possible to interrupt indexing.
-- (Optional) Be incremental. It would be nice if the builder would be able to
-  listen to the file system changes and update the index accordingly.
-
-Search query executor should:
-
-- Find a position in files for a given string.
-- Be able to process search requests in parallel.
-
-Please also cover the library with a set of unit-tests. Your code should not use
-third-party indexing libraries. To implement the library, you can use any JVM
-languages and any build systems, but we would appreciate you choosing Kotlin and
-Gradle. We don't set a deadline from our side but would appreciate if you would
-be able to estimate the time needed and would set a deadline yourself and send
-it to us before starting the work on the task.
-
-Should you have any questions, we would be happy to answer them.
+This document is written for a reviewer of this code project, to help you use
+your time more efficiently.
 
 ## Repository Layout
 
-- `lib`: Contains the library implementing full-text search
-- `Plan.md`: Contains the implementation plan
+- `Plan.md` contains a brief implementation plan including the iterations and
+  increments to the program which I've made until now.
+- `Task-description` contains the original task description.
+- `lib` contains the library implementing full-text search.
+- `app` contains a small example program which uses the library.
+- `scripts` contains a single script which you can use to fetch input
+  directories from GitHub, to be used when test the full-text search
+  functionality. The repositories it will clone are for the Kotlin programming
+  language, the Kotlin web-site, and also a small Java project from my GitHub.
 
+## Testing
+
+### Running Tests
+
+- `./gradlew lib:test` runs the unit tests for the library.
+- `./gradlew lib:performanceTest` runs some performance tests for the library,
+  although these depend on having the input data cloned, using the script
+  `scripts/fetch-performance-test-data.sh`. If the data isn't there, the tests
+  will be skipped.
+
+#### Fuzz Tests
+
+While working on suffix tree construction, I've made use of "fuzz testing", in
+which the test generates random inputs and see if the program behaves correctly.
 
 

@@ -7,6 +7,9 @@ import kotlin.streams.toList
 
 class NaiveIndexedFile(private val path: String, private val fileText: String) : IndexedFile {
     override fun query(queryString: String): List<QueryMatch> {
+        if (queryString.isEmpty()) {
+            return listOf()
+        }
         return Regex.fromLiteral(queryString)
             .findAll(fileText)
             .map { QueryMatch(path, it.range.first) }
