@@ -6,12 +6,14 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.fulltextsearch.filesystem.Directory
 import org.jetbrains.fulltextsearch.index.IndexedFile
-import org.jetbrains.fulltextsearch.index.IndexerStrategy
 import org.jetbrains.fulltextsearch.index.naive.NaiveIndexedFile
 import org.jetbrains.fulltextsearch.index.suffixtree.SuffixTreeIndexedFile
+import org.jetbrains.fulltextsearch.indexer.IndexerStrategy
 import org.jetbrains.fulltextsearch.indexer.async.AsyncIndexingProgressListener
 import org.jetbrains.fulltextsearch.indexer.async.ParallelAsyncIndexer
+import org.jetbrains.fulltextsearch.randominput.RandomInput
 import org.jetbrains.fulltextsearch.search.IndexedDirectory
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import java.nio.file.Path
@@ -19,8 +21,8 @@ import java.nio.file.Paths
 import kotlin.reflect.KClass
 
 /**
- * This class compares the suffix tree index and the naive index, primarily to identify the
- * shortcomings of the suffix tree index.
+ * This class compares the suffix tree index and the naive index in order to identify any
+ * shortcomings in the suffix tree index.
  */
 class IndexComparisonTest {
     @Test
@@ -33,6 +35,13 @@ class IndexComparisonTest {
         val naiveIndexer = ParallelAsyncIndexer(IndexerStrategy.alwaysUseNaiveIndex())
         val (suffixTreeIndex: IndexedDirectory, naiveIndex: IndexedDirectory) =
             buildIndices(dirPath, suffixTreeIndexer, naiveIndexer)
+
+        repeat(50) {
+            val queryTerm = RandomInput.generateRandomSearchQueryTerm()
+            val suffixTreeResults = suffixTreeIndex.queryCaseSensitive(queryTerm).toSet()
+            val expectedResults = naiveIndex.queryCaseSensitive(queryTerm).toSet()
+            assertEquals(expectedResults, suffixTreeResults)
+        }
     }
 
     private suspend fun buildIndices(

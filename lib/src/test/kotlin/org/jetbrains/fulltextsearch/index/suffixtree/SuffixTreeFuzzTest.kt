@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test
 class SuffixTreeFuzzTest {
     @Test
     @Disabled
-    internal fun `find bugs`() {
+    internal fun `send random input and assert that the search results are correct`() {
         repeat(100000) {
             val fileContent = generateRandomString(alphabet = "xyza", minLength = 7, maxLength = 10)
             val naiveIndexedFile = NaiveIndexedFile("some-file.txt", fileContent)

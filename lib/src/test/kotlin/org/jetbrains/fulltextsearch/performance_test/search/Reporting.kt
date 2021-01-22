@@ -5,7 +5,7 @@ import org.jetbrains.fulltextsearch.filesystem.Directory
 import org.jetbrains.fulltextsearch.index.IndexedFile
 import org.jetbrains.fulltextsearch.indexer.async.AsyncIndexer
 import org.jetbrains.fulltextsearch.indexer.async.AsyncIndexingProgressListener
-import org.jetbrains.fulltextsearch.randominput.RandomInput.generateRandomString
+import org.jetbrains.fulltextsearch.randominput.RandomInput.generateRandomSearchQueryTerm
 import org.jetbrains.fulltextsearch.search.IndexedDirectory
 import org.opentest4j.TestAbortedException
 import java.nio.file.Paths
@@ -48,27 +48,12 @@ fun collectAndPrintSearchExecutionTimeData(
 }
 
 class SearchQueryPerformanceTester {
-    private var counter = 0
-    private val queryTerms = listOf(
-        "class", "interface", "val", "var", "if",
-        "else", "print", "String", "List", "list", "Set", "set", "Test", "test",
-        "@Test", "assert", "{", ");", "\"hello world\"", "nonsense-text",
-        "long search term unlikely to have any matches", "            "
-    )
     private val results = mutableMapOf<String, Long>()
 
     fun nextResult(indexedDirectory: IndexedDirectory) {
-        if (counter >= queryTerms.size) {
-            val queryTerm: String = generateRandomString()
-            results[queryTerm] = measureTimeMillis {
-                indexedDirectory.queryCaseSensitive(queryTerm)
-            }
-        } else {
-            val queryTerm: String = queryTerms[counter]
-            results[queryTerm] = measureTimeMillis {
-                indexedDirectory.queryCaseSensitive(queryTerm)
-            }
-            counter++
+        val queryTerm = generateRandomSearchQueryTerm()
+        results[queryTerm] = measureTimeMillis {
+            indexedDirectory.queryCaseSensitive(queryTerm)
         }
     }
 
