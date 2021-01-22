@@ -1,15 +1,22 @@
 package org.jetbrains.fulltextsearch.index.comparison_test
 
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.fulltextsearch.filesystem.Directory
 import org.jetbrains.fulltextsearch.index.IndexedFile
 import org.jetbrains.fulltextsearch.index.IndexerStrategy
+import org.jetbrains.fulltextsearch.index.naive.NaiveIndexedFile
+import org.jetbrains.fulltextsearch.index.suffixtree.SuffixTreeIndexedFile
 import org.jetbrains.fulltextsearch.indexer.async.AsyncIndexingProgressListener
 import org.jetbrains.fulltextsearch.indexer.async.ParallelAsyncIndexer
 import org.jetbrains.fulltextsearch.search.IndexedDirectory
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
+import java.nio.file.Path
 import java.nio.file.Paths
+import kotlin.reflect.KClass
 
 /**
  * This class compares the suffix tree index and the naive index, primarily to identify the
@@ -18,11 +25,22 @@ import java.nio.file.Paths
 class IndexComparisonTest {
     @Test
     @Disabled
-    internal fun `compare naive index to suffix tree index`() {
+    internal fun `compare naive index to suffix tree index`() = runBlocking {
         val dirPath = Paths.get("src/test/resources/example-java-project")
-        val suffixTreeIndexer = ParallelAsyncIndexer(IndexerStrategy.alwaysUseSuffixTreeIndex)
-        val naiveIndexer = ParallelAsyncIndexer(IndexerStrategy.alwaysUseNaiveIndex)
-        val (suffixTreeIndex: IndexedDirectory, naiveIndex: IndexedDirectory) = runBlocking {
+        val suffixTreeIndexer = ParallelAsyncIndexer(
+            IndexerStrategy.alwaysUseSuffixTreeIndex(useFallback = true)
+        )
+        val naiveIndexer = ParallelAsyncIndexer(IndexerStrategy.alwaysUseNaiveIndex())
+        val (suffixTreeIndex: IndexedDirectory, naiveIndex: IndexedDirectory) =
+            buildIndices(dirPath, suffixTreeIndexer, naiveIndexer)
+    }
+
+    private suspend fun buildIndices(
+        dirPath: Path,
+        suffixTreeIndexer: ParallelAsyncIndexer,
+        naiveIndexer: ParallelAsyncIndexer
+    ): Pair<IndexedDirectory, IndexedDirectory> = coroutineScope {
+        val suffixTreeIndexResult = async {
             var suffixTreeIndex: IndexedDirectory? = null
             suffixTreeIndexer.buildIndexAsync(
                 Directory(dirPath),
@@ -36,6 +54,10 @@ class IndexComparisonTest {
                         suffixTreeIndex = indexedDirectory
                     }
                 })
+            Pair(suffixTreeIndex!!, SuffixTreeIndexedFile::class)
+        }
+
+        val naiveIndexResult = async {
             var naiveIndex: IndexedDirectory? = null
             naiveIndexer.buildIndexAsync(
                 Directory(dirPath),
@@ -49,7 +71,15 @@ class IndexComparisonTest {
                         naiveIndex = indexedDirectory
                     }
                 })
-            Pair(suffixTreeIndex!!, naiveIndex!!)
+            Pair(naiveIndex!!, NaiveIndexedFile::class)
+        }
+
+        val results: List<Pair<IndexedDirectory, KClass<out IndexedFile>>> =
+            awaitAll(suffixTreeIndexResult, naiveIndexResult)
+        if (results[0].second == SuffixTreeIndexedFile::class) {
+            Pair(results[0].first, results[1].first)
+        } else {
+            Pair(results[1].first, results[0].first)
         }
     }
 }

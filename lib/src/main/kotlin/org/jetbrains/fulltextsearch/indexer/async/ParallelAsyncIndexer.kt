@@ -11,7 +11,7 @@ import org.jetbrains.fulltextsearch.search.IndexedDirectory
 import java.util.*
 
 class ParallelAsyncIndexer(
-    private val indexerStrategy: IndexerStrategy = IndexerStrategy.default
+    private val indexerStrategy: IndexerStrategy = IndexerStrategy.default()
 ) : AsyncIndexer {
     override suspend fun buildIndexAsync(
         directory: Directory,

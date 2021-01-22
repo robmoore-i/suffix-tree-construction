@@ -9,7 +9,7 @@ fun interface IndexerStrategy {
     fun buildIndexFor(rootDirectory: Directory, file: File): IndexedFile
 
     companion object {
-        val default: IndexerStrategy = IndexerStrategy { rootDirectory, file ->
+        fun default(): IndexerStrategy = IndexerStrategy { rootDirectory, file ->
             val relativePath = rootDirectory.relativePathTo(file.path)
             val fileText = file.readText()
             if (fileText.length < 50) {
@@ -19,11 +19,15 @@ fun interface IndexerStrategy {
             }
         }
 
-        val alwaysUseSuffixTreeIndex = IndexerStrategy { rootDirectory, file ->
-            SuffixTreeIndexedFile(rootDirectory.relativePathTo(file.path), file.readText())
-        }
+        fun alwaysUseSuffixTreeIndex(useFallback: Boolean = false) =
+            IndexerStrategy { rootDirectory, file ->
+                SuffixTreeIndexedFile(
+                    rootDirectory.relativePathTo(file.path), file.readText(),
+                    useFallback = useFallback
+                )
+            }
 
-        val alwaysUseNaiveIndex = IndexerStrategy { rootDirectory, file ->
+        fun alwaysUseNaiveIndex() = IndexerStrategy { rootDirectory, file ->
             NaiveIndexedFile(rootDirectory.relativePathTo(file.path), file.readText())
         }
     }

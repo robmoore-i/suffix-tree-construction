@@ -9,7 +9,7 @@ import org.jetbrains.fulltextsearch.search.IndexedDirectory
 import java.util.Collections.synchronizedList
 
 class ParallelSyncIndexer(
-    private val indexerStrategy: IndexerStrategy = IndexerStrategy.default
+    private val indexerStrategy: IndexerStrategy = IndexerStrategy.default()
 ) : SyncIndexer {
     override fun buildIndex(
         directory: Directory,

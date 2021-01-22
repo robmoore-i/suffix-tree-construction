@@ -5,7 +5,7 @@ import org.jetbrains.fulltextsearch.index.IndexerStrategy
 import org.jetbrains.fulltextsearch.search.IndexedDirectory
 
 class SerialSyncIndexer(
-    private val indexerStrategy: IndexerStrategy = IndexerStrategy.default
+    private val indexerStrategy: IndexerStrategy = IndexerStrategy.default()
 ) : SyncIndexer {
     override fun buildIndex(
         directory: Directory,
