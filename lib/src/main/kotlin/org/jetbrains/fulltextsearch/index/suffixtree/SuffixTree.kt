@@ -60,10 +60,6 @@ class SuffixTree(private val terminatedInputString: String, private val root: Ro
     fun offsetsOf(queryString: String): Set<Int> {
         return root.offsetsOf(terminatedInputString, queryString)
     }
-
-    fun leaves(): Set<LeafNode> {
-        return root.descendentLeaves()
-    }
 }
 
 class RemainingSuffixesPointer(private var remainingSuffixes: Int = 0) {
@@ -381,8 +377,6 @@ interface DstNode {
      * @return The set of suffix offsets in all the leaf nodes in the subtree rooted at this node.
      */
     fun descendentSuffixOffsets(): Set<Int>
-
-    fun leaves(): Set<LeafNode>
 }
 
 abstract class Edge(
@@ -397,8 +391,6 @@ abstract class Edge(
     }
 
     fun descendentSuffixOffsets(): Set<Int> = dstNode.descendentSuffixOffsets()
-
-    fun leaves(): Set<LeafNode> = dstNode.leaves()
 
     /**
      * @return If the queryString is able to be found on this edge, or in any subtree rooted at the
@@ -598,13 +590,6 @@ abstract class SrcNode : ActiveNode {
     override fun hasEdge(edgeMatcher: (Edge) -> Boolean): Boolean =
         edges.any { edgeMatcher(it) }
 
-    /**
-     * @return The set of all the leaf nodes in the subtree rooted at this node.
-     */
-    fun descendentLeaves(): Set<LeafNode> {
-        return edges.flatMapTo(mutableSetOf()) { it.leaves() }
-    }
-
     fun descendentLeavesSuffixOffsets(): Set<Int> {
         return edges.flatMapTo(mutableSetOf()) {
             it.descendentSuffixOffsets()
@@ -677,10 +662,6 @@ class InternalNode : SrcNode(), DstNode {
         return super.descendentLeavesSuffixOffsets()
     }
 
-    override fun leaves(): Set<LeafNode> {
-        return descendentLeaves()
-    }
-
     fun linkTo(internalNode: InternalNode) {
         if (suffixLink != null) {
             Debugger.info("Overwriting existing suffix link: $suffixLink")
@@ -704,10 +685,6 @@ class LeafNode(private val suffixOffset: Int) : DstNode {
 
     override fun descendentSuffixOffsets(): Set<Int> {
         return setOf(suffixOffset)
-    }
-
-    override fun leaves(): Set<LeafNode> {
-        return setOf(this)
     }
 
     override fun offsetsOf(input: String, queryString: String): Set<Int> {
