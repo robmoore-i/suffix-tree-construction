@@ -84,8 +84,25 @@ class RemainingSuffixesPointer(private var remainingSuffixes: Int = 0) {
 }
 
 enum class SuffixExtensionType {
+    /**
+     * Rule one extensions are implicit extensions which happen during the first extension of a
+     * phase. These extensions can be done in constant time because they only involve updating the
+     * pointer which indicates the position of the end of the string.
+     */
+    @Suppress("unused")
     RULE_ONE,
+
+    /**
+     * Rule two extensions happen when a new leaf node is added to the tree. We perform a rule two
+     * extension in order to add new a suffix explicitly into the tree.
+     *
+     */
     RULE_TWO,
+
+    /**
+     * Rule three extensions are implicit extensions which happen when the suffix we are trying to
+     * add to the tree already exists implicitly.
+     */
     RULE_THREE
 }
 
@@ -148,8 +165,8 @@ class ActivePoint(
                     TextPosition(nextCharOffset),
                     endPosition
                 )
-                activeNode.advanceActivePoint(this)
                 remainingSuffixes.decrement()
+                activeNode.advanceActivePoint(this)
                 return SuffixExtensionType.RULE_TWO
             }
         } else {
@@ -199,6 +216,7 @@ class ActivePoint(
                         activeEdge += activeLength
                         activeLength = 1
                         activeNode.linkFrom(suffixLinkCandidate)
+                        normalizeActivePoint(eagerNodeHop = true)
                         SuffixExtensionType.RULE_THREE
                     } else {
                         /*
@@ -261,7 +279,6 @@ class ActivePoint(
     }
 
     private fun normalizeActivePoint(eagerNodeHop: Boolean = false) {
-        // TODO: Normalise recursively until reaching a node where it's all cool.
         activeNode.onEdgeWithChar(
             throwIfNotPresent = false,
             input, 0, input[activeEdge]
@@ -274,7 +291,11 @@ class ActivePoint(
                     "Hopped over a node - updating active edge from ($activeEdge, $activeLength) " +
                             "to (${activeEdge + edgeLength}, ${activeLength - edgeLength})"
                 )
-                activeNode = edge.dst() as InternalNode
+                val nextActiveNode = edge.dst() as InternalNode
+                if (!activeNodeIsRoot()) {
+                    nextActiveNode.linkTo(activeNode as InternalNode)
+                }
+                activeNode = nextActiveNode
                 activeEdge += edgeLength
                 activeLength -= edgeLength
                 Debugger.debug("Active point is now $this")
