@@ -713,6 +713,39 @@ class ActivePointTest {
         )
     }
 
+    @Test
+    internal fun `don't overwrite existing suffix links during normalization`() {
+        val root = RootNode()
+        val endPosition = TextPosition(9)
+        val zSubtree = root.addInternalEdge(
+            internalEdgeOffsets = Pair(2, 3),
+            firstLeafEdgeSrcOffset = 3, firstLeafSuffixOffset = 2,
+            secondLeafEdgeSrcOffset = 5, secondLeafSuffixOffset = 4, endPosition = endPosition
+        )
+        val xSubtree = InternalNode()
+        xSubtree.addLeafEdge(LeafNode(0), TextPosition(1), endPosition)
+        val xzSubtree = xSubtree.addInternalEdge(
+            internalEdgeOffsets = Pair(2, 3),
+            firstLeafEdgeSrcOffset = 3, firstLeafSuffixOffset = 1,
+            secondLeafEdgeSrcOffset = 5, secondLeafSuffixOffset = 3, endPosition = endPosition
+        )
+        xzSubtree.linkTo(zSubtree)
+        root.addInternalEdge(xSubtree, TextPosition(0), TextPosition(1))
+        val activePoint = ActivePoint.positionedAt(
+            "xxzxzzxza", root, endPosition,
+            activeEdge = 6, activeLength = 2, remainingSuffixes = 4, activeNode = zSubtree
+        )
+
+        activePoint.addNextSuffix(8)
+
+        assertTrue(
+            xzSubtree.hasSuffixLink { it == zSubtree },
+            "It looks like the subtree rooted at 'xz' had its suffix link to the 'z' subtree, " +
+                    "overwritten during normalization after inserting the suffix 'zxza'. Instead " +
+                    "normalization should only produce suffix links if they don't already exist."
+        )
+    }
+
     private fun SrcNode.addInternalEdge(
         internalEdgeOffsets: Pair<Int, Int>, firstLeafSuffixOffset: Int,
         firstLeafEdgeSrcOffset: Int, secondLeafSuffixOffset: Int,

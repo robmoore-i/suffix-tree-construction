@@ -27,7 +27,6 @@ class SuffixTree(private val terminatedInputString: String, private val root: Ro
 
             // Phases
             (2..input.length).forEach { phaseNumber ->
-                Debugger.enableIf { true }
                 val nextCharOffset = phaseNumber - 1
                 Debugger.info(
                     "\nStarting phase $phaseNumber for character '${input[nextCharOffset]}'\n" +
@@ -274,7 +273,13 @@ class ActivePoint(
     }
 
     fun followSuffixLink(suffixLink: InternalNode?) {
-        activeNode = suffixLink ?: root
+        activeNode = if (suffixLink != null) {
+            Debugger.info("Following suffix link to internal node $suffixLink;")
+            suffixLink
+        } else {
+            Debugger.info("No suffix link, so reverting to the root node")
+            root
+        }
         normalizeActivePoint(eagerNodeHop = true)
     }
 
@@ -292,7 +297,7 @@ class ActivePoint(
                             "to (${activeEdge + edgeLength}, ${activeLength - edgeLength})"
                 )
                 val nextActiveNode = edge.dst() as InternalNode
-                if (!activeNodeIsRoot()) {
+                if (!activeNodeIsRoot() && nextActiveNode.hasSuffixLink { it == null }) {
                     nextActiveNode.linkTo(activeNode as InternalNode)
                 }
                 activeNode = nextActiveNode
@@ -678,6 +683,9 @@ class InternalNode : SrcNode(), DstNode {
     }
 
     fun linkTo(internalNode: InternalNode) {
+        if (suffixLink != null) {
+            Debugger.info("Overwriting existing suffix link: $suffixLink")
+        }
         this.suffixLink = internalNode
     }
 

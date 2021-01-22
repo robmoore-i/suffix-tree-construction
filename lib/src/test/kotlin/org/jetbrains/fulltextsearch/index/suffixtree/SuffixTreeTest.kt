@@ -120,6 +120,12 @@ class SuffixTreeTest {
         assertSuffixTreeIsCorrectlyConstructed(input, suffixTree(input))
     }
 
+    @Test
+    internal fun `don't overwrite existing suffix links during normalization`() {
+        val input = "xxzxzzxza"
+        assertSuffixTreeIsCorrectlyConstructed(input, suffixTree(input))
+    }
+
     private fun suffixTree(input: String): SuffixTree {
         val suffixTree = SuffixTree.ukkonenConstruction(input)
         println("\nSuffix Tree for '$input': $suffixTree")
