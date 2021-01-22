@@ -1,18 +1,17 @@
 package org.jetbrains.fulltextsearch.indexer.async
 
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.joinAll
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import org.jetbrains.fulltextsearch.filesystem.Directory
 import org.jetbrains.fulltextsearch.index.IndexedFile
 import org.jetbrains.fulltextsearch.indexer.IndexerStrategy
+import org.jetbrains.fulltextsearch.indexer.sync.SyncIndexer
+import org.jetbrains.fulltextsearch.indexer.sync.SyncIndexingProgressListener
 import org.jetbrains.fulltextsearch.search.IndexedDirectory
 import java.util.*
 
 class ParallelAsyncIndexer(
     private val indexerStrategy: IndexerStrategy = IndexerStrategy.default()
-) : AsyncIndexer {
+) : AsyncIndexer, SyncIndexer {
     override suspend fun buildIndexAsync(
         directory: Directory,
         indexingProgressListener: AsyncIndexingProgressListener
@@ -32,5 +31,24 @@ class ParallelAsyncIndexer(
                 IndexedDirectory(indexedFiles)
             )
         }
+    }
+
+    override fun buildIndex(
+        directory: Directory,
+        indexingProgressListener: SyncIndexingProgressListener
+    ): IndexedDirectory = runBlocking {
+        var theIndexedDirectory: IndexedDirectory? = null
+        buildIndexAsync(
+            directory,
+            object : AsyncIndexingProgressListener {
+                override fun onNewFileIndexed(indexedFile: IndexedFile) {
+                    indexingProgressListener.onNewFileIndexed(indexedFile)
+                }
+
+                override fun onIndexingCompleted(indexedDirectory: IndexedDirectory) {
+                    theIndexedDirectory = indexedDirectory
+                }
+            })
+        theIndexedDirectory!!
     }
 }
