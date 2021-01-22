@@ -3,7 +3,25 @@
 This document is written for a reviewer of this code project, to help you use
 your time more efficiently.
 
+### Table of contents
+
+* [Repository Layout](#repository-layout)
+* [Mapping to requirements](#mapping-to-requirements)
+  * [Indexing of a directory](#indexing-of-a-directory)
+  * [Showing progress](#showing-progress)
+  * [Building the index using several threads in parallel](#building-the-index-using-several-threads-in-parallel)
+  * [Interrupting indexing](#interrupting-indexing)
+  * [Finding the position of strings](#finding-the-position-of-strings)
+  * [Processing search requests in parallel](#processing-search-requests-in-parallel)
+* [Indexes: Suffix trees vs naive substring search](#indexes-suffix-trees-vs-naive-substring-search)
+* [Developer Interface](#developer-interface)
+* [Testing](#testing)
+  * [Running Tests](#running-tests)
+  * [Fuzz Tests](#fuzz-tests)
+
 ## Repository Layout
+
+<a id="repository-layout"></a>
 
 - `Plan.md` contains a brief implementation plan including the iterations and
   increments to the program which I've made until now.
@@ -17,7 +35,11 @@ your time more efficiently.
 
 ## Mapping to requirements
 
+<a name="mapping-to-requirements"></a>
+
 #### Indexing of a directory
+
+<a name="indexing-of-a-directory"></a>
 
 To model an index of a directory, I have a class called an `IndexedDirectory`.
 This class has methods for performing queries on the underlying directory. It
@@ -28,6 +50,8 @@ the library in a dedicated section, further down.
 
 #### Showing progress
 
+<a name="showing-progress"></a>
+
 To report progress to developers using the library, I used the Observer pattern.
 Developers pass in an implementation of a functional interface, and the
 coroutines which are indexing the files will send the appropriate events to the
@@ -37,12 +61,16 @@ and asynchronous indexing, and it is easy to write tests for it.
 
 #### Building the index using several threads in parallel
 
+<a name="building-the-index-using-several-threads-in-parallel"></a>
+
 I used coroutines, rather than threads, but I suspect it is still within your
 expectations. For indexing, the parallel indexers will launch a coroutine to
 build an index for each file, since the index of the directory is simply a
 collection of file indexes.
 
 #### Interrupting indexing
+
+<a name="interrupting-indexing"></a>
 
 Since indexing is a Kotlin coroutine Job, it can be cancelled using any of the
 interfaces through which you can cancel a normal coroutine. You can see an
@@ -51,17 +79,23 @@ example of the cancellability in the `app` project, which uses the
 
 #### Finding the position of strings
 
+<a name="finding-the-position-of-strings"></a>
+
 Once it has been built, the index responds to queries by returning the location
 of substrings within the directory, including the relative path to the file they
 are in, and the text offset within the file.
 
 #### Processing search requests in parallel
 
+<a name="processing-search-requests-in-parallel"></a>
+
 Since queries are executed asynchronously, and they are read-only, I think it
 should be trivial to execute parallel queries, although there aren't examples of
 this in either the example `app` project, or the unit tests.
 
-## Indexes: Suffix trees vs naive
+## Indexes: Suffix trees vs naive substring search
+
+<a name="indexes-suffix-trees-vs-naive-substring-search"></a>
 
 First, I'll explain the concept of the "naive" index. When I refer in the code
 to a "naive" index, what I am talking about is not really an index at all. It is
@@ -83,6 +117,8 @@ personal matter for me with this algorithm :) so I won't give up until it's done
 and it's fast.
 
 ## Developer Interface
+
+<a name="developer-interface"></a>
 
 The library's developer interface consists of a few different objects. I
 developed this interface by using the small `app` project as an example.
@@ -111,7 +147,11 @@ report its query results to the `QueryMatchListener` as soon as it has them.
 
 ## Testing
 
+<a name="testing"/a>
+
 ### Running Tests
+
+<a name="running-tests"></a>
 
 - `./gradlew lib:test` runs the unit tests for the library. There should be 86
   unit tests running.
@@ -121,6 +161,8 @@ report its query results to the `QueryMatchListener` as soon as it has them.
   will be skipped. There are 6 performance tests available.
 
 #### Fuzz Tests
+
+<a name="fuzz-tests"></a>
 
 While working on suffix tree construction, I've made use of "fuzz testing", in
 which the test generates random inputs and see if the program behaves correctly.
