@@ -110,11 +110,8 @@ Ukkonen's algorithm for this, because it has desirable properties, such as being
 linear in the time and space of the input files. Due to the algorithm's
 complexity, I started with a simpler, more naive algorithm for suffix tree
 construction. This ran in cubic time and was quite impractical. My aim is now to
-iterate into a fast, correct implementation of Ukkonen's algorithm, and that is
-what I have been doing. As of Friday evening (the deadline I set for myself) my
-Ukkonen's algorithm implementation is still not correct, but it is now a
-personal matter for me with this algorithm :) so I won't give up until it's done
-and it's fast.
+iterate into a fast, correct implementation of Ukkonen's algorithm. As of the
+deadline of the evening of Friday 22nd, this is not yet done.
 
 ## Developer Interface
 
