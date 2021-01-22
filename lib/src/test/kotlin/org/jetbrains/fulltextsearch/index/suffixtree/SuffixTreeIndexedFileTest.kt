@@ -10,4 +10,12 @@ internal class SuffixTreeIndexedFileTest {
         val indexedFile = SuffixTreeIndexedFile("some-file.txt", "my file text")
         assertEquals(listOf<QueryMatch>(), indexedFile.query(""))
     }
+
+    @Test
+    internal fun `returns no matches for an empty file`() {
+        val indexedFile = SuffixTreeIndexedFile("some-file.txt", "")
+        assertEquals(listOf<QueryMatch>(), indexedFile.query("abc"))
+        assertEquals(listOf<QueryMatch>(), indexedFile.query("x"))
+        assertEquals(listOf<QueryMatch>(), indexedFile.query(""))
+    }
 }

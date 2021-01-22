@@ -14,6 +14,14 @@ class NaiveIndexedFileTest {
     }
 
     @Test
+    internal fun `returns no matches for an empty file`() {
+        val indexedFile = NaiveIndexedFile("some-file.txt", "")
+        assertEquals(listOf<QueryMatch>(), indexedFile.query("abc"))
+        assertEquals(listOf<QueryMatch>(), indexedFile.query("x"))
+        assertEquals(listOf<QueryMatch>(), indexedFile.query(""))
+    }
+
+    @Test
     internal fun `can query for string 'memo'`() {
         val indexedFile = NaiveIndexedFile("file.txt", "memo")
         assertEquals(setOf(0, 2), indexedFile.offsetsOf("m"))
