@@ -127,9 +127,11 @@ class SuffixTreeTest {
     }
 
     @Test
-    internal fun `next test`() {
-        val input = "zxxyzxzzx"
-        assertSuffixTreeIsCorrectlyConstructed(input, suffixTree(input))
+    internal fun `next failing test`() {
+        val input = "zxxyzxzzx$"
+        Debugger.debugFor {
+            assertSuffixTreeIsCorrectlyConstructed(input, suffixTree(input))
+        }
     }
 
     private fun suffixTree(input: String): SuffixTree {
