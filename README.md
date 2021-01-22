@@ -7,7 +7,7 @@ your time more efficiently.
 
 - `Plan.md` contains a brief implementation plan including the iterations and
   increments to the program which I've made until now.
-- `Task-description` contains the original task description.
+- `Task-description.md` contains the original task description.
 - `lib` contains the library implementing full-text search.
 - `app` contains a small example program which uses the library.
 - `scripts` contains a single script which you can use to fetch input
@@ -86,6 +86,28 @@ and it's fast.
 
 The library's developer interface consists of a few different objects. I
 developed this interface by using the small `app` project as an example.
+
+To index a directory, developers create a `Directory` object and an indexer of
+their choice. The indexer types are `SyncIndexer` and `AsyncIndexer`.
+
+Let's assume from now on that they have chosen to use the `AsyncIndexer`.
+
+When a developer wants to perform indexing, they pass the `Directory` to the
+`AsyncIndexer` via the `buildIndexAsync` method. In order to get feedback about
+the progress of indexing, and pick up the result when it's done, they also pass
+in an Observer, called `AsyncIndexingProgressListener`, which is notified by
+the `AsyncIndexer` about two kinds of events - when a file has been indexed, and
+when the whole directory has been indexed.
+
+Once indexing is complete, the user will have access to an implementation of the
+`IndexedDirectory` class, which represents an indexed, searchable directory,
+corresponding to the `Directory` that was passed in initially.
+
+The `IndexedDirectory` supports asynchronous and synchronous queries, which are
+currently always case-sensitive. In the case of asynchronous queries, developers
+pass in a `QueryMatchListener`. The `IndexedDirectory` will launch coroutines to
+query every one of the `IndexedFile` objects within it, and each coroutine will
+report its query results to the `QueryMatchListener` as soon as it has them.
 
 ## Testing
 

@@ -8,11 +8,11 @@ import org.jetbrains.fulltextsearch.index.IndexedFile
 class IndexedDirectory(private val indexedFiles: List<IndexedFile>) {
     fun queryCaseSensitive(s: String): List<QueryMatch> {
         val collector = QueryMatchListener.MatchCollector()
-        runBlocking { queryCaseSensitivesAsync(s, collector) }
+        runBlocking { queryCaseSensitiveAsync(s, collector) }
         return collector.matches()
     }
 
-    suspend fun queryCaseSensitivesAsync(
+    suspend fun queryCaseSensitiveAsync(
         s: String,
         listener: QueryMatchListener
     ): Unit = coroutineScope {

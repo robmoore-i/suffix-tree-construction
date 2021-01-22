@@ -30,8 +30,7 @@ task printRunDisabledMessage {
                 "- You need to run this program from Intellij, rather than " +
                 "using Gradle from the command line. The reason is that the " +
                 "application needs to read input from the user at the " +
-                "command line (i.e. via the Java Scanner object, or via " +
-                "Kotlin's readLine function. When run via the Gradle run " +
+                "command line (i.e. via stdin). When run via the Gradle run " +
                 "task though, this behaviour does not work correctly.\n" +
                 "- There is an open issue related to this, which can be found " +
                 "here: https://github.com/gradle/gradle/issues/1251\n"

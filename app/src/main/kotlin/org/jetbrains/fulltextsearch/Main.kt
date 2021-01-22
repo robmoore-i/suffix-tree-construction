@@ -11,7 +11,6 @@ import org.jetbrains.fulltextsearch.indexer.async.AsyncIndexingProgressListener
 import org.jetbrains.fulltextsearch.search.IndexedDirectory
 import org.jetbrains.fulltextsearch.search.QueryMatch
 import java.nio.file.Paths
-import java.util.*
 import kotlin.system.exitProcess
 
 class Main {
@@ -20,8 +19,7 @@ class Main {
         fun main(args: Array<String>) {
             runBlocking {
                 printBanner()
-                val userInput = UserInputSource()
-                val directory: Directory = chooseSearchDirectory(userInput)
+                val directory: Directory = chooseSearchDirectory()
                 val indexer = AsyncIndexer.default()
                 // Note: You can trigger a timeout using the below directory:
                 // example-input-directories/kotlin
@@ -42,7 +40,7 @@ class Main {
                     println("Done.")
                     theIndexedDirectory!!
                 }
-                runSearchQueryREPL(userInput, indexedDirectory)
+                runSearchQueryREPL(indexedDirectory)
             }
         }
 
@@ -54,7 +52,7 @@ class Main {
             )
         }
 
-        private fun chooseSearchDirectory(userInputSource: UserInputSource): Directory {
+        private fun chooseSearchDirectory(): Directory {
             var defaultSearchDirectory =
                 "example-input-directories/LSystems/src"
             if (currentWorkingDirectory().endsWith("app")) {
@@ -62,12 +60,14 @@ class Main {
             }
 
             println("Which directory do you want to search in? (default = $defaultSearchDirectory)")
-            var userInput = userInputSource.readLine()
+            val inputLine = readLine()
+            val userInput = if (!inputLine.isNullOrBlank()) {
+                inputLine
+            } else {
+                defaultSearchDirectory
+            }
             if (userInput == "quit") {
                 exitProcess(0)
-            }
-            if (userInput.isBlank()) {
-                userInput = defaultSearchDirectory
             }
             val dirPath = Paths.get(userInput)
 
@@ -83,17 +83,14 @@ class Main {
                             // If your directory is called 'quit', then I'm sorry.
                             "Type 'quit' to quit.\n"
                 )
-                return chooseSearchDirectory(userInputSource)
+                return chooseSearchDirectory()
             }
             println("Directory '${userInput}' not found. Type 'quit' to quit.\n")
-            return chooseSearchDirectory(userInputSource)
+            return chooseSearchDirectory()
         }
 
-        private fun runSearchQueryREPL(
-            userInputSource: UserInputSource,
-            indexedDirectory: IndexedDirectory
-        ) {
-            val queryInput = QueryInput(userInputSource)
+        private fun runSearchQueryREPL(indexedDirectory: IndexedDirectory) {
+            val queryInput = QueryInput()
             queryInput.readFromUser()
             while (!queryInput.hasQuit()) {
                 val queryCaseSensitive: List<QueryMatch> =
@@ -107,15 +104,7 @@ class Main {
     }
 }
 
-class UserInputSource {
-    private val scan = Scanner(System.`in`)
-
-    fun readLine(): String {
-        return scan.nextLine().trim()
-    }
-}
-
-class QueryInput(private val userInputSource: UserInputSource) {
+class QueryInput() {
     var query: String? = ""
 
     fun readFromUser() {
@@ -126,12 +115,12 @@ class QueryInput(private val userInputSource: UserInputSource) {
         println(
             prompt
         )
-        query = userInputSource.readLine()
+        query = readLine()
         while (query.isNullOrBlank()) {
             println(
                 prompt
             )
-            query = userInputSource.readLine()
+            query = readLine()
         }
     }
 

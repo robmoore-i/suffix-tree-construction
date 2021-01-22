@@ -53,8 +53,8 @@ class IndexedDirectoryTest {
         val one = QueryMatchListener.MatchCollector()
         val two = QueryMatchListener.MatchCollector()
         runBlocking {
-            indexedDirectory.queryCaseSensitivesAsync("abra", one)
-            indexedDirectory.queryCaseSensitivesAsync("ra", two)
+            indexedDirectory.queryCaseSensitiveAsync("abra", one)
+            indexedDirectory.queryCaseSensitiveAsync("ra", two)
         }
 
         assertThat(one.matches(), hasSize(2))
@@ -94,7 +94,7 @@ class IndexedDirectoryTest {
         }
 
         runBlocking {
-            indexedDirectory.queryCaseSensitivesAsync("abra", eventCounter)
+            indexedDirectory.queryCaseSensitiveAsync("abra", eventCounter)
         }
 
         assertThat(eventCounter.numberOfReceivedEvents(), equalTo(1))
