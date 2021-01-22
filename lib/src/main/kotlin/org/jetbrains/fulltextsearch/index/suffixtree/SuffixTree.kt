@@ -180,7 +180,7 @@ class ActivePoint(
                                 "due to next char '$nextChar' at label offset $activeLength"
                     )
                     activeLength++
-                    normalizeActivePoint()
+                    normalizeActivePoint(eagerNodeHop = false)
                     SuffixExtensionType.RULE_THREE
                 } else if (labelLength > activeLength) {
                     /*
@@ -203,7 +203,6 @@ class ActivePoint(
                             )
                         }' with activeLength=$activeLength. The edge is $edge."
                     )
-                    val internalEdge = edge as InternalEdge
                     val internalNode = edge.dst() as InternalNode
                     if (internalNode.hasEdgeWithChar(input, 0, nextChar)) {
                         /*
@@ -223,10 +222,15 @@ class ActivePoint(
                         next character, so we create one.
                         */
                         Debugger.info(
-                            "Adding leaf node to the internal node that is just " +
-                                    "in-front of us at the end of edge $edge"
+                            "Adding leaf node [$nextCharOffset, $endPosition]($suffixOffset) " +
+                                    "to the internal node that is just in-front of us " +
+                                    "at the end of edge $edge;"
                         )
-                        internalEdge.addToDst(LeafNode(suffixOffset), nextCharOffset, endPosition)
+                        internalNode.addLeafEdge(
+                            LeafNode(suffixOffset),
+                            TextPosition(nextCharOffset),
+                            endPosition
+                        )
                         remainingSuffixes.decrement()
                         activeNode.advanceActivePoint(this)
                         SuffixExtensionType.RULE_TWO
@@ -500,11 +504,6 @@ class InternalEdge(
 ) : Edge(srcNode, dstNode, srcOffset, dstOffset) {
     override fun toString(): String {
         return "<InternalEdge [$srcOffset, $dstOffset] => dstNode=${dstNode}>"
-    }
-
-    fun addToDst(leaf: LeafNode, srcOffset: Int, endPosition: TextPosition) {
-        Debugger.info("Adding leaf $leaf to dst node.")
-        dstNode.addLeafEdge(leaf, TextPosition(srcOffset), endPosition)
     }
 
     fun dstMatches(internalNodeMatcher: (InternalNode) -> Boolean): Boolean {

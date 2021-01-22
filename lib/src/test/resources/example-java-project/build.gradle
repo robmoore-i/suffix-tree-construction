@@ -1,0 +1,37 @@
+plugins {
+    id 'java'
+}
+
+//noinspection GroovyAssignabilityCheck
+group 'org.lsystems'
+//noinspection GroovyAssignabilityCheck
+version '1.0'
+//noinspection GroovyAssignabilityCheck
+sourceCompatibility = 11
+
+compileJava.options.encoding = 'UTF-8'
+
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}
+
+jar {
+    manifest {
+        //noinspection GroovyAssignabilityCheck
+        attributes 'Main-Class': 'Main'
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    //noinspection GroovyAssignabilityCheck
+    testImplementation 'junit:junit:4.11'
+    //noinspection GroovyAssignabilityCheck
+    testImplementation 'org.hamcrest:hamcrest-core:1.3'
+    //noinspection GroovyAssignabilityCheck
+    testImplementation 'org.mockito:mockito-core:2.1.0'
+
+}
