@@ -5,14 +5,16 @@ import java.util.*
 
 class SuffixTree(length: Int) {
     private val text: CharArray = CharArray(length)
+    private var textPosition: Int = 0
+
     private val rootNode: Node = RootNode()
 
     private var activeNode: Node = rootNode
     private var activeLength = 0
     private var activeEdge = 0
 
-    private var position: Int = -1
     private var suffixLinkCandidate: Node? = null
+
     private var remainingSuffixes = 0
 
     companion object {
@@ -27,7 +29,8 @@ class SuffixTree(length: Int) {
     fun addChar(c: Char) {
         // Add the character into the array of characters we have already indexed, and increase our
         // pointer to the end of the text
-        text[++position] = c
+        text[textPosition] = c
+        textPosition++
 
         // We only add suffix links within a phase, so we reset it.
         suffixLinkCandidate = null
@@ -37,8 +40,8 @@ class SuffixTree(length: Int) {
 
         while (remainingSuffixes > 0) {
             if (activeLength == 0) {
-                // Point our active edge at the next character in the text
-                activeEdge = position
+                // Point our active edge at the most recently added character in the text
+                activeEdge = textPosition - 1
             }
 
             if (!activeNode.edges.containsKey(activeEdgeChar())) {
@@ -93,7 +96,7 @@ class SuffixTree(length: Int) {
                 // When we insert a node from root, we decrement our active length, and pull our
                 // active edge forwards to point at the start of the next suffix we're adding.
                 activeLength--
-                activeEdge = position - remainingSuffixes + 1
+                activeEdge = textPosition - remainingSuffixes
             } else {
                 // When we insert a node from an internal node, we follow its suffix link if it has
                 // one. The default suffix link for any node is root.
@@ -196,7 +199,7 @@ class SuffixTree(length: Int) {
     open inner class Node(var start: Int, private var end: Int) {
         private var suffixLink: Node? = null
 
-        val suffix = position - remainingSuffixes + 1
+        val suffix = textPosition - remainingSuffixes
         var edges = TreeMap<Char, Node>()
 
         fun suffixLink(): Node {
@@ -208,7 +211,7 @@ class SuffixTree(length: Int) {
         }
 
         fun edgeLength(): Int {
-            return minOf(end, position + 1) - start
+            return minOf(end, textPosition) - start
         }
 
         fun edgeLabel(): String {
@@ -247,7 +250,7 @@ class SuffixTree(length: Int) {
         }
     }
 
-    inner class LeafNode : Node(position, Int.MAX_VALUE / 2) {
+    inner class LeafNode : Node(textPosition - 1, Int.MAX_VALUE / 2) {
         override fun toString(): String {
             return "LeafNode(start=$start, end=end, suffix=$suffix, label=${edgeLabel()})"
         }
