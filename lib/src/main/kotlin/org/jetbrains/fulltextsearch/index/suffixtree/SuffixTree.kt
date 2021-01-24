@@ -44,7 +44,7 @@ class SuffixTree(length: Int) {
         if (activeLength >= edgeLength) {
             activeEdge += edgeLength
             activeLength -= edgeLength
-            activeNode = nodes[nextNode.id]!!
+            activeNode = nextNode
             return true
         }
         return false
@@ -89,8 +89,7 @@ class SuffixTree(length: Int) {
                 // Since the active node has an edge starting with the next character, we need to
                 // either create a new leaf node, continue down the active edge, or split the
                 // current edge and create both an internal node and a leaf node.
-                val nextNodeId = activeNode.next[activeEdge()]!!
-                val nextNode = nodes[nextNodeId]!!
+                val nextNode = nodes[activeNode.next[activeEdge()]!!]!!
 
                 // If the reference to the active point is non-canonical, then canonize it by
                 // stepping through the tree, and then go to the next extension of the current
@@ -137,7 +136,7 @@ class SuffixTree(length: Int) {
             } else {
                 // When we insert a node from an internal node, we follow its suffix link if it has
                 // one. The default suffix link for any node is root.
-                activeNode = activeNode.linkedNode()
+                activeNode = activeNode.suffixLink()
             }
         }
     }
@@ -220,17 +219,17 @@ class SuffixTree(length: Int) {
      * and 'end' fields.
      */
     open inner class Node(val id: Int, var start: Int, private var end: Int) {
-        private var link: Node? = null
+        private var suffixLink: Node? = null
 
         val suffix = position - remainder + 1
         var next = TreeMap<Char, Int>()
 
-        fun linkedNode(): Node {
-            return link ?: rootNode
+        fun suffixLink(): Node {
+            return suffixLink ?: rootNode
         }
 
         fun linkTo(node: Node) {
-            link = node
+            suffixLink = node
         }
 
         fun edgeLength(): Int {
@@ -252,7 +251,7 @@ class SuffixTree(length: Int) {
         override fun toString(): String {
             return "Node(next=$next, start=$start, end=${
                 if (end > text.size) "end" else end.toString()
-            }, suffix=$suffix, link=${link?.id}, label=${edgeLabel()})"
+            }, suffix=$suffix, link=${suffixLink?.id}, label=${edgeLabel()})"
         }
     }
 
