@@ -15,12 +15,13 @@ class SuffixTree(length: Int) {
 
 
     private var activeNodeId: Int = rootNode.id
+    private var activeLength = 0
+    private var activeEdge = 0
+
     private var position: Int = -1
     private var currentNode = 1
     private var nodeNeedingSuffixLink: Node? = null
     private var remainder = 0
-    private var activeLength = 0
-    private var activeEdge = 0
 
 
     companion object {
