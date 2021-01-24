@@ -13,7 +13,7 @@ class SuffixTree(length: Int) {
 
     private var position: Int = -1
     private var suffixLinkCandidate: Node? = null
-    private var remainder = 0
+    private var remainingSuffixes = 0
 
     companion object {
         fun ukkonenConstruction(input: String): SuffixTree {
@@ -33,9 +33,9 @@ class SuffixTree(length: Int) {
         suffixLinkCandidate = null
 
         // There is now an additional suffix which is not yet explicit in the tree
-        remainder++
+        remainingSuffixes++
 
-        while (remainder > 0) {
+        while (remainingSuffixes > 0) {
             if (activeLength == 0) {
                 // Point our active edge at the next character in the text
                 activeEdge = position
@@ -87,13 +87,13 @@ class SuffixTree(length: Int) {
             // new leaf node, which means that a new suffix has been made explicit within the tree.
             // When this happens, we decrement the number of suffixes that still need to be added to
             // the tree.
-            remainder--
+            remainingSuffixes--
 
             if (activeNode == rootNode && activeLength > 0) {
                 // When we insert a node from root, we decrement our active length, and pull our
                 // active edge forwards to point at the start of the next suffix we're adding.
                 activeLength--
-                activeEdge = position - remainder + 1
+                activeEdge = position - remainingSuffixes + 1
             } else {
                 // When we insert a node from an internal node, we follow its suffix link if it has
                 // one. The default suffix link for any node is root.
@@ -196,7 +196,7 @@ class SuffixTree(length: Int) {
     open inner class Node(var start: Int, private var end: Int) {
         private var suffixLink: Node? = null
 
-        val suffix = position - remainder + 1
+        val suffix = position - remainingSuffixes + 1
         var edges = TreeMap<Char, Node>()
 
         fun suffixLink(): Node {
