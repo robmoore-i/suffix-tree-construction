@@ -13,7 +13,6 @@ import org.jetbrains.fulltextsearch.indexer.async.AsyncIndexingProgressListener
 import org.jetbrains.fulltextsearch.indexer.async.ParallelAsyncIndexer
 import org.jetbrains.fulltextsearch.randominput.RandomInput
 import org.jetbrains.fulltextsearch.search.IndexedDirectory
-import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import java.nio.file.Path
@@ -38,9 +37,26 @@ class IndexComparisonTest {
 
         repeat(50) {
             val queryTerm = RandomInput.generateRandomSearchQueryTerm()
-            val suffixTreeResults = suffixTreeIndex.queryCaseSensitive(queryTerm).toSet()
-            val expectedResults = naiveIndex.queryCaseSensitive(queryTerm).toSet()
-            assertEquals(expectedResults, suffixTreeResults)
+            val suffixTreeMatches = suffixTreeIndex.queryCaseSensitive(queryTerm).toSet()
+            val expectedMatches = naiveIndex.queryCaseSensitive(queryTerm).toSet()
+            println("Querying for '$queryTerm'")
+            if (suffixTreeMatches != expectedMatches) {
+                var counter = 0
+                for (expectedMatch in expectedMatches) {
+                    if (expectedMatch !in suffixTreeMatches) {
+                        counter++
+                    }
+                }
+                println("\tThere were $counter expected query results which were missing")
+
+                counter = 0
+                for (match in suffixTreeMatches) {
+                    if (match !in expectedMatches) {
+                        counter++
+                    }
+                }
+                println("\tThere were $counter query results which were unexpected")
+            }
         }
     }
 
