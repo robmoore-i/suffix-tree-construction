@@ -7,8 +7,6 @@ class SuffixTree(length: Int) {
     private val text: CharArray = CharArray(length)
     private val rootNode: Node = RootNode()
 
-    private val nodes: MutableMap<Int, Node?> = mutableMapOf(Pair(rootNode.id, rootNode))
-
     private var activeNode: Node = rootNode
     private var activeLength = 0
     private var activeEdge = 0
@@ -47,7 +45,7 @@ class SuffixTree(length: Int) {
                 // If the active node doesn't yet have a child node corresponding to the next
                 // character, add one. When we perform a leaf insertion like this, we need to add a
                 // suffix link.
-                activeNode.edges[activeEdgeChar()] = addLeafNode()
+                activeNode.edges[activeEdgeChar()] = LeafNode()
                 addSuffixLink(activeNode)
             } else {
                 // Since the active node has an edge starting with the next character, we need to
@@ -77,9 +75,9 @@ class SuffixTree(length: Int) {
                 // The next node we're adding will be an internal node. We add it, and create a
                 // leaf node from it whose edge corresponds to the character we're adding. We also
                 // create a suffix link for the newly added internal node.
-                val internalNode = addInternalNode(nextNode.start, nextNode.start + activeLength)
+                val internalNode = Node(nextNode.start, nextNode.start + activeLength)
                 activeNode.edges[activeEdgeChar()] = internalNode
-                internalNode.edges[c] = addLeafNode()
+                internalNode.edges[c] = LeafNode()
                 nextNode.start += activeLength
                 internalNode.edges[text[nextNode.start]] = nextNode
                 addSuffixLink(internalNode)
@@ -91,7 +89,7 @@ class SuffixTree(length: Int) {
             // the tree.
             remainder--
 
-            if (activeNode.id == rootNode.id && activeLength > 0) {
+            if (activeNode == rootNode && activeLength > 0) {
                 // When we insert a node from root, we decrement our active length, and pull our
                 // active edge forwards to point at the start of the next suffix we're adding.
                 activeLength--
@@ -106,15 +104,6 @@ class SuffixTree(length: Int) {
 
     private fun canonizeTree() {
         addChar('\u0000')
-    }
-
-    private fun addInternalNode(start: Int, end: Int) = addNode(Node(nodes.size + 1, start, end))
-
-    private fun addLeafNode() = addNode(LeafNode())
-
-    private fun addNode(node: Node): Node {
-        nodes[node.id] = node
-        return node
     }
 
     private fun addSuffixLink(node: Node) {
@@ -204,7 +193,7 @@ class SuffixTree(length: Int) {
         }
     }
 
-    open inner class Node(val id: Int, var start: Int, private var end: Int) {
+    open inner class Node(var start: Int, private var end: Int) {
         private var suffixLink: Node? = null
 
         val suffix = position - remainder + 1
@@ -235,19 +224,40 @@ class SuffixTree(length: Int) {
         }
 
         override fun toString(): String {
-            return "Node(next=$edges, start=$start, end=${
-                if (end > text.size) "end" else end.toString()
-            }, suffix=$suffix, link=${suffixLink?.id}, label=${edgeLabel()})"
+            return toString(1)
+        }
+
+        open fun toString(indentationLevel: Int): String {
+            return "Node(start=$start, end=$end, suffix=$suffix, hasLink?=${suffixLink != null}, label=${edgeLabel()}, " +
+                    "edges:${
+                        edges.map {
+                            "\n${"\t".repeat(indentationLevel)}'${it.key}'=${
+                                it.value.toString(
+                                    indentationLevel + 1
+                                )
+                            }"
+                        }
+                    })"
         }
     }
 
-    inner class RootNode : Node(1, -1, -1)
+    inner class RootNode : Node(-1, -1) {
+        override fun toString(): String {
+            return "RootNode(edges:${edges.map { "\n\t'${it.key}'=${it.value.toString(2)}" }})"
+        }
+    }
 
-    inner class LeafNode : Node(nodes.size + 1, position, Int.MAX_VALUE / 2)
+    inner class LeafNode : Node(position, Int.MAX_VALUE / 2) {
+        override fun toString(): String {
+            return "LeafNode(start=$start, end=end, suffix=$suffix, label=${edgeLabel()})"
+        }
+
+        override fun toString(indentationLevel: Int): String {
+            return toString()
+        }
+    }
 
     override fun toString(): String {
-        return "SuffixTree(nodes={\n${
-            nodes.toSortedMap().map { "\t${it.key} ${it.value}" }.joinToString("\n")
-        }\n})"
+        return "SuffixTree(rootNode={\n$rootNode\n})"
     }
 }
