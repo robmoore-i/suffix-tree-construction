@@ -14,18 +14,15 @@ fun interface IndexerStrategy {
             val relativePath = rootDirectory.relativePathTo(file.path)
             val fileText = file.readText()
             if (fileText.length < 50) {
-                SuffixTreeIndexedFile(relativePath, fileText, useFallback = true)
+                SuffixTreeIndexedFile(relativePath, fileText)
             } else {
                 NaiveIndexedFile(relativePath, fileText)
             }
         }
 
-        fun alwaysUseSuffixTreeIndex(useFallback: Boolean = false) =
+        fun alwaysUseSuffixTreeIndex() =
             IndexerStrategy { rootDirectory, file ->
-                SuffixTreeIndexedFile(
-                    rootDirectory.relativePathTo(file.path), file.readText(),
-                    useFallback = useFallback
-                )
+                SuffixTreeIndexedFile(rootDirectory.relativePathTo(file.path), file.readText())
             }
 
         fun alwaysUseNaiveIndex() = IndexerStrategy { rootDirectory, file ->

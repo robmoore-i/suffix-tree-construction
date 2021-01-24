@@ -28,9 +28,7 @@ class IndexComparisonTest {
     @Disabled
     internal fun `compare naive index to suffix tree index`() = runBlocking {
         val dirPath = Paths.get("src/test/resources/example-java-project")
-        val suffixTreeIndexer = ParallelAsyncIndexer(
-            IndexerStrategy.alwaysUseSuffixTreeIndex(useFallback = true)
-        )
+        val suffixTreeIndexer = ParallelAsyncIndexer(IndexerStrategy.alwaysUseSuffixTreeIndex())
         val naiveIndexer = ParallelAsyncIndexer(IndexerStrategy.alwaysUseNaiveIndex())
         val (suffixTreeIndex: IndexedDirectory, naiveIndex: IndexedDirectory) =
             buildIndices(dirPath, suffixTreeIndexer, naiveIndexer)

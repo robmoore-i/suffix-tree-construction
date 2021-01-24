@@ -62,7 +62,7 @@
   :white_check_mark: (18/01)
 
 - Update the suffix tree construction code so that it uses Ukkonen's linear-time
-  algorithm.
+  algorithm. :white_check_mark: (24/01)
 
 - Update the library's indexing function so that it builds a suffix tree index
   even for bigger files - maybe even all files, if that is feasible.
