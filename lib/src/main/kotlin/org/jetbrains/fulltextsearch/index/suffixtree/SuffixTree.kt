@@ -21,7 +21,6 @@ class SuffixTree(length: Int) {
     private var nodeNeedingSuffixLink: Node? = null
     private var remainder = 0
 
-
     companion object {
         fun ukkonenConstruction(input: String): SuffixTree {
             val tree = SuffixTree(input.length + 1)
