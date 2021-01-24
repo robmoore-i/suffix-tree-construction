@@ -49,44 +49,41 @@ class SuffixTree {
         var i = 0
         var node: Node = rootNode
         while (i < queryString.length) {
-            // If we're at a leaf, then we get a match if the leaf's text matches the query string.
-            // Otherwise we don't get a match.
-            if (node is LeafNode) {
-                return if (node.edgeLabel().startsWith(queryString)) {
-                    setOf(node.suffix)
-                } else {
-                    setOf()
-                }
-            }
-
             // If there are no outbound edges for the next character, then there are no matches
             val queryChar = queryString[i]
             if (!node.edges.containsKey(queryChar)) {
                 return setOf()
             }
 
-            // We follow the edge to the next internal node
+            // We follow the edge to the next internal node - but we need to check some things too.
             node = node.edges[queryChar]!!
-            val edgeLabel = node.edgeLabel()
 
             // If the edge we just followed is longer than the remainder of the query string, then
-            // we get matches the edge label starts with the remainder of the query string.
+            // we get matches only if the edge label starts with the remainder of the query string.
             // Otherwise we get no matches
             if (node.edgeLength() >= (queryString.length - i)) {
-                return if (edgeLabel.startsWith(queryString.substring(i))) {
-                    suffixesUnderSubtreeRootedAt(node)
-                } else {
-                    setOf()
+                var j = 0
+                while (j < queryString.length - i) {
+                    if (queryString[i + j] != currentlyInsertedInput[node.start + j]) {
+                        return setOf()
+                    }
+                    j++
                 }
+                return suffixesUnderSubtreeRootedAt(node)
             }
 
             // If the edge we just followed doesn't have an edge label matching the query string,
-            // then there are no matches
-            if (edgeLabel != queryString.substring(i, i + node.edgeLength())) {
-                return setOf()
+            // from the current character until the end of the edge label, then there are no
+            // matches.
+            var k = 0
+            while (k < node.edgeLength()) {
+                if (queryString[i + k] != currentlyInsertedInput[node.start + k]) {
+                    return setOf()
+                }
+                k++
             }
 
-            // We increase i by the size of the next edge label
+            // We increase i by the size of the matching edge label we just crossed.
             i += node.edgeLength()
         }
 
@@ -112,14 +109,14 @@ class SuffixTree {
 
         fun edgeLength(): Int = minOf(end, currentlyInsertedInput.length) - start
 
-        fun edgeLabel(): String =
-            currentlyInsertedInput.substring(start, minOf(end, currentlyInsertedInput.length))
-
         fun suffixLink(): Node = suffixLink ?: rootNode
 
         fun linkTo(node: Node) {
             suffixLink = node
         }
+
+        fun edgeLabel(): String =
+            currentlyInsertedInput.substring(start, minOf(end, currentlyInsertedInput.length))
 
         override fun toString(): String {
             return toString(1)
@@ -155,7 +152,7 @@ class SuffixTree {
         }
     }
 
-    inner class ActivePoint() {
+    inner class ActivePoint {
         private var activeNode: Node = rootNode
         private var activeLength = 0
         private var activeEdge = 0
