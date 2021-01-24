@@ -47,14 +47,13 @@ class SuffixTree(length: Int) {
                 // If the active node doesn't yet have a child node corresponding to the next
                 // character, add one. When we perform a leaf insertion like this, we need to add a
                 // suffix link.
-                val leaf = addLeaf()
-                activeNode.edges[activeEdgeChar()] = leaf
+                activeNode.edges[activeEdgeChar()] = addLeafNode()
                 addSuffixLink(activeNode)
             } else {
                 // Since the active node has an edge starting with the next character, we need to
                 // either create a new leaf node, continue down the active edge, or split the
                 // current edge and create both an internal node and a leaf node.
-                val nextNode = nodes[activeNode.edges[activeEdgeChar()]!!.id]!!
+                val nextNode = activeNode.edges[activeEdgeChar()]!!
 
                 // If the reference to the active point is non-canonical, then canonize it by
                 // stepping through the tree, and then go to the next extension of the current
@@ -78,10 +77,9 @@ class SuffixTree(length: Int) {
                 // The next node we're adding will be an internal node. We add it, and create a
                 // leaf node from it whose edge corresponds to the character we're adding. We also
                 // create a suffix link for the newly added internal node.
-                val internalNode = addNode(nextNode.start, nextNode.start + activeLength)
+                val internalNode = addInternalNode(nextNode.start, nextNode.start + activeLength)
                 activeNode.edges[activeEdgeChar()] = internalNode
-                val leaf = addLeaf()
-                internalNode.edges[c] = leaf
+                internalNode.edges[c] = addLeafNode()
                 nextNode.start += activeLength
                 internalNode.edges[text[nextNode.start]] = nextNode
                 addSuffixLink(internalNode)
@@ -110,14 +108,14 @@ class SuffixTree(length: Int) {
         addChar('\u0000')
     }
 
-    private fun addNode(start: Int, end: Int): Node {
-        val i = nodes.size + 1
-        val node = Node(i, start, end)
-        nodes[i] = node
+    private fun addInternalNode(start: Int, end: Int) = addNode(Node(nodes.size + 1, start, end))
+
+    private fun addLeafNode() = addNode(LeafNode())
+
+    private fun addNode(node: Node): Node {
+        nodes[node.id] = node
         return node
     }
-
-    private fun addLeaf(): Node = addNode(position, Int.MAX_VALUE / 2)
 
     private fun addSuffixLink(node: Node) {
         suffixLinkCandidate?.linkTo(node)
@@ -250,6 +248,8 @@ class SuffixTree(length: Int) {
     }
 
     inner class RootNode : Node(1, -1, -1)
+
+    inner class LeafNode : Node(nodes.size + 1, position, Int.MAX_VALUE / 2)
 
     override fun toString(): String {
         return "SuffixTree(nodes={\n${
