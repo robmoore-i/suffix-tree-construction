@@ -116,13 +116,13 @@ to a point that I think is good enough. I'll give an overview of the
 implementation here, although the code is close-by to look at. This
 implementation quite explicitly processes the string one character at a time,
 which I think makes the on-line property of Ukkonen's algorithm quite clear to
-the reader. It stores the inbound edge as part of a Node's internal state,
-rather than having an Edge class as in my earlier and much more complex
-attempts. The Node class has two subclasses - RootNode and LeafNode. The
+the reader. It stores the inbound edge as part of a `Node` object's internal
+state, rather than having an Edge class as in my earlier and much more complex
+attempts. The Node class has two subclasses - `RootNode` and `LeafNode`. The
 internal node doesn't have a particular subclass because it doesn't add much to
 do that. I did also comment the code extensively, because the problem domain is
-quite complex. There is an ActivePoint class which encapsulates the
-ActivePoint's role in providing constant time suffix additions, by creating and
+quite complex. There is an `ActivePoint` class which encapsulates the role of
+the `ActivePoint` in providing constant time suffix additions, by creating and
 exploiting suffix links. Offsets are acquired by scanning from the root node of
 the tree.
 
