@@ -96,6 +96,10 @@ class SuffixTree {
         }
     }
 
+    override fun toString(): String {
+        return "SuffixTree(rootNode={\n$rootNode\n})"
+    }
+
     open inner class Node(var start: Int, private var end: Int) {
         private var suffixLink: Node? = null
 
@@ -235,9 +239,5 @@ class SuffixTree {
             suffixLinkCandidate?.linkTo(node)
             suffixLinkCandidate = node
         }
-    }
-
-    override fun toString(): String {
-        return "SuffixTree(rootNode={\n$rootNode\n})"
     }
 }
