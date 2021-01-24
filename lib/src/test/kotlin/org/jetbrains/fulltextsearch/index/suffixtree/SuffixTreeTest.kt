@@ -108,11 +108,6 @@ class SuffixTreeTest {
         assertSuffixTreeIsCorrectlyConstructed("xxyxxaxxa$")
     }
 
-    @Test
-    internal fun `don't overwrite existing suffix links during active point canonization`() {
-        assertSuffixTreeIsCorrectlyConstructed("xxzxzzxza")
-    }
-
     private fun suffixTree(input: String): SuffixTree {
         val suffixTree = SuffixTree.ukkonenConstruction(input)
         println("\nSuffix Tree for '$input': $suffixTree")
