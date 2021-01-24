@@ -43,18 +43,18 @@ class SuffixTree(length: Int) {
                 activeEdge = position
             }
 
-            if (!activeNode.next.containsKey(activeEdgeChar())) {
+            if (!activeNode.edges.containsKey(activeEdgeChar())) {
                 // If the active node doesn't yet have a child node corresponding to the next
                 // character, add one. When we perform a leaf insertion like this, we need to add a
                 // suffix link.
                 val leaf = addLeaf()
-                activeNode.next[activeEdgeChar()] = leaf
+                activeNode.edges[activeEdgeChar()] = leaf
                 addSuffixLink(activeNode)
             } else {
                 // Since the active node has an edge starting with the next character, we need to
                 // either create a new leaf node, continue down the active edge, or split the
                 // current edge and create both an internal node and a leaf node.
-                val nextNode = nodes[activeNode.next[activeEdgeChar()]!!.id]!!
+                val nextNode = nodes[activeNode.edges[activeEdgeChar()]!!.id]!!
 
                 // If the reference to the active point is non-canonical, then canonize it by
                 // stepping through the tree, and then go to the next extension of the current
@@ -79,11 +79,11 @@ class SuffixTree(length: Int) {
                 // leaf node from it whose edge corresponds to the character we're adding. We also
                 // create a suffix link for the newly added internal node.
                 val internalNode = addNode(nextNode.start, nextNode.start + activeLength)
-                activeNode.next[activeEdgeChar()] = internalNode
+                activeNode.edges[activeEdgeChar()] = internalNode
                 val leaf = addLeaf()
-                internalNode.next[c] = leaf
+                internalNode.edges[c] = leaf
                 nextNode.start += activeLength
-                internalNode.next[text[nextNode.start]] = nextNode
+                internalNode.edges[text[nextNode.start]] = nextNode
                 addSuffixLink(internalNode)
             }
 
@@ -152,7 +152,7 @@ class SuffixTree(length: Int) {
         while (i < queryString.length) {
             // If we're at a leaf, then we get a match if the leaf's text matches the query string.
             // Otherwise we don't get a match.
-            if (nodes[nodeId]!!.next.isEmpty()) {
+            if (nodes[nodeId]!!.edges.isEmpty()) {
                 val edgeLabel = nodes[nodeId]!!.edgeLabel()
                 return if (edgeLabel.startsWith(queryString)) {
                     setOf(nodes[nodeId]!!.suffix)
@@ -163,12 +163,12 @@ class SuffixTree(length: Int) {
 
             // If there are no outbound edges for the next character, then there are no matches
             val queryChar = queryString[i]
-            if (!nodes[nodeId]!!.next.containsKey(queryChar)) {
+            if (!nodes[nodeId]!!.edges.containsKey(queryChar)) {
                 return setOf()
             }
 
             // We follow the edge to the next internal node
-            nodeId = nodes[nodeId]!!.next[queryChar]!!.id
+            nodeId = nodes[nodeId]!!.edges[queryChar]!!.id
             val edgeLabel = nodes[nodeId]!!.edgeLabel()
 
             // If the edge we just followed is longer than the remainder of the query string, then
@@ -199,10 +199,10 @@ class SuffixTree(length: Int) {
     }
 
     private fun suffixesUnderSubtreeRootedAt(node: Int): Set<Int> {
-        return if (nodes[node]!!.next.isEmpty()) {
+        return if (nodes[node]!!.edges.isEmpty()) {
             setOf(nodes[node]!!.suffix)
         } else {
-            nodes[node]!!.next.flatMap { suffixesUnderSubtreeRootedAt(it.value.id) }.toSet()
+            nodes[node]!!.edges.flatMap { suffixesUnderSubtreeRootedAt(it.value.id) }.toSet()
         }
     }
 
@@ -216,7 +216,7 @@ class SuffixTree(length: Int) {
         private var suffixLink: Node? = null
 
         val suffix = position - remainder + 1
-        var next = TreeMap<Char, Node>()
+        var edges = TreeMap<Char, Node>()
 
         fun suffixLink(): Node {
             return suffixLink ?: rootNode
@@ -243,7 +243,7 @@ class SuffixTree(length: Int) {
         }
 
         override fun toString(): String {
-            return "Node(next=$next, start=$start, end=${
+            return "Node(next=$edges, start=$start, end=${
                 if (end > text.size) "end" else end.toString()
             }, suffix=$suffix, link=${suffixLink?.id}, label=${edgeLabel()})"
         }
