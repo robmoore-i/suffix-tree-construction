@@ -26,41 +26,6 @@ class SuffixTree(length: Int) {
         }
     }
 
-    private fun addSuffixLink(node: Node) {
-        suffixLinkCandidate?.linkTo(node)
-        suffixLinkCandidate = node
-    }
-
-    private fun activeEdge(): Char {
-        return text[activeEdge]
-    }
-
-    /**
-     * @return true if the reference to the active node was non-canonical, requiring us to step
-     * through the tree.
-     */
-    private fun canonizeActivePoint(nextNode: Node): Boolean {
-        val edgeLength = nextNode.edgeLength()
-        if (activeLength >= edgeLength) {
-            activeEdge += edgeLength
-            activeLength -= edgeLength
-            activeNode = nextNode
-            return true
-        }
-        return false
-    }
-
-    private fun canonizeTree() {
-        addChar('\u0000')
-    }
-
-    private fun addNode(start: Int, end: Int): Node {
-        val i = nodes.size + 1
-        val node = Node(i, start, end)
-        nodes[i] = node
-        return node
-    }
-
     fun addChar(c: Char) {
         // Add the character into the array of characters we have already indexed, and increase our
         // pointer to the end of the text
@@ -78,18 +43,18 @@ class SuffixTree(length: Int) {
                 activeEdge = position
             }
 
-            if (!activeNode.next.containsKey(activeEdge())) {
+            if (!activeNode.next.containsKey(activeEdgeChar())) {
                 // If the active node doesn't yet have a child node corresponding to the next
                 // character, add one. When we perform a leaf insertion like this, we need to add a
                 // suffix link.
                 val leaf = addLeaf().id
-                activeNode.next[activeEdge()] = leaf
+                activeNode.next[activeEdgeChar()] = leaf
                 addSuffixLink(activeNode)
             } else {
                 // Since the active node has an edge starting with the next character, we need to
                 // either create a new leaf node, continue down the active edge, or split the
                 // current edge and create both an internal node and a leaf node.
-                val nextNode = nodes[activeNode.next[activeEdge()]!!]!!
+                val nextNode = nodes[activeNode.next[activeEdgeChar()]!!]!!
 
                 // If the reference to the active point is non-canonical, then canonize it by
                 // stepping through the tree, and then go to the next extension of the current
@@ -114,7 +79,7 @@ class SuffixTree(length: Int) {
                 // leaf node from it whose edge corresponds to the character we're adding. We also
                 // create a suffix link for the newly added internal node.
                 val internalNode = addNode(nextNode.start, nextNode.start + activeLength)
-                activeNode.next[activeEdge()] = internalNode.id
+                activeNode.next[activeEdgeChar()] = internalNode.id
                 val leaf = addLeaf().id
                 internalNode.next[c] = leaf
                 nextNode.start += activeLength
@@ -141,7 +106,42 @@ class SuffixTree(length: Int) {
         }
     }
 
+    private fun canonizeTree() {
+        addChar('\u0000')
+    }
+
+    private fun addNode(start: Int, end: Int): Node {
+        val i = nodes.size + 1
+        val node = Node(i, start, end)
+        nodes[i] = node
+        return node
+    }
+
     private fun addLeaf(): Node = addNode(position, Int.MAX_VALUE / 2)
+
+    private fun addSuffixLink(node: Node) {
+        suffixLinkCandidate?.linkTo(node)
+        suffixLinkCandidate = node
+    }
+
+    private fun activeEdgeChar(): Char {
+        return text[activeEdge]
+    }
+
+    /**
+     * @return true if the reference to the active node was non-canonical, requiring us to step
+     * through the tree.
+     */
+    private fun canonizeActivePoint(nextNode: Node): Boolean {
+        val edgeLength = nextNode.edgeLength()
+        if (activeLength >= edgeLength) {
+            activeEdge += edgeLength
+            activeLength -= edgeLength
+            activeNode = nextNode
+            return true
+        }
+        return false
+    }
 
     /**
      * Finds the offsets of the given query string in the root
@@ -206,12 +206,6 @@ class SuffixTree(length: Int) {
         }
     }
 
-    override fun toString(): String {
-        return "SuffixTree(nodes={\n${
-            nodes.toSortedMap().map { "\t${it.key} ${it.value}" }.joinToString("\n")
-        }\n})"
-    }
-
     /**
      * This class represents all nodes, including the root node, internal nodes, and leaf nodes.
      *
@@ -255,6 +249,11 @@ class SuffixTree(length: Int) {
         }
     }
 
-    inner class RootNode : Node(1, -1, -1) {
+    inner class RootNode : Node(1, -1, -1)
+
+    override fun toString(): String {
+        return "SuffixTree(nodes={\n${
+            nodes.toSortedMap().map { "\t${it.key} ${it.value}" }.joinToString("\n")
+        }\n})"
     }
 }
