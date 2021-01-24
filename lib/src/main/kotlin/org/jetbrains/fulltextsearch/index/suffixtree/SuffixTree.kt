@@ -5,14 +5,12 @@ import java.util.*
 
 class SuffixTree(length: Int) {
     private val text: CharArray = CharArray(length)
-    private val infinity = Int.MAX_VALUE / 2
     private val rootNode: Node = RootNode()
 
     private val nodes: MutableList<Node?> = MutableList<Node?>(2 * length + 2) { null }.run {
         this[1] = rootNode
         this
     }
-
 
     private var activeNodeId: Int = rootNode.id
     private var activeLength = 0
@@ -149,7 +147,7 @@ class SuffixTree(length: Int) {
         }
     }
 
-    private fun addLeaf(): Node = addNode(position, infinity)
+    private fun addLeaf(): Node = addNode(position, Int.MAX_VALUE / 2)
 
     private fun activeNode(): Node = nodes[activeNodeId]!!
 
@@ -262,11 +260,7 @@ class SuffixTree(length: Int) {
 
         override fun toString(): String {
             return "Node(next=$next, start=$start, end=${
-                if (end == infinity) {
-                    "end"
-                } else {
-                    end.toString()
-                }
+                if (end > text.size) "end" else end.toString()
             }, suffix=$suffix, link=$link, label=${edgeLabel()})"
         }
     }
