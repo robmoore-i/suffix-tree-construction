@@ -159,7 +159,7 @@ class SuffixTree {
         private var suffixLinkCandidate: Node? = null
 
         fun addRemainingSuffixes(c: Char) {
-            // We only add suffix links within a phase, so we reset it at the start of this phase.
+            // We only add suffix links within a phase, so we reset it at the start of the phase.
             suffixLinkCandidate = null
 
             while (remainingSuffixes > 0) {
