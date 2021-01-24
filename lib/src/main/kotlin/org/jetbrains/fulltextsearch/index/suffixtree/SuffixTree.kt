@@ -44,17 +44,18 @@ class SuffixTree {
                 activeEdge = currentlyInsertedInput.length - 1
             }
 
-            if (!activeNode.edges.containsKey(activeEdgeChar())) {
+            val activeEdgeChar = currentlyInsertedInput[activeEdge]
+            if (!activeNode.edges.containsKey(activeEdgeChar)) {
                 // If the active node doesn't yet have a child node corresponding to the next
                 // character, add one. When we perform a leaf insertion like this, we need to add a
                 // suffix link.
-                activeNode.edges[activeEdgeChar()] = LeafNode()
+                activeNode.edges[activeEdgeChar] = LeafNode()
                 addSuffixLink(activeNode)
             } else {
                 // Since the active node has an edge starting with the next character, we need to
                 // either create a new leaf node, continue down the active edge, or split the
                 // current edge and create both an internal node and a leaf node.
-                val nextNode = activeNode.edges[activeEdgeChar()]!!
+                val nextNode = activeNode.edges[activeEdgeChar]!!
 
                 // If the reference to the active point is non-canonical, then canonize it by
                 // stepping through the tree, and then go to the next extension of the current
@@ -83,7 +84,7 @@ class SuffixTree {
                 // leaf node from it whose edge corresponds to the character we're adding. We also
                 // create a suffix link for the newly added internal node.
                 val internalNode = Node(nextNode.start, nextNode.start + activeLength)
-                activeNode.edges[activeEdgeChar()] = internalNode
+                activeNode.edges[activeEdgeChar] = internalNode
                 internalNode.edges[c] = LeafNode()
                 nextNode.start += activeLength
                 internalNode.edges[currentlyInsertedInput[nextNode.start]] = nextNode
@@ -120,10 +121,6 @@ class SuffixTree {
     private fun addSuffixLink(node: Node) {
         suffixLinkCandidate?.linkTo(node)
         suffixLinkCandidate = node
-    }
-
-    private fun activeEdgeChar(): Char {
-        return currentlyInsertedInput[activeEdge]
     }
 
     /**
