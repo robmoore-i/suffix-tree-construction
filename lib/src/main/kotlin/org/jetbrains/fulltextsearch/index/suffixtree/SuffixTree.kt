@@ -47,14 +47,14 @@ class SuffixTree(length: Int) {
                 // If the active node doesn't yet have a child node corresponding to the next
                 // character, add one. When we perform a leaf insertion like this, we need to add a
                 // suffix link.
-                val leaf = addLeaf().id
+                val leaf = addLeaf()
                 activeNode.next[activeEdgeChar()] = leaf
                 addSuffixLink(activeNode)
             } else {
                 // Since the active node has an edge starting with the next character, we need to
                 // either create a new leaf node, continue down the active edge, or split the
                 // current edge and create both an internal node and a leaf node.
-                val nextNode = nodes[activeNode.next[activeEdgeChar()]!!]!!
+                val nextNode = nodes[activeNode.next[activeEdgeChar()]!!.id]!!
 
                 // If the reference to the active point is non-canonical, then canonize it by
                 // stepping through the tree, and then go to the next extension of the current
@@ -79,11 +79,11 @@ class SuffixTree(length: Int) {
                 // leaf node from it whose edge corresponds to the character we're adding. We also
                 // create a suffix link for the newly added internal node.
                 val internalNode = addNode(nextNode.start, nextNode.start + activeLength)
-                activeNode.next[activeEdgeChar()] = internalNode.id
-                val leaf = addLeaf().id
+                activeNode.next[activeEdgeChar()] = internalNode
+                val leaf = addLeaf()
                 internalNode.next[c] = leaf
                 nextNode.start += activeLength
-                internalNode.next[text[nextNode.start]] = nextNode.id
+                internalNode.next[text[nextNode.start]] = nextNode
                 addSuffixLink(internalNode)
             }
 
@@ -168,7 +168,7 @@ class SuffixTree(length: Int) {
             }
 
             // We follow the edge to the next internal node
-            nodeId = nodes[nodeId]!!.next[queryChar]!!
+            nodeId = nodes[nodeId]!!.next[queryChar]!!.id
             val edgeLabel = nodes[nodeId]!!.edgeLabel()
 
             // If the edge we just followed is longer than the remainder of the query string, then
@@ -202,7 +202,7 @@ class SuffixTree(length: Int) {
         return if (nodes[node]!!.next.isEmpty()) {
             setOf(nodes[node]!!.suffix)
         } else {
-            nodes[node]!!.next.flatMap { suffixesUnderSubtreeRootedAt(it.value) }.toSet()
+            nodes[node]!!.next.flatMap { suffixesUnderSubtreeRootedAt(it.value.id) }.toSet()
         }
     }
 
@@ -216,7 +216,7 @@ class SuffixTree(length: Int) {
         private var suffixLink: Node? = null
 
         val suffix = position - remainder + 1
-        var next = TreeMap<Char, Int>()
+        var next = TreeMap<Char, Node>()
 
         fun suffixLink(): Node {
             return suffixLink ?: rootNode
