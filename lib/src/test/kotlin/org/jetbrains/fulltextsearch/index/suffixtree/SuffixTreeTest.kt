@@ -4,39 +4,33 @@ package org.jetbrains.fulltextsearch.index.suffixtree
 
 import org.jetbrains.fulltextsearch.randominput.RandomInput
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 
 class SuffixTreeTest {
 
     @Test
     internal fun `constructs simple suffix tree with only leaf nodes`() {
-        val input = "abcde"
-        assertSuffixTreeIsCorrectlyConstructed(input, suffixTree(input))
+        assertSuffixTreeIsCorrectlyConstructed("abcde")
     }
 
     @Test
     internal fun `constructs simple suffix tree with one internal node`() {
-        val input = "memo"
-        assertSuffixTreeIsCorrectlyConstructed(input, suffixTree(input))
+        assertSuffixTreeIsCorrectlyConstructed("memo")
     }
 
     @Test
     internal fun `can construct multiple internal nodes on different branches'`() {
-        val input = "xabxa$"
-        assertSuffixTreeIsCorrectlyConstructed(input, suffixTree(input))
+        assertSuffixTreeIsCorrectlyConstructed("xabxa$")
     }
 
     @Test
     internal fun `can construct nested internal nodes'`() {
-        val input = "xaxbxac"
-        assertSuffixTreeIsCorrectlyConstructed(input, suffixTree(input))
+        assertSuffixTreeIsCorrectlyConstructed("xaxbxac")
     }
 
     @Test
     internal fun `can add all-new leaf nodes from internal nodes`() {
-        val input = "xxaxb"
-        assertSuffixTreeIsCorrectlyConstructed(input, suffixTree(input))
+        assertSuffixTreeIsCorrectlyConstructed("xxaxb")
     }
 
     @Test
@@ -49,95 +43,78 @@ class SuffixTreeTest {
 
     @Test
     internal fun `reverts to root after internal node insertion`() {
-        val input = "yyxyyz"
-        assertSuffixTreeIsCorrectlyConstructed(input, suffixTree(input))
+        assertSuffixTreeIsCorrectlyConstructed("yyxyyz")
     }
 
     @Test
     internal fun `checks for active node hop after following a suffix link`() {
-        val input = "xyzxzyxy$"
-        assertSuffixTreeIsCorrectlyConstructed(input, suffixTree(input))
+        assertSuffixTreeIsCorrectlyConstructed("xyzxzyxy$")
     }
 
     @Test
     internal fun `checks for active node hop after root node insertion`() {
-        val input = "xzyxyxy$"
-        val suffixTree = suffixTree(input)
+        val suffixTree = suffixTree("xzyxyxy$")
         assertEquals(setOf(4), suffixTree.offsetsOf("yxy$"))
-        assertSuffixTreeIsCorrectlyConstructed(input, suffixTree)
+        assertSuffixTreeIsCorrectlyConstructed("xzyxyxy$", suffixTree)
     }
 
     @Test
     internal fun `resets active length and edge when reverting to root after internal node insertion`() {
-        val input = "xyyxyyy$"
-        assertSuffixTreeIsCorrectlyConstructed(input, suffixTree(input))
+        assertSuffixTreeIsCorrectlyConstructed("xyyxyyy$")
     }
 
     @Test
     internal fun `hopping over internal nodes without adding a new leaf`() {
-        val input = "xxyzyxyz$"
-        assertSuffixTreeIsCorrectlyConstructed(input, suffixTree(input))
+        assertSuffixTreeIsCorrectlyConstructed("xxyzyxyz$")
     }
 
     @Test
     internal fun `doesn't follow suffix links when hopping over internal node`() {
-        val input = "xyxyzxyz$"
-        assertSuffixTreeIsCorrectlyConstructed(input, suffixTree(input))
+        assertSuffixTreeIsCorrectlyConstructed("xyxyzxyz$")
     }
 
     @Test
     internal fun `don't eagerly hop into internal nodes after reverting to root`() {
-        val input = "xyyzxyzxy"
-        assertSuffixTreeIsCorrectlyConstructed(input, suffixTree(input))
+        assertSuffixTreeIsCorrectlyConstructed("xyyzxyzxy")
     }
 
     @Test
     internal fun `create suffix links when passing through internal nodes`() {
-        val input = "xxzxxxx$"
-        assertSuffixTreeIsCorrectlyConstructed(input, suffixTree(input))
+        assertSuffixTreeIsCorrectlyConstructed("xxzxxxx$")
     }
 
     @Test
     internal fun `create suffix links when reaching end of edge between internal nodes`() {
-        val input = "yxzzxzxz$"
-        assertSuffixTreeIsCorrectlyConstructed(input, suffixTree(input))
+        assertSuffixTreeIsCorrectlyConstructed("yxzzxzxz$")
     }
 
     @Test
     internal fun `edge label validation doesn't go beyond the label length`() {
-        val input = "xaxyaxax$"
-        assertSuffixTreeIsCorrectlyConstructed(input, suffixTree(input))
+        assertSuffixTreeIsCorrectlyConstructed("xaxyaxax$")
     }
 
     @Test
     internal fun `recursively normalizes the active node`() {
-        val input = "xyyyxyyy$"
-        assertSuffixTreeIsCorrectlyConstructed(input, suffixTree(input))
+        assertSuffixTreeIsCorrectlyConstructed("xyyyxyyy$")
     }
 
     @Test
     internal fun `create suffix links during active node normalization`() {
-        val input = "xxyxxaxxa$"
-        assertSuffixTreeIsCorrectlyConstructed(input, suffixTree(input))
-    }
-
-    @Test
-    internal fun `don't overwrite existing suffix links during normalization`() {
-        val input = "xxzxzzxza"
-        assertSuffixTreeIsCorrectlyConstructed(input, suffixTree(input))
-    }
-
-    @Test
-    @Disabled
-    internal fun `next failing test`() {
-        val input = "zxxyzxzzx$"
-        assertSuffixTreeIsCorrectlyConstructed(input, suffixTree(input))
+        assertSuffixTreeIsCorrectlyConstructed("xxyxxaxxa$")
+        assertSuffixTreeIsCorrectlyConstructed("zxxyzxzzx$")
+        assertSuffixTreeIsCorrectlyConstructed("xxzxzzxza")
     }
 
     private fun suffixTree(input: String): SuffixTree {
         val suffixTree = SuffixTree.ukkonenConstruction(input)
         println("\nSuffix Tree for '$input': $suffixTree")
         return suffixTree
+    }
+
+    private fun assertSuffixTreeIsCorrectlyConstructed(
+        input: String
+    ) {
+        assertSuffixTreeIsCorrectlyConstructed(input, suffixTree(input))
     }
 
     private fun assertSuffixTreeIsCorrectlyConstructed(

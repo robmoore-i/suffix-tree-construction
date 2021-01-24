@@ -13,7 +13,7 @@ class SuffixTreeIndexedFile(
 
     init {
         this.suffixTree = try {
-            SuffixTree.defaultConstruction(fileText)
+            SuffixTree.ukkonenConstruction(fileText)
         } catch (e: Throwable) {
             print("Suffix tree creation failed for file $path. ")
             if (useFallback) {

@@ -4,16 +4,19 @@ package org.jetbrains.fulltextsearch.index.suffixtree
 
 import org.jetbrains.fulltextsearch.index.naive.NaiveIndexedFile
 import org.jetbrains.fulltextsearch.randominput.RandomInput.generateRandomString
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Disabled
+import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.Test
 
 class SuffixTreeFuzzTest {
     @Test
-    @Disabled
     internal fun `send random input and assert that the search results are correct`() {
-        repeat(100000) {
-            val fileContent = generateRandomString(alphabet = "xyza", minLength = 7, maxLength = 10)
+        repeat(1000) {
+            val fileContent = generateRandomString(
+                // Use a smaller alphabet to increase likelihood of exposing a bug
+                alphabet = "abcdefg",
+                // I'm confident that this is big enough to catch any potential problems
+                maxLength = 500
+            )
             val naiveIndexedFile = NaiveIndexedFile("some-file.txt", fileContent)
 
             fun getSuffixTreeIndexedFile(): SuffixTreeIndexedFile {
@@ -27,8 +30,20 @@ class SuffixTreeFuzzTest {
 
             val suffixTreeIndexedFile = getSuffixTreeIndexedFile()
 
-            repeat(100) {
-                val queryString = generateRandomString(maxLength = 10)
+            // Lots of small queries
+            repeat(1000) {
+                val queryString = generateRandomString(maxLength = 5)
+                assertQueryResultsMatch(
+                    fileContent,
+                    queryString,
+                    naiveIndexedFile,
+                    suffixTreeIndexedFile
+                )
+            }
+
+            // A few slightly bigger queries
+            repeat(50) {
+                val queryString = generateRandomString(minLength = 10, maxLength = 50)
                 assertQueryResultsMatch(
                     fileContent,
                     queryString,
@@ -60,13 +75,31 @@ class SuffixTreeFuzzTest {
         suffixTreeIndexedFile: SuffixTreeIndexedFile
     ) {
         val expectedQueryResults = naiveIndexedFile.lookaheadQuery(queryString).toSet()
-        assertEquals(
-            expectedQueryResults,
-            suffixTreeIndexedFile.query(queryString).toSet(),
-            "SuffixTreeIndexedFile and NaiveIndexedFile disagreed on the output " +
-                    "of a query.\n" +
-                    "Query string: '$queryString'\n" +
-                    "File content: '$fileContent'\n"
-        )
+        val actualQueryResults = suffixTreeIndexedFile.query(queryString).toSet()
+        if (expectedQueryResults != actualQueryResults) {
+            var counter = 0
+            for (expectedMatch in expectedQueryResults) {
+                if (expectedMatch !in actualQueryResults) {
+                    counter++
+                    println(expectedMatch)
+                }
+            }
+            println("\tThere were $counter expected query results which were missing")
+
+            counter = 0
+            for (match in expectedQueryResults) {
+                if (match !in actualQueryResults) {
+                    counter++
+                    println(match)
+                }
+            }
+            println("\tThere were $counter query results which were unexpected")
+            fail<String>(
+                "\tSuffixTreeIndexedFile and NaiveIndexedFile disagreed on the output " +
+                        "of a query.\n" +
+                        "Query string: '$queryString'\n" +
+                        "File content: '$fileContent'\n"
+            )
+        }
     }
 }
