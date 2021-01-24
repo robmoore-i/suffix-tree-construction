@@ -109,9 +109,22 @@ working on constructing a suffix tree from the file content. I have targeted
 Ukkonen's algorithm for this, because it has desirable properties, such as being
 linear in the time and space of the input files. Due to the algorithm's
 complexity, I started with a simpler, more naive algorithm for suffix tree
-construction. This ran in cubic time and was quite impractical. My aim is now to
-iterate into a fast, correct implementation of Ukkonen's algorithm. As of the
-deadline of the evening of Friday 22nd, this is not yet done.
+construction. This ran in cubic time and was quite impractical.
+
+The Ukkonen's algorithm implementation is now correct, and I have refactored it
+to a point that I think is good enough. I'll give an overview of the
+implementation here, although the code is close-by to look at. This
+implementation quite explicitly processes the string one character at a time,
+which I think makes the on-line property of Ukkonen's algorithm quite clear to
+the reader. It stores the inbound edge as part of a Node's internal state,
+rather than having an Edge class as in my earlier and much more complex
+attempts. The Node class has two subclasses - RootNode and LeafNode. The
+internal node doesn't have a particular subclass because it doesn't add much to
+do that. I did also comment the code extensively, because the problem domain is
+quite complex. There is an ActivePoint class which encapsulates the
+ActivePoint's role in providing constant time suffix additions, by creating and
+exploiting suffix links. Offsets are acquired by scanning from the root node of
+the tree.
 
 ## Developer Interface
 
