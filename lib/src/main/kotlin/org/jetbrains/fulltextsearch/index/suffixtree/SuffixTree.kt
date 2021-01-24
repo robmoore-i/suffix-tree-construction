@@ -1,7 +1,5 @@
 package org.jetbrains.fulltextsearch.index.suffixtree
 
-import java.util.*
-
 
 class SuffixTree {
     private var currentlyInsertedInput = ""
@@ -104,7 +102,7 @@ class SuffixTree {
         private var suffixLink: Node? = null
 
         val suffix = currentlyInsertedInput.length - remainingSuffixes
-        var edges = TreeMap<Char, Node>()
+        var edges = mutableMapOf<Char, Node>()
 
         fun edgeLength(): Int = minOf(end, currentlyInsertedInput.length) - start
 
