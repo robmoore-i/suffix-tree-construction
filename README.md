@@ -163,12 +163,11 @@ report its query results to the `QueryMatchListener` as soon as it has them.
 
 <a name="running-tests"></a>
 
-- `./gradlew lib:test` runs the unit tests for the library. There should be 86
-  unit tests running.
+- `./gradlew lib:test` runs the unit tests for the library.
 - `./gradlew lib:performanceTest` runs some performance tests for the library,
   although these depend on having the input data cloned, using the script
   `scripts/fetch-performance-test-data.sh`. If the data isn't there, the tests
-  will be skipped. There are 6 performance tests available.
+  will be skipped.
 
 #### Fuzz Tests
 
