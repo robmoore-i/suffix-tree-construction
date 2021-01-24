@@ -8,7 +8,8 @@ class SuffixTree(length: Int) {
     private val nodes: MutableList<Node?> = MutableList(2 * length + 2) { null }
     private val text: CharArray = CharArray(length)
     private val infinity = Int.MAX_VALUE / 2
-    private val rootNodeId: Int = addNode(-1, -1).id
+    private val rootNodeId: Int = 1
+    private val rootNode: Node = addNode(-1, -1)
 
     private var activeNodeId: Int = rootNodeId
     private var position: Int = -1
@@ -133,7 +134,7 @@ class SuffixTree(length: Int) {
             // the tree.
             remainder--
 
-            if (activeNodeId == rootNodeId && activeLength > 0) {
+            if (activeNodeId == rootNode.id && activeLength > 0) {
                 // When we insert a node from root, we decrement our active length, and pull our
                 // active edge forwards to point at the start of the next suffix we're adding.
                 activeLength--
@@ -144,29 +145,29 @@ class SuffixTree(length: Int) {
                 activeNodeId = if (activeNode().link > 0) {
                     activeNode().link
                 } else {
-                    rootNodeId
+                    rootNode.id
                 }
             }
         }
     }
 
-    private fun addLeaf() = addNode(position, infinity)
+    private fun addLeaf(): Node = addNode(position, infinity)
 
-    private fun activeNode() = nodes[activeNodeId]!!
+    private fun activeNode(): Node = nodes[activeNodeId]!!
 
     /**
      * Finds the offsets of the given query string in the root
      */
     fun offsetsOf(queryString: String): Set<Int> {
         var i = 0
-        var node = rootNodeId
+        var nodeId = rootNode.id
         while (i < queryString.length) {
             // If we're at a leaf, then we get a match if the leaf's text matches the query string.
             // Otherwise we don't get a match.
-            if (nodes[node]!!.next.isEmpty()) {
-                val edgeLabel = nodes[node]!!.edgeLabel()
+            if (nodes[nodeId]!!.next.isEmpty()) {
+                val edgeLabel = nodes[nodeId]!!.edgeLabel()
                 return if (edgeLabel.startsWith(queryString)) {
-                    setOf(nodes[node]!!.suffix)
+                    setOf(nodes[nodeId]!!.suffix)
                 } else {
                     setOf()
                 }
@@ -174,20 +175,20 @@ class SuffixTree(length: Int) {
 
             // If there are no outbound edges for the next character, then there are no matches
             val queryChar = queryString[i]
-            if (!nodes[node]!!.next.containsKey(queryChar)) {
+            if (!nodes[nodeId]!!.next.containsKey(queryChar)) {
                 return setOf()
             }
 
             // We follow the edge to the next internal node
-            node = nodes[node]!!.next[queryChar]!!
-            val edgeLabel = nodes[node]!!.edgeLabel()
+            nodeId = nodes[nodeId]!!.next[queryChar]!!
+            val edgeLabel = nodes[nodeId]!!.edgeLabel()
 
             // If the edge we just followed is longer than the remainder of the query string, then
             // we get matches the edge label starts with the remainder of the query string.
             // Otherwise we get no matches
-            if (nodes[node]!!.edgeLength() >= (queryString.length - i)) {
+            if (nodes[nodeId]!!.edgeLength() >= (queryString.length - i)) {
                 return if (edgeLabel.startsWith(queryString.substring(i))) {
-                    suffixesUnderSubtreeRootedAt(node)
+                    suffixesUnderSubtreeRootedAt(nodeId)
                 } else {
                     setOf()
                 }
@@ -195,18 +196,18 @@ class SuffixTree(length: Int) {
 
             // If the edge we just followed doesn't have an edge label matching the query string,
             // then there are no matches
-            if (edgeLabel != queryString.substring(i, i + nodes[node]!!.edgeLength())) {
+            if (edgeLabel != queryString.substring(i, i + nodes[nodeId]!!.edgeLength())) {
                 return setOf()
             }
 
             // We increase i by the size of the next edge label
-            i += nodes[node]!!.edgeLength()
+            i += nodes[nodeId]!!.edgeLength()
         }
 
         // If we make it out of the loop, then we have consumed the full query string by traversing
         // edges from the root. This means that all the suffixes stored within the current subtree
         // will be prefixed by the query string.
-        return suffixesUnderSubtreeRootedAt(node)
+        return suffixesUnderSubtreeRootedAt(nodeId)
     }
 
     private fun suffixesUnderSubtreeRootedAt(node: Int): Set<Int> {
