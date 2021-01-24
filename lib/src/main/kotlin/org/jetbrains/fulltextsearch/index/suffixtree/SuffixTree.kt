@@ -7,18 +7,14 @@ class SuffixTree(length: Int) {
     private val text: CharArray = CharArray(length)
     private val rootNode: Node = RootNode()
 
-    private val nodes: MutableList<Node?> = MutableList<Node?>(2 * length + 2) { null }.run {
-        this[1] = rootNode
-        this
-    }
+    private val nodes: MutableMap<Int, Node?> = mutableMapOf(Pair(rootNode.id, rootNode))
 
     private var activeNode: Node = rootNode
     private var activeLength = 0
     private var activeEdge = 0
 
     private var position: Int = -1
-    private var currentNode = 1
-    private var nodeNeedingSuffixLink: Node? = null
+    private var suffixLinkCandidate: Node? = null
     private var remainder = 0
 
     companion object {
@@ -31,8 +27,8 @@ class SuffixTree(length: Int) {
     }
 
     private fun addSuffixLink(node: Node) {
-        nodeNeedingSuffixLink?.linkTo(node)
-        nodeNeedingSuffixLink = node
+        suffixLinkCandidate?.linkTo(node)
+        suffixLinkCandidate = node
     }
 
     private fun activeEdge(): Char {
@@ -59,8 +55,8 @@ class SuffixTree(length: Int) {
     }
 
     private fun addNode(start: Int, end: Int): Node {
-        val i = ++currentNode
-        val node = Node(start, end)
+        val i = nodes.size + 1
+        val node = Node(i, start, end)
         nodes[i] = node
         return node
     }
@@ -71,7 +67,7 @@ class SuffixTree(length: Int) {
         text[++position] = c
 
         // We only add suffix links within a phase, so we reset it.
-        nodeNeedingSuffixLink = null
+        suffixLinkCandidate = null
 
         // There is now an additional suffix which is not yet explicit in the tree
         remainder++
@@ -213,7 +209,7 @@ class SuffixTree(length: Int) {
 
     override fun toString(): String {
         return "SuffixTree(nodes={\n${
-            nodes.mapIndexed { index, node -> "\t$index $node" }.joinToString("\n")
+            nodes.toSortedMap().map { "\t${it.key} ${it.value}" }.joinToString("\n")
         }\n})"
     }
 
@@ -223,9 +219,7 @@ class SuffixTree(length: Int) {
      * It also contains information about the edge that connects it to its parent, via the 'start'
      * and 'end' fields.
      */
-    open inner class Node(var start: Int, private var end: Int) {
-        open val id = currentNode
-
+    open inner class Node(val id: Int, var start: Int, private var end: Int) {
         private var link: Node? = null
 
         val suffix = position - remainder + 1
@@ -262,7 +256,6 @@ class SuffixTree(length: Int) {
         }
     }
 
-    inner class RootNode : Node(-1, -1) {
-        override var id = 1
+    inner class RootNode : Node(1, -1, -1) {
     }
 }
