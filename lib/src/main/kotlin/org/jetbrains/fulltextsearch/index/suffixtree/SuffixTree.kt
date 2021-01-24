@@ -17,7 +17,7 @@ class SuffixTree(length: Int) {
     private var activeNodeId: Int = rootNode.id
     private var position: Int = -1
     private var currentNode = 1
-    private var needSuffixLink = 0
+    private var nodeNeedingSuffixLink: Node? = null
     private var remainder = 0
     private var activeLength = 0
     private var activeEdge = 0
@@ -33,10 +33,8 @@ class SuffixTree(length: Int) {
     }
 
     private fun addSuffixLink(node: Node) {
-        if (needSuffixLink > 0) {
-            nodes[needSuffixLink]!!.linkTo(node)
-        }
-        needSuffixLink = node.id
+        nodeNeedingSuffixLink?.linkTo(node)
+        nodeNeedingSuffixLink = node
     }
 
     private fun activeEdge(): Char {
@@ -75,7 +73,7 @@ class SuffixTree(length: Int) {
         text[++position] = c
 
         // We only add suffix links within a phase, so we reset it.
-        needSuffixLink = -1
+        nodeNeedingSuffixLink = null
 
         // There is now an additional suffix which is not yet explicit in the tree
         remainder++
