@@ -94,14 +94,22 @@ class SuffixTreeTest {
     }
 
     @Test
-    internal fun `recursively normalizes the active node`() {
+    internal fun `recursively canonizes the active node reference`() {
         assertSuffixTreeIsCorrectlyConstructed("xyyyxyyy$")
     }
 
     @Test
-    internal fun `create suffix links during active node normalization`() {
-        assertSuffixTreeIsCorrectlyConstructed("xxyxxaxxa$")
+    internal fun `create suffix links during active node canonization`() {
         assertSuffixTreeIsCorrectlyConstructed("zxxyzxzzx$")
+    }
+
+    @Test
+    internal fun `create suffix links after adding leaf to internal node`() {
+        assertSuffixTreeIsCorrectlyConstructed("xxyxxaxxa$")
+    }
+
+    @Test
+    internal fun `don't overwrite existing suffix links during active point canonization`() {
         assertSuffixTreeIsCorrectlyConstructed("xxzxzzxza")
     }
 
