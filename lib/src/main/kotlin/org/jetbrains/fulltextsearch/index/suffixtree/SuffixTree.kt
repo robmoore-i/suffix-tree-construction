@@ -3,9 +3,8 @@ package org.jetbrains.fulltextsearch.index.suffixtree
 import java.util.*
 
 
-class SuffixTree(length: Int) {
-    private val text: CharArray = CharArray(length)
-    private var textPosition: Int = 0
+class SuffixTree {
+    private var currentlyInsertedInput = ""
 
     private val rootNode: Node = RootNode()
 
@@ -19,29 +18,30 @@ class SuffixTree(length: Int) {
 
     companion object {
         fun ukkonenConstruction(input: String): SuffixTree {
-            val tree = SuffixTree(input.length + 1)
-            input.forEach { tree.addChar(it) }
-            tree.canonizeTree()
-            return tree
+            val suffixTree = SuffixTree()
+            input.forEach { suffixTree.addChar(it) }
+            suffixTree.canonizeTree()
+            return suffixTree
         }
     }
 
     fun addChar(c: Char) {
-        // Add the character into the array of characters we have already indexed, and increase our
-        // pointer to the end of the text
-        text[textPosition] = c
-        textPosition++
+        // Add the character to the string of characters whose suffixes are present in the tree
+        // already.
+        currentlyInsertedInput += c
 
-        // We only add suffix links within a phase, so we reset it.
+        // We only add suffix links within a phase, so we reset it at the start of this phase.
         suffixLinkCandidate = null
 
-        // There is now an additional suffix which is not yet explicit in the tree
+        // There is now an additional suffix which is not yet explicit in the tree, so we increment
+        // our counter for the number of remaining suffixes.
         remainingSuffixes++
 
         while (remainingSuffixes > 0) {
             if (activeLength == 0) {
-                // Point our active edge at the most recently added character in the text
-                activeEdge = textPosition - 1
+                // If we're at a node, point our active edge at the most recently added character in
+                // the text.
+                activeEdge = currentlyInsertedInput.length - 1
             }
 
             if (!activeNode.edges.containsKey(activeEdgeChar())) {
@@ -60,7 +60,11 @@ class SuffixTree(length: Int) {
                 // stepping through the tree, and then go to the next extension of the current
                 // phase so that we can do all our steps from the basis of a canonical reference to
                 // the active point.
-                if (canonizeActivePoint(nextNode)) {
+                val edgeLength = nextNode.edgeLength()
+                if (activeLength >= edgeLength) {
+                    activeEdge += edgeLength
+                    activeLength -= edgeLength
+                    activeNode = nextNode
                     continue
                 }
 
@@ -69,7 +73,7 @@ class SuffixTree(length: Int) {
                 // end the current phase. We need to add a suffix link to the active node as well,
                 // because otherwise the active point won't get to the correct place after our next
                 // insertion.
-                if (text[nextNode.start + activeLength] == c) {
+                if (currentlyInsertedInput[nextNode.start + activeLength] == c) {
                     activeLength++
                     addSuffixLink(activeNode)
                     break
@@ -82,7 +86,7 @@ class SuffixTree(length: Int) {
                 activeNode.edges[activeEdgeChar()] = internalNode
                 internalNode.edges[c] = LeafNode()
                 nextNode.start += activeLength
-                internalNode.edges[text[nextNode.start]] = nextNode
+                internalNode.edges[currentlyInsertedInput[nextNode.start]] = nextNode
                 addSuffixLink(internalNode)
             }
 
@@ -96,7 +100,7 @@ class SuffixTree(length: Int) {
                 // When we insert a node from root, we decrement our active length, and pull our
                 // active edge forwards to point at the start of the next suffix we're adding.
                 activeLength--
-                activeEdge = textPosition - remainingSuffixes
+                activeEdge = currentlyInsertedInput.length - remainingSuffixes
             } else {
                 // When we insert a node from an internal node, we follow its suffix link if it has
                 // one. The default suffix link for any node is root.
@@ -105,6 +109,10 @@ class SuffixTree(length: Int) {
         }
     }
 
+    /**
+     * This converts the implicit suffix tree into a canonical suffix tree by adding a character
+     * that doesn't appear elsewhere in the input.
+     */
     private fun canonizeTree() {
         addChar('\u0000')
     }
@@ -115,22 +123,7 @@ class SuffixTree(length: Int) {
     }
 
     private fun activeEdgeChar(): Char {
-        return text[activeEdge]
-    }
-
-    /**
-     * @return true if the reference to the active node was non-canonical, requiring us to step
-     * through the tree.
-     */
-    private fun canonizeActivePoint(nextNode: Node): Boolean {
-        val edgeLength = nextNode.edgeLength()
-        if (activeLength >= edgeLength) {
-            activeEdge += edgeLength
-            activeLength -= edgeLength
-            activeNode = nextNode
-            return true
-        }
-        return false
+        return currentlyInsertedInput[activeEdge]
     }
 
     /**
@@ -199,7 +192,7 @@ class SuffixTree(length: Int) {
     open inner class Node(var start: Int, private var end: Int) {
         private var suffixLink: Node? = null
 
-        val suffix = textPosition - remainingSuffixes
+        val suffix = currentlyInsertedInput.length - remainingSuffixes
         var edges = TreeMap<Char, Node>()
 
         fun suffixLink(): Node {
@@ -211,17 +204,17 @@ class SuffixTree(length: Int) {
         }
 
         fun edgeLength(): Int {
-            return minOf(end, textPosition) - start
+            return minOf(end, currentlyInsertedInput.length) - start
         }
 
         fun edgeLabel(): String {
             if (start == -1) {
                 return ""
             }
-            val endPosition = minOf(end, text.size)
+            val endPosition = minOf(end, currentlyInsertedInput.length)
             val chars = CharArray(endPosition - start)
             (start until endPosition).forEach {
-                chars[it - start] = text[it]
+                chars[it - start] = currentlyInsertedInput[it]
             }
             return String(chars)
         }
@@ -250,7 +243,7 @@ class SuffixTree(length: Int) {
         }
     }
 
-    inner class LeafNode : Node(textPosition - 1, Int.MAX_VALUE / 2) {
+    inner class LeafNode : Node(currentlyInsertedInput.length - 1, Int.MAX_VALUE / 2) {
         override fun toString(): String {
             return "LeafNode(start=$start, end=end, suffix=$suffix, label=${edgeLabel()})"
         }
