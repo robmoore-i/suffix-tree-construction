@@ -170,7 +170,9 @@ class SuffixTree {
                 }
 
                 val activeEdgeChar = currentlyInsertedInput[activeEdge]
-                if (!activeNode.edges.containsKey(activeEdgeChar)) {
+
+                val nextNode = activeNode.edges[activeEdgeChar]
+                if (nextNode == null) {
                     // If the active node doesn't yet have a child node corresponding to the next
                     // character, add one. When we perform a leaf insertion like this, we need to add a
                     // suffix link.
@@ -180,7 +182,6 @@ class SuffixTree {
                     // Since the active node has an edge starting with the next character, we need to
                     // either create a new leaf node, continue down the active edge, or split the
                     // current edge and create both an internal node and a leaf node.
-                    val nextNode = activeNode.edges[activeEdgeChar]!!
 
                     // If the reference to the active point is non-canonical, then canonize it by
                     // stepping through the tree, and then go to the next extension of the current
