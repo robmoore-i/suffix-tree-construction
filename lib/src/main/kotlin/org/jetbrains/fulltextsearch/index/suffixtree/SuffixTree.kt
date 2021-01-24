@@ -49,14 +49,9 @@ class SuffixTree {
         var i = 0
         var node: Node = rootNode
         while (i < queryString.length) {
-            // If there are no outbound edges for the next character, then there are no matches
-            val queryChar = queryString[i]
-            if (!node.edges.containsKey(queryChar)) {
-                return setOf()
-            }
-
-            // We follow the edge to the next internal node - but we need to check some things too.
-            node = node.edges[queryChar]!!
+            // We try to follow the edge to the next internal node. If there is no such edge, then
+            // there are no matches and we return the empty set.
+            node = (node.edges[queryString[i]] ?: return setOf())
 
             // If the edge we just followed is longer than the remainder of the query string, then
             // we get matches only if the edge label starts with the remainder of the query string.
