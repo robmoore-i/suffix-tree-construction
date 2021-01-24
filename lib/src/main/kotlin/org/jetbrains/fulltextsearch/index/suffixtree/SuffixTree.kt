@@ -1,19 +1,22 @@
 package org.jetbrains.fulltextsearch.index.suffixtree
 
-import java.io.OutputStream
 import java.util.*
 
 
 class SuffixTree(length: Int) {
-    private val nodes: MutableList<Node?> = MutableList(2 * length + 2) { null }
     private val text: CharArray = CharArray(length)
     private val infinity = Int.MAX_VALUE / 2
-    private val rootNodeId: Int = 1
-    private val rootNode: Node = addNode(-1, -1)
+    private val rootNode: Node = RootNode()
 
-    private var activeNodeId: Int = rootNodeId
+    private val nodes: MutableList<Node?> = MutableList<Node?>(2 * length + 2) { null }.run {
+        this[1] = rootNode
+        this
+    }
+
+
+    private var activeNodeId: Int = rootNode.id
     private var position: Int = -1
-    private var currentNode = 0
+    private var currentNode = 1
     private var needSuffixLink = 0
     private var remainder = 0
     private var activeLength = 0
@@ -29,11 +32,11 @@ class SuffixTree(length: Int) {
         }
     }
 
-    private fun addSuffixLink(node: Int) {
+    private fun addSuffixLink(node: Node) {
         if (needSuffixLink > 0) {
-            nodes[needSuffixLink]!!.link = node
+            nodes[needSuffixLink]!!.linkTo(node)
         }
-        needSuffixLink = node
+        needSuffixLink = node.id
     }
 
     private fun activeEdge(): Char {
@@ -89,7 +92,7 @@ class SuffixTree(length: Int) {
                 // suffix link.
                 val leaf = addLeaf().id
                 activeNode().next[activeEdge()] = leaf
-                addSuffixLink(activeNodeId)
+                addSuffixLink(activeNode())
             } else {
                 // Since the active node has an edge starting with the next character, we need to
                 // either create a new leaf node, continue down the active edge, or split the
@@ -112,7 +115,7 @@ class SuffixTree(length: Int) {
                 // insertion.
                 if (text[nextNode.start + activeLength] == c) {
                     activeLength++
-                    addSuffixLink(activeNodeId)
+                    addSuffixLink(activeNode())
                     break
                 }
 
@@ -125,7 +128,7 @@ class SuffixTree(length: Int) {
                 internalNode.next[c] = leaf
                 nextNode.start += activeLength
                 internalNode.next[text[nextNode.start]] = nextNode.id
-                addSuffixLink(internalNode.id)
+                addSuffixLink(internalNode)
             }
 
             // Since we have completed the above conditional block, it means that we have added a
@@ -141,12 +144,8 @@ class SuffixTree(length: Int) {
                 activeEdge = position - remainder + 1
             } else {
                 // When we insert a node from an internal node, we follow its suffix link if it has
-                // one. Otherwise we go back to root.
-                activeNodeId = if (activeNode().link > 0) {
-                    activeNode().link
-                } else {
-                    rootNode.id
-                }
+                // one. The default suffix link for any node is root.
+                activeNodeId = activeNode().linkedNodeId()
             }
         }
     }
@@ -230,11 +229,21 @@ class SuffixTree(length: Int) {
      * It also contains information about the edge that connects it to its parent, via the 'start'
      * and 'end' fields.
      */
-    inner class Node(var start: Int, private var end: Int) {
-        var link = rootNodeId
-        var next = TreeMap<Char, Int>()
+    open inner class Node(var start: Int, private var end: Int) {
+        open val id = currentNode
+
+        private var link: Int? = null
+
         val suffix = position - remainder + 1
-        val id = currentNode
+        var next = TreeMap<Char, Int>()
+
+        open fun linkedNodeId(): Int {
+            return link ?: rootNode.id
+        }
+
+        open fun linkTo(node: Node) {
+            link = node.id
+        }
 
         fun edgeLength(): Int {
             return minOf(end, position + 1) - start
@@ -262,62 +271,8 @@ class SuffixTree(length: Int) {
             }, suffix=$suffix, link=$link, label=${edgeLabel()})"
         }
     }
-}
 
-@Suppress("unused")
-object Debugger {
-    private var debug = false
-
-    private val doNothingOutputStream = object : OutputStream() {
-        override fun write(b: Int) {}
-    }
-
-    private var outputStream: OutputStream = doNothingOutputStream
-
-    fun info(s: String) {
-        outputStream.write(s.toByteArray())
-    }
-
-    fun debug(s: String) {
-        if (debug) {
-            outputStream.write(s.toByteArray())
-        }
-    }
-
-    fun enableIf(function: () -> Boolean) {
-        if (function()) {
-            enable()
-        } else {
-            disable()
-        }
-    }
-
-    private fun enable() {
-        outputStream = System.out
-    }
-
-    private fun disable() {
-        outputStream = doNothingOutputStream
-    }
-
-    fun debugFor(function: () -> Unit) {
-        val wasEnabled = outputStream == System.out
-        val wasDebug = debug
-        enable()
-        debug = true
-        function.invoke()
-        if (!wasEnabled) {
-            disable()
-        }
-        debug = wasDebug
-    }
-
-    fun enableFor(function: () -> Unit) {
-        val wasEnabled = outputStream == System.out
-        enable()
-        function.invoke()
-        if (!wasEnabled) {
-            disable()
-        }
+    inner class RootNode : Node(-1, -1) {
+        override var id = 1
     }
 }
