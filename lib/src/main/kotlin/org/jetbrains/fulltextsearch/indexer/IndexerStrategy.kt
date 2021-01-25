@@ -14,7 +14,7 @@ fun interface IndexerStrategy {
             val relativePath = rootDirectory.relativePathTo(file.path)
             val fileText = file.readText()
             if (
-                listOf(".jar", ".png").any { relativePath.endsWith(it) } // Don't index these
+                listOf(".jar", ".png").any { relativePath.endsWith(it) }
                 || fileText.length > 10000 // It's not really fast enough to handle any bigger files
             ) {
                 NaiveIndexedFile(relativePath, fileText)
