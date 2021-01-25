@@ -2,6 +2,7 @@
 
 package org.jetbrains.fulltextsearch.index.suffixtree
 
+import org.jetbrains.fulltextsearch.index.comparison_test.QueryResultsComparisons
 import org.jetbrains.fulltextsearch.index.naive.NaiveIndexedFile
 import org.jetbrains.fulltextsearch.randominput.RandomInput.generateRandomString
 import org.junit.jupiter.api.Assertions.fail
@@ -76,32 +77,18 @@ class SuffixTreeFuzzTest {
         naiveIndexedFile: NaiveIndexedFile,
         suffixTreeIndexedFile: SuffixTreeIndexedFile
     ) {
-        val expectedQueryResults = naiveIndexedFile.lookaheadQuery(queryString).toSet()
-        val actualQueryResults = suffixTreeIndexedFile.query(queryString).toSet()
-        if (expectedQueryResults != actualQueryResults) {
-            var counter = 0
-            for (expectedMatch in expectedQueryResults) {
-                if (expectedMatch !in actualQueryResults) {
-                    counter++
-                    println(expectedMatch)
-                }
-            }
-            println("\tThere were $counter expected query results which were missing")
-
-            counter = 0
-            for (match in expectedQueryResults) {
-                if (match !in actualQueryResults) {
-                    counter++
-                    println(match)
-                }
-            }
-            println("\tThere were $counter query results which were unexpected")
-            fail<String>(
-                "\tSuffixTreeIndexedFile and NaiveIndexedFile disagreed on the output " +
-                        "of a query.\n" +
-                        "Query string: '$queryString'\n" +
-                        "File content: '$fileContent'\n"
-            )
-        }
+        val actualQueryResults = suffixTreeIndexedFile.query(queryString)
+        val expectedQueryResults = naiveIndexedFile.lookaheadQuery(queryString)
+        QueryResultsComparisons.printQueryResultComparison(
+            actualQueryResults,
+            expectedQueryResults,
+            onMismatch = {
+                fail<String>(
+                    "\tSuffixTreeIndexedFile and NaiveIndexedFile disagreed on the output " +
+                            "of a query.\n" +
+                            "File content: '$fileContent'\n" +
+                            "Query string: '$queryString'\n"
+                )
+            })
     }
 }
