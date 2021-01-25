@@ -59,6 +59,11 @@ class SuffixTree {
 
         private var suffixLinkCandidate: Node? = null
 
+        /**
+         * Add the suffixes that still need to be made explicit in the tree.
+         *
+         * @param c The character we're adding to the tree in the current phase.
+         */
         fun addRemainingSuffixes(c: Char) {
             // We only add suffix links within a phase, so we reset it at the start of the phase.
             suffixLinkCandidate = null
@@ -90,6 +95,7 @@ class SuffixTree {
         }
 
         /**
+         * @param c The character we're adding to the tree in the current phase.¬
          * @return Which suffix extension rule was applied in order to add the next suffix.
          */
         private fun addSuffix(c: Char): SuffixExtensionRule {
