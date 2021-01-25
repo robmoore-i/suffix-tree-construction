@@ -13,10 +13,13 @@ fun interface IndexerStrategy {
         fun default(): IndexerStrategy = IndexerStrategy { rootDirectory, file ->
             val relativePath = rootDirectory.relativePathTo(file.path)
             val fileText = file.readText()
-            if (fileText.length < 50) {
-                SuffixTreeIndexedFile(relativePath, fileText)
-            } else {
+            if (
+                listOf(".jar", ".png").any { relativePath.endsWith(it) } // Don't index these
+                || fileText.length > 10000 // It's not really fast enough to handle any bigger files
+            ) {
                 NaiveIndexedFile(relativePath, fileText)
+            } else {
+                SuffixTreeIndexedFile(relativePath, fileText)
             }
         }
 
