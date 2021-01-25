@@ -70,52 +70,11 @@ class SuffixTree {
                     activeEdge = currentlyInsertedInput.length - 1
                 }
 
-                val activeEdgeLeadingChar = currentlyInsertedInput[activeEdge]
-
-                val nextNode = activeNode.edges[activeEdgeLeadingChar]
-                if (nextNode == null) {
-                    // If the active node doesn't yet have a child node corresponding to the next
-                    // character, add one. When we perform a leaf insertion like this, we need to add a
-                    // suffix link.
-                    activeNode.edges[activeEdgeLeadingChar] = LeafNode()
-                    addSuffixLink(activeNode)
-                } else {
-                    // Since the active node has an edge starting with the next character, we need to
-                    // either create a new leaf node, continue down the active edge, or split the
-                    // current edge and create both an internal node and a leaf node.
-
-                    // If the reference to the active point is non-canonical, then canonize it by
-                    // stepping through the tree, and then go to the next extension of the current
-                    // phase so that we can do all our steps from the basis of a canonical reference to
-                    // the active point.
-                    val edgeLength = nextNode.edgeLength()
-                    if (activeLength >= edgeLength) {
-                        activeEdge += edgeLength
-                        activeLength -= edgeLength
-                        activeNode = nextNode
-                        continue
-                    }
-
-                    // If the character is already present on the edge we are creating for the next
-                    // node, then the suffix is implicitly contained within the tree already, so we
-                    // end the current phase. We need to add a suffix link to the active node as well,
-                    // because otherwise the active point won't get to the correct place after our next
-                    // insertion.
-                    if (currentlyInsertedInput[nextNode.start + activeLength] == c) {
-                        activeLength++
-                        addSuffixLink(activeNode)
-                        break
-                    }
-
-                    // The next node we're adding will be an internal node. We add it, and create a
-                    // leaf node from it whose edge corresponds to the character we're adding. We also
-                    // create a suffix link for the newly added internal node.
-                    val internalNode = Node(nextNode.start, nextNode.start + activeLength)
-                    activeNode.edges[activeEdgeLeadingChar] = internalNode
-                    internalNode.edges[c] = LeafNode()
-                    nextNode.start += activeLength
-                    internalNode.edges[currentlyInsertedInput[nextNode.start]] = nextNode
-                    addSuffixLink(internalNode)
+                val extension = addSuffix(c)
+                if (extension == "canonizing active point reference") {
+                    continue
+                } else if (extension == "rule 3 extension") {
+                    break
                 }
 
                 // Since we have completed the above conditional block, it means that we have added a
@@ -134,6 +93,58 @@ class SuffixTree {
                     // one. The default suffix link for any node is root.
                     activeNode = activeNode.suffixLink()
                 }
+            }
+        }
+
+        private fun addSuffix(c: Char): String {
+            val activeEdgeLeadingChar = currentlyInsertedInput[activeEdge]
+
+            val nextNode = activeNode.edges[activeEdgeLeadingChar]
+            if (nextNode == null) {
+                // If the active node doesn't yet have a child node corresponding to the next
+                // character, add one. When we perform a leaf insertion like this, we need to add a
+                // suffix link.
+                activeNode.edges[activeEdgeLeadingChar] = LeafNode()
+                addSuffixLink(activeNode)
+                return "rule 2 extension"
+            } else {
+                // Since the active node has an edge starting with the next character, we need to
+                // either create a new leaf node, continue down the active edge, or split the
+                // current edge and create both an internal node and a leaf node.
+
+                // If the reference to the active point is non-canonical, then canonize it by
+                // stepping through the tree, and then go to the next extension of the current
+                // phase so that we can do all our steps from the basis of a canonical reference
+                // to the active point.
+                val edgeLength = nextNode.edgeLength()
+                if (activeLength >= edgeLength) {
+                    activeEdge += edgeLength
+                    activeLength -= edgeLength
+                    activeNode = nextNode
+                    return "canonizing active point reference"
+                }
+
+                // If the character is already present on the edge we are creating for the next
+                // node, then the suffix is implicitly contained within the tree already, so we
+                // end the current phase. We need to add a suffix link to the active node as well,
+                // because otherwise the active point won't get to the correct place after our next
+                // insertion.
+                if (currentlyInsertedInput[nextNode.start + activeLength] == c) {
+                    activeLength++
+                    addSuffixLink(activeNode)
+                    return "rule 3 extension"
+                }
+
+                // The next node we're adding will be an internal node. We add it, and create a
+                // leaf node from it whose edge corresponds to the character we're adding. We also
+                // create a suffix link for the newly added internal node.
+                val internalNode = Node(nextNode.start, nextNode.start + activeLength)
+                activeNode.edges[activeEdgeLeadingChar] = internalNode
+                internalNode.edges[c] = LeafNode()
+                nextNode.start += activeLength
+                internalNode.edges[currentlyInsertedInput[nextNode.start]] = nextNode
+                addSuffixLink(internalNode)
+                return "rule 2 extension"
             }
         }
 
