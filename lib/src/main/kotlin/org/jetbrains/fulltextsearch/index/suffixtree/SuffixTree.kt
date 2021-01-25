@@ -64,16 +64,8 @@ class SuffixTree {
             suffixLinkCandidate = null
 
             while (remainingSuffixes > 0) {
-                if (activeLength == 0) {
-                    // If we're at a node, point our active edge at the most recently added character in
-                    // the text.
-                    activeEdge = currentlyInsertedInput.length - 1
-                }
-
-                val extension = addSuffix(c)
-                if (extension == "canonizing active point reference") {
-                    continue
-                } else if (extension == "rule 3 extension") {
+                val extensionRuleThatWasApplied = addSuffix(c)
+                if (extensionRuleThatWasApplied == SuffixExtensionRule.RULE_THREE) {
                     break
                 }
 
@@ -96,7 +88,16 @@ class SuffixTree {
             }
         }
 
-        private fun addSuffix(c: Char): String {
+        /**
+         * @return Which suffix extension rule was applied in order to add the next suffix.
+         */
+        private fun addSuffix(c: Char): SuffixExtensionRule {
+            if (activeLength == 0) {
+                // If we're at a node, point our active edge at the most recently added character in
+                // the text.
+                activeEdge = currentlyInsertedInput.length - 1
+            }
+
             val activeEdgeLeadingChar = currentlyInsertedInput[activeEdge]
 
             val nextNode = activeNode.edges[activeEdgeLeadingChar]
@@ -106,22 +107,18 @@ class SuffixTree {
                 // suffix link.
                 activeNode.edges[activeEdgeLeadingChar] = LeafNode()
                 addSuffixLink(activeNode)
-                return "rule 2 extension"
+                return SuffixExtensionRule.RULE_TWO
             } else {
-                // Since the active node has an edge starting with the next character, we need to
-                // either create a new leaf node, continue down the active edge, or split the
-                // current edge and create both an internal node and a leaf node.
-
                 // If the reference to the active point is non-canonical, then canonize it by
-                // stepping through the tree, and then go to the next extension of the current
-                // phase so that we can do all our steps from the basis of a canonical reference
-                // to the active point.
+                // recursively stepping through the tree, and then go to the next extension of the
+                // current phase so that we can do all our steps from the basis of a canonical
+                // reference to the active point.
                 val edgeLength = nextNode.edgeLength()
                 if (activeLength >= edgeLength) {
                     activeEdge += edgeLength
                     activeLength -= edgeLength
                     activeNode = nextNode
-                    return "canonizing active point reference"
+                    return addSuffix(c)
                 }
 
                 // If the character is already present on the edge we are creating for the next
@@ -132,7 +129,7 @@ class SuffixTree {
                 if (currentlyInsertedInput[nextNode.start + activeLength] == c) {
                     activeLength++
                     addSuffixLink(activeNode)
-                    return "rule 3 extension"
+                    return SuffixExtensionRule.RULE_THREE
                 }
 
                 // The next node we're adding will be an internal node. We add it, and create a
@@ -144,7 +141,7 @@ class SuffixTree {
                 nextNode.start += activeLength
                 internalNode.edges[currentlyInsertedInput[nextNode.start]] = nextNode
                 addSuffixLink(internalNode)
-                return "rule 2 extension"
+                return SuffixExtensionRule.RULE_TWO
             }
         }
 
@@ -255,4 +252,19 @@ class SuffixTree {
             return "RootNode(edges:${edges.map { "\n\t'${it.key}'=${it.value.toString(2)}" }})"
         }
     }
+}
+
+private enum class SuffixExtensionRule {
+    /**
+     * Rule two extensions happen when the suffix is not implicitly present in the tree, so we add
+     * it in a new leaf node.
+     */
+    RULE_TWO,
+
+    /**
+     * Rule three extensions happen when the suffix is already implicitly present in the tree, in
+     * which case we do nothing. These suffixes will be made explicit later when the tree is
+     * canonized by the addition of a unique character at the end. d
+     */
+    RULE_THREE
 }
