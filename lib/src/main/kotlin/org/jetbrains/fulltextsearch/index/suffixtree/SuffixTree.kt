@@ -66,6 +66,8 @@ class SuffixTree {
             while (remainingSuffixes > 0) {
                 val extensionRuleThatWasApplied = addSuffix(c)
                 if (extensionRuleThatWasApplied == SuffixExtensionRule.RULE_THREE) {
+                    // When we apply rule three extensions, it ends the current phase because the
+                    // suffix we want to add is already implicitly present in the tree.
                     break
                 }
 
@@ -93,13 +95,11 @@ class SuffixTree {
          */
         private fun addSuffix(c: Char): SuffixExtensionRule {
             if (activeLength == 0) {
-                // If we're at a node, point our active edge at the most recently added character in
-                // the text.
+                // If we're at a node, set our active edge at the last added character in the text.
                 activeEdge = currentlyInsertedInput.length - 1
             }
 
             val activeEdgeLeadingChar = currentlyInsertedInput[activeEdge]
-
             val nextNode = activeNode.edges[activeEdgeLeadingChar]
             if (nextNode == null) {
                 // If the active node doesn't yet have a child node corresponding to the next
@@ -122,19 +122,16 @@ class SuffixTree {
                 }
 
                 // If the character is already present on the edge we are creating for the next
-                // node, then the suffix is implicitly contained within the tree already, so we
-                // end the current phase. We need to add a suffix link to the active node as well,
-                // because otherwise the active point won't get to the correct place after our next
-                // insertion.
+                // node, then we perform a rule three extension. We add a suffix link to the active
+                // node, so the active point gets to the right place after our next node insertion.
                 if (currentlyInsertedInput[nextNode.start + activeLength] == c) {
                     activeLength++
                     addSuffixLink(activeNode)
                     return SuffixExtensionRule.RULE_THREE
                 }
 
-                // The next node we're adding will be an internal node. We add it, and create a
-                // leaf node from it whose edge corresponds to the character we're adding. We also
-                // create a suffix link for the newly added internal node.
+                // We split the active edge by creating a new internal node and a new leaf node for
+                // the next character. We add a suffix link for the newly created internal node.
                 val internalNode = Node(nextNode.start, nextNode.start + activeLength)
                 activeNode.edges[activeEdgeLeadingChar] = internalNode
                 internalNode.edges[c] = LeafNode()
@@ -186,7 +183,7 @@ class SuffixTree {
         }
     }
 
-    inner class LeafNode : Node(currentlyInsertedInput.length - 1, Int.MAX_VALUE / 2) {
+    inner class LeafNode : Node(currentlyInsertedInput.length - 1, Int.MAX_VALUE) {
         override fun toString(): String {
             return "LeafNode(start=$start, end=end, suffix=$suffix, label=${edgeLabel()})"
         }
@@ -255,6 +252,14 @@ class SuffixTree {
 }
 
 private enum class SuffixExtensionRule {
+    /**
+     * Rule one extensions happen in the first extension of every phase, when the leaf nodes are
+     * implicitly extended by the addition of the next character. I have included it here for my
+     * documentation of the algorithm.
+     */
+    @Suppress("unused")
+    RULE_ONE,
+
     /**
      * Rule two extensions happen when the suffix is not implicitly present in the tree, so we add
      * it in a new leaf node.
