@@ -12,3 +12,6 @@ example-input-directories
 
 # Zipped project
 full-text-search.zip
+
+# Mac
+.DS_Store
