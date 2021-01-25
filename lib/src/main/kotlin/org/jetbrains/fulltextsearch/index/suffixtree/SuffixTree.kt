@@ -71,10 +71,9 @@ class SuffixTree {
                     break
                 }
 
-                // Since we have completed the above conditional block, it means that we have added a
-                // new leaf node, which means that a new suffix has been made explicit within the tree.
-                // When this happens, we decrement the number of suffixes that still need to be added to
-                // the tree.
+                // Since we haven't broken out of the loop, it means we did a rule three extension,
+                // which means that a new suffix has been made explicit within the tree. When this
+                // happens, we decrement the number of suffixes that still need to be added.
                 remainingSuffixes--
 
                 if (activeNode == rootNode && activeLength > 0) {
