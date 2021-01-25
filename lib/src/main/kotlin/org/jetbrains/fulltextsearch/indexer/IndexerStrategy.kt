@@ -10,12 +10,14 @@ fun interface IndexerStrategy {
     fun buildIndexFor(rootDirectory: Directory, file: File): IndexedFile
 
     companion object {
-        fun default(): IndexerStrategy = IndexerStrategy { rootDirectory, file ->
+        fun default(
+            fileCharsThreshold: Int = 10000
+        ): IndexerStrategy = IndexerStrategy { rootDirectory, file ->
             val relativePath = rootDirectory.relativePathTo(file.path)
             val fileText = file.readText()
             if (
                 listOf(".jar", ".png").any { relativePath.endsWith(it) }
-                || fileText.length > 10000 // It's not really fast enough to handle any bigger files
+                || fileText.length > fileCharsThreshold
             ) {
                 NaiveIndexedFile(relativePath, fileText)
             } else {

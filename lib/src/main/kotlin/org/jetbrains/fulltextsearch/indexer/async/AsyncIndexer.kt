@@ -2,6 +2,7 @@ package org.jetbrains.fulltextsearch.indexer.async
 
 import kotlinx.coroutines.Job
 import org.jetbrains.fulltextsearch.filesystem.Directory
+import org.jetbrains.fulltextsearch.indexer.IndexerStrategy
 
 interface AsyncIndexer {
     suspend fun buildIndexAsync(
@@ -10,8 +11,8 @@ interface AsyncIndexer {
     ): Job
 
     companion object {
-        fun default(): AsyncIndexer {
-            return ParallelAsyncIndexer()
+        fun default(indexerStrategy: IndexerStrategy = IndexerStrategy.default()): AsyncIndexer {
+            return ParallelAsyncIndexer(indexerStrategy = indexerStrategy)
         }
     }
 }

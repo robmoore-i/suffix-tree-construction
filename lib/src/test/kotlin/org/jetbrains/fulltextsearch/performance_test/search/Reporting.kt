@@ -3,6 +3,7 @@ package org.jetbrains.fulltextsearch.performance_test.search
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.fulltextsearch.filesystem.Directory
 import org.jetbrains.fulltextsearch.index.IndexedFile
+import org.jetbrains.fulltextsearch.indexer.IndexerStrategy
 import org.jetbrains.fulltextsearch.indexer.async.AsyncIndexer
 import org.jetbrains.fulltextsearch.indexer.async.AsyncIndexingProgressListener
 import org.jetbrains.fulltextsearch.randominput.RandomInput.generateRandomSearchQueryTerm
@@ -13,7 +14,8 @@ import kotlin.system.measureTimeMillis
 
 fun collectAndPrintSearchExecutionTimeData(
     directoryPathFromSourceRoot: String,
-    n: Int
+    numberOfSearchesToExecute: Int,
+    indexerStrategy: IndexerStrategy = IndexerStrategy.default(fileCharsThreshold = 10000)
 ) {
     val dirPath = Paths.get("../$directoryPathFromSourceRoot")
     if (!dirPath.toFile().exists()) {
@@ -27,7 +29,7 @@ fun collectAndPrintSearchExecutionTimeData(
     }
     val indexedDirectory: IndexedDirectory = runBlocking {
         println("Indexing...")
-        val indexer = AsyncIndexer.default()
+        val indexer = AsyncIndexer.default(indexerStrategy = indexerStrategy)
         var theIndexedDirectory: IndexedDirectory? = null
         indexer.buildIndexAsync(
             Directory(dirPath),
@@ -43,7 +45,7 @@ fun collectAndPrintSearchExecutionTimeData(
         theIndexedDirectory!!
     }
     val searchQueryPerformanceTester = SearchQueryPerformanceTester()
-    repeat(n) { searchQueryPerformanceTester.nextResult(indexedDirectory) }
+    repeat(numberOfSearchesToExecute) { searchQueryPerformanceTester.nextResult(indexedDirectory) }
     searchQueryPerformanceTester.printResults()
 }
 

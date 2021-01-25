@@ -3,6 +3,7 @@ package org.jetbrains.fulltextsearch.performance_test.indexer
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.fulltextsearch.filesystem.Directory
 import org.jetbrains.fulltextsearch.index.IndexedFile
+import org.jetbrains.fulltextsearch.indexer.IndexerStrategy
 import org.jetbrains.fulltextsearch.indexer.async.AsyncIndexer
 import org.jetbrains.fulltextsearch.indexer.async.AsyncIndexingProgressListener
 import org.jetbrains.fulltextsearch.search.IndexedDirectory
@@ -12,7 +13,8 @@ import kotlin.system.measureTimeMillis
 
 fun collectAndPrintIndexingExecutionTimeData(
     directoryPathFromSourceRoot: String,
-    n: Int
+    numberOfTimesToBuildTheIndex: Int,
+    indexerStrategy: IndexerStrategy = IndexerStrategy.default(fileCharsThreshold = 10000)
 ) {
     val dirPath = Paths.get("../$directoryPathFromSourceRoot")
     if (!dirPath.toFile().exists()) {
@@ -26,12 +28,12 @@ fun collectAndPrintIndexingExecutionTimeData(
     }
 
     val executionTimes = mutableListOf<Long>()
-    repeat(n) {
+    repeat(numberOfTimesToBuildTheIndex) {
         executionTimes.add(measureTimeMillis {
             // Note that we are testing the default indexer.
-            val defaultIndexer = AsyncIndexer.default()
+            val indexer = AsyncIndexer.default(indexerStrategy = indexerStrategy)
             runBlocking {
-                defaultIndexer.buildIndexAsync(
+                indexer.buildIndexAsync(
                     Directory(dirPath),
                     object : AsyncIndexingProgressListener {
                         override fun onNewFileIndexed(indexedFile: IndexedFile) {
@@ -44,7 +46,7 @@ fun collectAndPrintIndexingExecutionTimeData(
         })
     }
     val maxExecutionTime = executionTimes.maxOrNull()!!
-    val meanExecutionTime = executionTimes.toLongArray().sum() / n
+    val meanExecutionTime = executionTimes.toLongArray().sum() / numberOfTimesToBuildTheIndex
     println("Max execution time: ${maxExecutionTime}ms")
     println("Mean execution time: ${meanExecutionTime}ms")
 }

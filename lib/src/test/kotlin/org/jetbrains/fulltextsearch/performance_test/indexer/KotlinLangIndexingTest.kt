@@ -2,6 +2,7 @@
 
 package org.jetbrains.fulltextsearch.performance_test.indexer
 
+import org.jetbrains.fulltextsearch.indexer.IndexerStrategy
 import org.jetbrains.fulltextsearch.performance_test.PerformanceTest
 import org.junit.jupiter.api.Test
 
@@ -11,7 +12,9 @@ class KotlinLangIndexingTest {
     internal fun `indexing the kotlin programming language repository`() {
         collectAndPrintIndexingExecutionTimeData(
             "example-input-directories/kotlin",
-            1
+            1,
+            // At the moment my implementation can't really handle this data set.
+            IndexerStrategy.default(fileCharsThreshold = 10)
         )
     }
 }
