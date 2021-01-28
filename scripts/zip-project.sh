@@ -7,11 +7,13 @@ fi
 
 project_dir_name=$(pwd | xargs basename)
 pushd ..
+rm -f "${project_dir_name}/full-text-search.zip"
 zip -r "${project_dir_name}/full-text-search.zip" "$project_dir_name" \
   -x '*example-input-directories*' \
   -x '*build*' \
   -x '*.gradle*' \
   -x '*.git*' \
-  -x '*.idea*'
+  -x '*.idea*' \
+  -x '*full-text-search.zip'
 
 popd || exit
