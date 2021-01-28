@@ -15,7 +15,7 @@ import kotlin.system.measureTimeMillis
 fun collectAndPrintSearchExecutionTimeData(
     directoryPathFromSourceRoot: String,
     numberOfSearchesToExecute: Int,
-    indexerStrategy: IndexerStrategy = IndexerStrategy.default(fileCharsThreshold = 10000)
+    indexerStrategy: IndexerStrategy = IndexerStrategy.default(suffixTreeMaxCharsThreshold = 10000)
 ) {
     val dirPath = Paths.get("../$directoryPathFromSourceRoot")
     if (!dirPath.toFile().exists()) {

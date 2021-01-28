@@ -14,7 +14,7 @@ class KotlinLangIndexingTest {
             "example-input-directories/kotlin",
             1,
             // At the moment my implementation can't really handle this data set.
-            IndexerStrategy.default(fileCharsThreshold = 10)
+            IndexerStrategy.default(suffixTreeMaxCharsThreshold = 10)
         )
     }
 }
