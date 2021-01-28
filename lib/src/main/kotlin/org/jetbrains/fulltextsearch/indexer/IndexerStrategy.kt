@@ -14,7 +14,8 @@ fun interface IndexerStrategy {
         fun default(suffixTreeMaxCharsThreshold: Int = 10000): IndexerStrategy =
             IndexerStrategy { rootDirectory, file ->
                 val relativePath = rootDirectory.relativePathTo(file.path)
-                if (listOf(".jar", ".png").any { relativePath.endsWith(it) }) {
+                val fileExtensionsToNotIndex = setOf(".jar", ".png", ".jpg", ".jpeg")
+                if (fileExtensionsToNotIndex.any { relativePath.endsWith(it) }) {
                     return@IndexerStrategy NoSearchIndexedFile(relativePath)
                 }
 
