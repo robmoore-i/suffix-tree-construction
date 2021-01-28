@@ -12,8 +12,6 @@ zip -r "${project_dir_name}/full-text-search.zip" "$project_dir_name" \
   -x '*example-input-directories*' \
   -x '*build*' \
   -x '*.gradle*' \
-  -x '*.git*' \
-  -x '*.idea*' \
   -x '*full-text-search.zip'
 
 popd || exit
