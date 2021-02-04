@@ -1,0 +1,19 @@
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.4.30"
+    }
+}
+
+apply plugin: 'kotlin'
+
+repositories {
+    jcenter()
+}
+
+sourceSets {
+    main.kotlin.srcDirs = ['src']
+    main.resources.srcDirs = ['resources']
+}
