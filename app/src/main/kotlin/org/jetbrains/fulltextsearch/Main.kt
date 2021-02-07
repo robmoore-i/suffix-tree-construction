@@ -97,7 +97,7 @@ class Main {
                     indexedDirectory.queryCaseSensitive(queryInput.query!!)
                 println("Found ${queryCaseSensitive.size} matching lines:")
                 queryCaseSensitive.forEach {
-                    println("- ${indexedDirectory.correspondingFileLine(it).trim()}")
+                    println(indexedDirectory.correspondingFileLine(it).trim())
                 }
                 queryInput.readFromUser()
             }

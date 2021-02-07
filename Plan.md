@@ -64,19 +64,22 @@
 - Update the suffix tree construction code so that it uses Ukkonen's linear-time
   algorithm. :white_check_mark: (24/01)
 
-- Update the library's indexing function so that it builds a suffix tree index
-  even for bigger files - maybe even all files, if that is feasible.
-
 - **First iteration complete**
 
-- I'll plan the next iteration when the first iteration is closer to completion.
-  Broadly speaking, the subsequent iterations will contain the file-watching
-  requirement, developer-experience improvements to the interface, and
-  performance improvements by the use of parallel algorithms for suffix tree
-  construction, or even the use of another data structure if appropriate.
+- Find out why the launched indexing coroutines are not executing concurrently,
+  and change it so that they are, but that we don't accidentally launch too many
+  worker threads. :white_check_mark: (07/02)
+
+- Change the user interface of the demo app so using it is a slightly better
+  experience. Users should be able to see the number of matches, and the
+  matching lines. Start by implementing a basic line scanning implementation for
+  the naive index. :white_check_mark: (07/02)
+
+- When getting the matching lines from a suffix tree index, exploit the index.
 
 ## Plan Changelog
 
-- 13/01 morning : Initial planning
-- 18/01 morning : Split suffix tree index integration into two iterations.
+- 13/01 morning:   Initial planning
+- 18/01 morning:   Split suffix tree index integration into two iterations.
+- 07/02 afternoon: Second iteration planning
 
