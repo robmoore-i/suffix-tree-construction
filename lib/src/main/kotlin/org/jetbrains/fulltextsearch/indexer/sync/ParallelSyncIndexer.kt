@@ -1,5 +1,6 @@
 package org.jetbrains.fulltextsearch.indexer.sync
 
+import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -19,7 +20,8 @@ class ParallelSyncIndexer(
         val indexedFiles = synchronizedList(mutableListOf<IndexedFile>())
         runBlocking {
             directory.forEachFile {
-                launch(Dispatchers.Default) {
+                val coroutineName = CoroutineName("build-index-for-${it.path}")
+                launch(Dispatchers.Default + coroutineName) {
                     val indexedFile = indexerStrategy.buildIndexFor(directory, it)
                     indexingProgressListener.onNewFileIndexed(indexedFile)
                     indexedFiles.add(indexedFile)
