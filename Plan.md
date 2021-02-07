@@ -75,7 +75,9 @@
   matching lines. Start by implementing a basic line scanning implementation for
   the naive index. :white_check_mark: (07/02)
 
-- When getting the matching lines from a suffix tree index, exploit the index.
+- When getting the matching lines from a suffix tree index, exploit the index by
+  storing the line break offsets and utilising them for every query.
+  :white_check_mark: (07/02)
 
 ## Plan Changelog
 
