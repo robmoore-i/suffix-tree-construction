@@ -23,8 +23,6 @@ class Main {
                 val directory: Directory = chooseSearchDirectory()
                 val indexer =
                     AsyncIndexer.default(IndexerStrategy.default(suffixTreeMaxCharsThreshold = null))
-                // Note: You can trigger a timeout using the below directory:
-                // example-input-directories/kotlin
                 val indexedDirectory: IndexedDirectory = coroutineScope {
                     println("Indexing...")
                     var theIndexedDirectory: IndexedDirectory? = null
