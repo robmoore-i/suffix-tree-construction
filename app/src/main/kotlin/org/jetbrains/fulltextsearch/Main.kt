@@ -95,7 +95,10 @@ class Main {
             while (!queryInput.hasQuit()) {
                 val queryCaseSensitive: List<QueryMatch> =
                     indexedDirectory.queryCaseSensitive(queryInput.query!!)
-                queryCaseSensitive.forEach { println(indexedDirectory.correspondingFileLine(it)) }
+                println("Found ${queryCaseSensitive.size} matching lines:")
+                queryCaseSensitive.forEach {
+                    println("- ${indexedDirectory.correspondingFileLine(it).trim()}")
+                }
                 queryInput.readFromUser()
             }
         }
@@ -108,7 +111,7 @@ class QueryInput() {
     var query: String? = ""
 
     fun readFromUser() {
-        val prompt = "What do you want to search for? " +
+        val prompt = "\nWhat do you want to search for? " +
                 "Note that searches are case sensitive. " +
                 // If you want to search for 'quit', then I'm sorry.
                 "Type 'quit' to quit."

@@ -20,7 +20,20 @@ class NaiveIndexedFile(private val relativePath: String, private val fileText: S
     }
 
     override fun getLineOfChar(offset: Int): String {
-        return fileText.substring(maxOf(0, offset - 10), minOf(fileText.length, offset + 10))
+        // Scan to previous line break
+        var i = offset
+        while (i > 0 && fileText[i - 1] != '\n') {
+            i--
+        }
+        val substringStart = i
+        i = offset
+        // Scan to next line break
+        while (i < fileText.length && fileText[i] != '\n') {
+            i++
+        }
+        val substringEnd = i
+        // Return the substring
+        return fileText.substring(substringStart, substringEnd)
     }
 
     // This method is useful for fuzz testing the suffix tree, because it provides accurate match
