@@ -8,6 +8,7 @@ class SuffixTreeIndexedFile(
 ) : IndexedFile {
 
     private val suffixTree: SuffixTree = SuffixTree.ukkonenConstruction(fileText)
+    private val lineBreakOffsets = suffixTree.offsetsOf("\n")
 
     override fun relativePath(): String = relativePath
 
@@ -18,20 +19,19 @@ class SuffixTreeIndexedFile(
         return suffixTree.offsetsOf(queryString).map { QueryMatch(relativePath, it) }
     }
 
-    override fun getLineOfChar(offset: Int): String {
-        // Scan to previous line break
-        var i = offset
-        while (i > 0 && fileText[i - 1] != '\n') {
-            i--
+    // Approach:
+    // - Find the smallest line break offset > char offset
+    // - Find the greatest line break offset < char offset
+    override fun getLineOfChar(charOffset: Int): String {
+        var startOfLineOffset = -1
+        var endOfLineOffset = fileText.length
+        for (lineBreakOffset in lineBreakOffsets) {
+            if (lineBreakOffset in (charOffset + 1) until endOfLineOffset) {
+                endOfLineOffset = lineBreakOffset
+            } else if (lineBreakOffset in (startOfLineOffset + 1) until charOffset) {
+                startOfLineOffset = lineBreakOffset
+            }
         }
-        val substringStart = i
-        i = offset
-        // Scan to next line break
-        while (i < fileText.length && fileText[i] != '\n') {
-            i++
-        }
-        val substringEnd = i
-        // Return the substring
-        return fileText.substring(substringStart, substringEnd)
+        return fileText.substring(startOfLineOffset + 1, endOfLineOffset)
     }
 }

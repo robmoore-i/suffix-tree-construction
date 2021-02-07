@@ -19,14 +19,14 @@ class NaiveIndexedFile(private val relativePath: String, private val fileText: S
             .toList()
     }
 
-    override fun getLineOfChar(offset: Int): String {
+    override fun getLineOfChar(charOffset: Int): String {
         // Scan to previous line break
-        var i = offset
+        var i = charOffset
         while (i > 0 && fileText[i - 1] != '\n') {
             i--
         }
         val substringStart = i
-        i = offset
+        i = charOffset
         // Scan to next line break
         while (i < fileText.length && fileText[i] != '\n') {
             i++

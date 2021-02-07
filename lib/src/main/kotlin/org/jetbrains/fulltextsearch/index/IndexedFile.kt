@@ -7,5 +7,5 @@ interface IndexedFile {
 
     fun query(queryString: String): List<QueryMatch>
 
-    fun getLineOfChar(offset: Int): String
+    fun getLineOfChar(charOffset: Int): String
 }

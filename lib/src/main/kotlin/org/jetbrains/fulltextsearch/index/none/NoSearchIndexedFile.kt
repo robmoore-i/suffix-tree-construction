@@ -15,10 +15,10 @@ class NoSearchIndexedFile(private val relativePath: String) : IndexedFile {
         return listOf()
     }
 
-    override fun getLineOfChar(offset: Int): String {
+    override fun getLineOfChar(charOffset: Int): String {
         throw UnsupportedOperationException(
             "The file '$relativePath' was not indexed, so getting the line of the character at " +
-                    "offset $offset is not supported, because this call was probably caused by a " +
+                    "offset $charOffset is not supported, because this call was probably caused by a " +
                     "bug."
         )
     }

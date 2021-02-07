@@ -2,10 +2,11 @@
 
 package org.jetbrains.fulltextsearch
 
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withTimeout
 import org.jetbrains.fulltextsearch.filesystem.Directory
 import org.jetbrains.fulltextsearch.index.IndexedFile
+import org.jetbrains.fulltextsearch.indexer.IndexerStrategy
 import org.jetbrains.fulltextsearch.indexer.async.AsyncIndexer
 import org.jetbrains.fulltextsearch.indexer.async.AsyncIndexingProgressListener
 import org.jetbrains.fulltextsearch.search.IndexedDirectory
@@ -20,10 +21,11 @@ class Main {
             runBlocking {
                 printBanner()
                 val directory: Directory = chooseSearchDirectory()
-                val indexer = AsyncIndexer.default()
+                val indexer =
+                    AsyncIndexer.default(IndexerStrategy.default(suffixTreeMaxCharsThreshold = null))
                 // Note: You can trigger a timeout using the below directory:
                 // example-input-directories/kotlin
-                val indexedDirectory: IndexedDirectory = withTimeout(2000) {
+                val indexedDirectory: IndexedDirectory = coroutineScope {
                     println("Indexing...")
                     var theIndexedDirectory: IndexedDirectory? = null
                     indexer.buildIndexAsync(

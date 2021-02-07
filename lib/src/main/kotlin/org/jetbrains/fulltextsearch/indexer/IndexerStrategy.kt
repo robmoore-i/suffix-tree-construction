@@ -11,7 +11,7 @@ fun interface IndexerStrategy {
     fun buildIndexFor(rootDirectory: Directory, file: File): IndexedFile
 
     companion object {
-        fun default(suffixTreeMaxCharsThreshold: Int = 10000): IndexerStrategy =
+        fun default(suffixTreeMaxCharsThreshold: Int? = 10000): IndexerStrategy =
             IndexerStrategy { rootDirectory, file ->
                 val relativePath = rootDirectory.relativePathTo(file.path)
                 val fileExtensionsToNotIndex = setOf(".jar", ".png", ".jpg", ".jpeg")
@@ -20,7 +20,7 @@ fun interface IndexerStrategy {
                 }
 
                 val fileText = file.readText()
-                if (fileText.length > suffixTreeMaxCharsThreshold) {
+                if (suffixTreeMaxCharsThreshold != null && suffixTreeMaxCharsThreshold < fileText.length) {
                     NaiveIndexedFile(relativePath, fileText)
                 } else {
                     SuffixTreeIndexedFile(relativePath, fileText)
