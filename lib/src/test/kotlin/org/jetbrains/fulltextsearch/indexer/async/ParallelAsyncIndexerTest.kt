@@ -4,7 +4,7 @@ import kotlinx.coroutines.runBlocking
 import org.hamcrest.CoreMatchers
 import org.hamcrest.CoreMatchers.hasItems
 import org.hamcrest.MatcherAssert.assertThat
-import org.hamcrest.Matchers.hasSize
+import org.hamcrest.Matchers.*
 import org.jetbrains.fulltextsearch.filesystem.Directory
 import org.jetbrains.fulltextsearch.index.IndexedFile
 import org.jetbrains.fulltextsearch.search.IndexedDirectory
@@ -105,8 +105,7 @@ class ParallelAsyncIndexerTest {
                 }
 
                 override fun onIndexingCompleted(indexedDirectory: IndexedDirectory) {
-                    this@ParallelAsyncIndexerTest.indexedDirectory =
-                        indexedDirectory
+                    this@ParallelAsyncIndexerTest.indexedDirectory = indexedDirectory
                 }
             })
             .join()
@@ -139,6 +138,37 @@ class ParallelAsyncIndexerTest {
         assertTrue(indexingCompleted)
     }
 
+    /**
+     * This test checks the number of active threads every time a new indexing has finished, gathers
+     * that data, and asserts that the number of active threads has increased from the start of the
+     * indexing to the end. This test will fail if you don't use Dispatcher.default when launching
+     * indexing jobs.
+     */
+    @Test
+    internal fun `builds the index using multiple threads in parallel`() = runBlocking {
+        val dirPath = Paths.get("src/test/resources/example-java-project")
+        val threadCounts = mutableListOf<Int>()
+        indexer.buildIndexAsync(
+            Directory(dirPath),
+            object : AsyncIndexingProgressListener {
+                override fun onNewFileIndexed(indexedFile: IndexedFile) {
+                    threadCounts.add(Thread.activeCount())
+                }
+
+                override fun onIndexingCompleted(indexedDirectory: IndexedDirectory) {
+                }
+            })
+            .join()
+
+        assertThat(threadCounts[0], lessThan(threadCounts[threadCounts.size - 1]))
+        threadCounts.indices.drop(1).forEach {
+            assertThat(threadCounts[it], greaterThanOrEqualTo(threadCounts[it - 1]))
+        }
+    }
+
+    /**
+     * Assigns the finished index to the value of the corresponding field in this class.
+     */
     private fun indexingProgressListener() =
         object : AsyncIndexingProgressListener {
             override fun onNewFileIndexed(indexedFile: IndexedFile) {

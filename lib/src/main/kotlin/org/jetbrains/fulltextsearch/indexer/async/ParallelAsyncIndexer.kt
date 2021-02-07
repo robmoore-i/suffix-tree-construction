@@ -20,7 +20,7 @@ class ParallelAsyncIndexer(
             val indexedFiles = Collections.synchronizedList(mutableListOf<IndexedFile>())
             val indexingJobs = mutableListOf<Job>()
             directory.forEachFile {
-                indexingJobs.add(launch {
+                indexingJobs.add(launch(Dispatchers.Default) {
                     val indexedFile = indexerStrategy.buildIndexFor(directory, it)
                     indexingProgressListener.onNewFileIndexed(indexedFile)
                     indexedFiles.add(indexedFile)
