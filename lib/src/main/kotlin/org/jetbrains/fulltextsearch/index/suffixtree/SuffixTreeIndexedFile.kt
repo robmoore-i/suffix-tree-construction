@@ -19,9 +19,12 @@ class SuffixTreeIndexedFile(
         return suffixTree.offsetsOf(queryString).map { QueryMatch(relativePath, it) }
     }
 
-    // Approach:
+    // Current Approach:
     // - Find the smallest line break offset > char offset
     // - Find the greatest line break offset < char offset
+    // Potential improvement:
+    // - Sort the line break offsets, store them in an AVL tree, and exploit it like the cracker
+    //   index from https://github.com/robmoore-i/AdaptiveCompression
     override fun getLineOfChar(charOffset: Int): String {
         var startOfLineOffset = -1
         var endOfLineOffset = fileText.length
