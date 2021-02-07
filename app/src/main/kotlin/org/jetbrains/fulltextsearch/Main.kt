@@ -2,17 +2,17 @@
 
 package org.jetbrains.fulltextsearch
 
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.fulltextsearch.filesystem.Directory
 import org.jetbrains.fulltextsearch.index.IndexedFile
 import org.jetbrains.fulltextsearch.indexer.IndexerStrategy
-import org.jetbrains.fulltextsearch.indexer.async.AsyncIndexer
-import org.jetbrains.fulltextsearch.indexer.async.AsyncIndexingProgressListener
+import org.jetbrains.fulltextsearch.indexer.async.ParallelAsyncIndexer
+import org.jetbrains.fulltextsearch.indexer.sync.SyncIndexingProgressListener
 import org.jetbrains.fulltextsearch.search.IndexedDirectory
 import org.jetbrains.fulltextsearch.search.QueryMatch
 import java.nio.file.Paths
 import kotlin.system.exitProcess
+import kotlin.system.measureTimeMillis
 
 class Main {
     companion object {
@@ -21,26 +21,22 @@ class Main {
             runBlocking {
                 printBanner()
                 val directory: Directory = chooseSearchDirectory()
-                val indexer =
-                    AsyncIndexer.default(IndexerStrategy.default(suffixTreeMaxCharsThreshold = null))
-                val indexedDirectory: IndexedDirectory = coroutineScope {
-                    println("Indexing...")
-                    var theIndexedDirectory: IndexedDirectory? = null
-                    indexer.buildIndexAsync(
+                val indexer = ParallelAsyncIndexer(
+                    IndexerStrategy.default(suffixTreeMaxCharsThreshold = null)
+                )
+                println("Indexing...")
+                var indexedDirectory: IndexedDirectory?
+                val indexingMillis = measureTimeMillis {
+                    indexedDirectory = indexer.buildIndex(
                         directory,
-                        object : AsyncIndexingProgressListener {
+                        object : SyncIndexingProgressListener {
                             override fun onNewFileIndexed(indexedFile: IndexedFile) {
                                 println("Index built for ${indexedFile.relativePath()}")
                             }
-
-                            override fun onIndexingCompleted(indexedDirectory: IndexedDirectory) {
-                                theIndexedDirectory = indexedDirectory
-                            }
                         })
-                    println("Done.")
-                    theIndexedDirectory!!
                 }
-                runSearchQueryREPL(indexedDirectory)
+                println("Finished indexing in ${indexingMillis}ms.")
+                runSearchQueryREPL(indexedDirectory!!)
             }
         }
 
@@ -93,12 +89,15 @@ class Main {
             val queryInput = QueryInput()
             queryInput.readFromUser()
             while (!queryInput.hasQuit()) {
-                val queryCaseSensitive: List<QueryMatch> =
-                    indexedDirectory.queryCaseSensitive(queryInput.query!!)
-                println("Found ${queryCaseSensitive.size} matching lines:")
-                queryCaseSensitive.forEach {
+                var queryCaseSensitive: List<QueryMatch>?
+                val millisTaken = measureTimeMillis {
+                    queryCaseSensitive = indexedDirectory.queryCaseSensitive(queryInput.query!!)
+                }
+                val matches = queryCaseSensitive!!
+                matches.forEach {
                     println(indexedDirectory.correspondingFileLine(it).trim())
                 }
+                println("Found ${matches.size} matching lines in ${millisTaken}ms.")
                 queryInput.readFromUser()
             }
         }
