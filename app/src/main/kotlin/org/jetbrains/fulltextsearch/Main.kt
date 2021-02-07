@@ -30,7 +30,7 @@ class Main {
                         directory,
                         object : AsyncIndexingProgressListener {
                             override fun onNewFileIndexed(indexedFile: IndexedFile) {
-                                println("Index built for ${indexedFile.path()}")
+                                println("Index built for ${indexedFile.relativePath()}")
                             }
 
                             override fun onIndexingCompleted(indexedDirectory: IndexedDirectory) {
@@ -95,7 +95,7 @@ class Main {
             while (!queryInput.hasQuit()) {
                 val queryCaseSensitive: List<QueryMatch> =
                     indexedDirectory.queryCaseSensitive(queryInput.query!!)
-                println(queryCaseSensitive.toString().replace("),", "),\n"))
+                queryCaseSensitive.forEach { println(indexedDirectory.correspondingFileLine(it)) }
                 queryInput.readFromUser()
             }
         }

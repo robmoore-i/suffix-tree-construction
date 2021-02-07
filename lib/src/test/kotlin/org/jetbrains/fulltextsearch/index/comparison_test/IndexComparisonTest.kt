@@ -50,7 +50,7 @@ class IndexComparisonTest {
                 Directory(dirPath),
                 object : AsyncIndexingProgressListener {
                     override fun onNewFileIndexed(indexedFile: IndexedFile) {
-                        println("Suffix tree indexer has finished indexing the file ${indexedFile.path()}")
+                        println("Suffix tree indexer has finished indexing the file ${indexedFile.relativePath()}")
                     }
 
                     override fun onIndexingCompleted(indexedDirectory: IndexedDirectory) {
@@ -67,7 +67,7 @@ class IndexComparisonTest {
                 Directory(dirPath),
                 object : AsyncIndexingProgressListener {
                     override fun onNewFileIndexed(indexedFile: IndexedFile) {
-                        println("Naive indexer has finished indexing the file ${indexedFile.path()}")
+                        println("Naive indexer has finished indexing the file ${indexedFile.relativePath()}")
                     }
 
                     override fun onIndexingCompleted(indexedDirectory: IndexedDirectory) {

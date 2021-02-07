@@ -90,7 +90,7 @@ abstract class SyncFullTextSearchTest {
             Directory(Paths.get("src/test/resources/nested-files")),
             indexingProgressListener = object : SyncIndexingProgressListener {
                 override fun onNewFileIndexed(indexedFile: IndexedFile) {
-                    indexedFileNames.add(indexedFile.path())
+                    indexedFileNames.add(indexedFile.relativePath())
                 }
             })
 

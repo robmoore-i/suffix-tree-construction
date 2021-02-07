@@ -25,4 +25,9 @@ class IndexedDirectory(private val indexedFiles: List<IndexedFile>) {
             }
         }
     }
+
+    fun correspondingFileLine(queryMatch: QueryMatch): String {
+        return indexedFiles.first { it.relativePath() == queryMatch.fileRelativePath }
+            .getLineOfChar(queryMatch.offset)
+    }
 }

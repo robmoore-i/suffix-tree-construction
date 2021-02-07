@@ -7,11 +7,19 @@ import org.jetbrains.fulltextsearch.search.QueryMatch
  * This type of IndexedFile builds no index, and queries on it return no results.
  */
 class NoSearchIndexedFile(private val relativePath: String) : IndexedFile {
+    override fun relativePath(): String {
+        return relativePath
+    }
+
     override fun query(queryString: String): List<QueryMatch> {
         return listOf()
     }
 
-    override fun path(): String {
-        return relativePath
+    override fun getLineOfChar(offset: Int): String {
+        throw UnsupportedOperationException(
+            "The file '$relativePath' was not indexed, so getting the line of the character at " +
+                    "offset $offset is not supported, because this call was probably caused by a " +
+                    "bug."
+        )
     }
 }

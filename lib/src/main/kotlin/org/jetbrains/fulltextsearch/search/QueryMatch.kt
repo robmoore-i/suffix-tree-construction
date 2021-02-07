@@ -1,3 +1,3 @@
 package org.jetbrains.fulltextsearch.search
 
-data class QueryMatch(private val filePath: String, val offset: Int)
+data class QueryMatch(val fileRelativePath: String, val offset: Int)

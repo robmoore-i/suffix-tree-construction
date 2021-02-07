@@ -4,6 +4,7 @@ import kotlinx.coroutines.runBlocking
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.*
 import org.jetbrains.fulltextsearch.index.naive.NaiveIndexedFile
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
 class IndexedDirectoryTest {
@@ -98,5 +99,17 @@ class IndexedDirectoryTest {
         }
 
         assertThat(eventCounter.numberOfReceivedEvents(), equalTo(1))
+    }
+
+    @Test
+    internal fun `gets line associated with query match from the indexed file`() {
+        val indexedDirectory = IndexedDirectory(
+            listOf(NaiveIndexedFile("file-1.txt", "abracadabra"))
+        )
+
+        assertEquals(
+            "abracadabra",
+            indexedDirectory.correspondingFileLine(QueryMatch("file-1.txt", 5))
+        )
     }
 }

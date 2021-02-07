@@ -10,6 +10,7 @@ import org.jetbrains.fulltextsearch.index.IndexedFile
 import org.jetbrains.fulltextsearch.search.IndexedDirectory
 import org.jetbrains.fulltextsearch.search.QueryMatch
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import java.nio.file.Paths
 import java.util.Collections.synchronizedList
@@ -101,7 +102,7 @@ class ParallelAsyncIndexerTest {
             Directory(Paths.get("src/test/resources/nested-files")),
             object : AsyncIndexingProgressListener {
                 override fun onNewFileIndexed(indexedFile: IndexedFile) {
-                    indexedFileNames.add(indexedFile.path())
+                    indexedFileNames.add(indexedFile.relativePath())
                 }
 
                 override fun onIndexingCompleted(indexedDirectory: IndexedDirectory) {
@@ -145,6 +146,11 @@ class ParallelAsyncIndexerTest {
      * indexing jobs.
      */
     @Test
+    @Disabled(
+        "This test currently works only for debugging purposes, and should be run " +
+                "only with other tests in this test class, not with the full suite of tests. " +
+                "Hence it is disabled by default."
+    )
     internal fun `builds the index using multiple threads in parallel`() = runBlocking {
         val dirPath = Paths.get("src/test/resources/example-java-project")
         val threadCounts = mutableListOf<Int>()
