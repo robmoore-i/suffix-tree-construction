@@ -7,7 +7,7 @@ import org.jetbrains.fulltextsearch.indexer.IndexerStrategy
 import org.jetbrains.fulltextsearch.indexer.async.AsyncIndexer
 import org.jetbrains.fulltextsearch.indexer.async.AsyncIndexingProgressListener
 import org.jetbrains.fulltextsearch.search.IndexedDirectory
-import org.opentest4j.TestAbortedException
+import org.junit.jupiter.api.Assumptions.assumeTrue
 import java.nio.file.Paths
 import kotlin.system.measureTimeMillis
 
@@ -17,15 +17,14 @@ fun collectAndPrintIndexingExecutionTimeData(
     indexerStrategy: IndexerStrategy = IndexerStrategy.default(suffixTreeMaxCharsThreshold = 10000)
 ) {
     val dirPath = Paths.get("../$directoryPathFromSourceRoot")
-    if (!dirPath.toFile().exists()) {
-        val message =
-            "Assumption not met: The specified directory for the performance " +
-                    "test input doesn't exist. Clone it using the script: " +
-                    "`scripts/fetch-performance-test-data.sh`."
-        println(message)
-        // This has the effect of marking the test as 'skipped'.
-        throw TestAbortedException(message)
-    }
+
+    // If the directory doesn't exist, the test is marked as 'skipped'.
+    assumeTrue(
+        dirPath.toFile().exists(),
+        "Assumption not met: The specified directory for the performance " +
+                "test input doesn't exist. Clone it using the script: " +
+                "`scripts/fetch-performance-test-data.sh`."
+    )
 
     val executionTimes = mutableListOf<Long>()
     repeat(numberOfTimesToBuildTheIndex) {
