@@ -274,7 +274,7 @@ private enum class SuffixExtensionRule {
     /**
      * Rule three extensions happen when the suffix is already implicitly present in the tree, in
      * which case we do nothing. These suffixes will be made explicit later when the tree is
-     * canonized by the addition of a unique character at the end. d
+     * canonized by the addition of a unique character at the end.
      */
     RULE_THREE
 }
