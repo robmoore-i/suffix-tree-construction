@@ -95,7 +95,7 @@ class SuffixTree {
         }
 
         /**
-         * @param c The character we're adding to the tree in the current phase.¬
+         * @param c The character we're adding to the tree in the current phase.
          * @return Which suffix extension rule was applied in order to add the next suffix.
          */
         private fun addSuffix(c: Char): SuffixExtensionRule {
