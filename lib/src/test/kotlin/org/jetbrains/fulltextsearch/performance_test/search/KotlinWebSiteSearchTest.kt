@@ -3,10 +3,12 @@
 package org.jetbrains.fulltextsearch.performance_test.search
 
 import org.jetbrains.fulltextsearch.performance_test.PerformanceTest
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 
 @PerformanceTest
 class KotlinWebSiteSearchTest {
+    @Disabled
     @Test
     internal fun `searching the kotlin web site repository`() {
         collectAndPrintSearchExecutionTimeData(

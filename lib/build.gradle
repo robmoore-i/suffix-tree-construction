@@ -7,7 +7,7 @@ group 'org.jetbrains'
 version '1.0'
 
 repositories {
-    jcenter()
+    mavenCentral()
 }
 
 dependencies {
@@ -31,7 +31,7 @@ test {
     useJUnitPlatform()
 }
 
-tasks.withType(Test) {
+tasks.named("test") {
     useJUnitPlatform {
         excludeTags "performance-test"
     }
@@ -40,7 +40,8 @@ tasks.withType(Test) {
     }
 }
 
-task performanceTest(type: Test) {
+// Only up-to-date if 'example-input-directories' stays the same.
+tasks.register("performanceTest", Test) {
     minHeapSize = "128m"
     maxHeapSize = "2048m"
 

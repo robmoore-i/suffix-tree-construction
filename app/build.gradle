@@ -7,7 +7,7 @@ group 'org.jetbrains'
 version '1.0'
 
 repositories {
-    jcenter()
+    mavenCentral()
 }
 
 dependencies {
@@ -24,7 +24,7 @@ application {
 /**
  * Read the text in the below print statement to learn about this code.
  */
-task printRunDisabledMessage {
+tasks.register("printRunDisabledMessage") {
     doFirst {
         print "\n!!! Not running the application from Gradle !!!\n" +
                 "- You need to run this program from Intellij, rather than " +
