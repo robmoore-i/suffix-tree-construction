@@ -6,12 +6,10 @@ import com.rrm.fulltextsearch.index.comparison_test.QueryResultsComparisons
 import com.rrm.fulltextsearch.index.naive.NaiveIndexedFile
 import com.rrm.fulltextsearch.randominput.RandomInput.generateRandomString
 import org.junit.jupiter.api.Assertions.fail
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 
 class SuffixTreeFuzzTest {
     @Test
-    @Disabled
     internal fun `send random input and assert that the search results are correct`() {
         repeat(1000) {
             val fileContent = generateRandomString(
