@@ -7,7 +7,7 @@ job("Build") {
                 args["target"] = "lsystems"
             }
 
-            push("codespyglass.registry.jetbrains.space/p/analyser/containers/lsystems") {
+            push("codespyglass.registry.somewhere.space/p/analyser/containers/lsystems") {
                 tag = "latest"
             }
         }

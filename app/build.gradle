@@ -18,7 +18,7 @@ dependencies {
 
 application {
     //noinspection GroovyAssignabilityCheck, GroovyAccessibility
-    mainClass = 'org.jetbrains.fulltextsearch.Main'
+    mainClass = 'com.rrm.fulltextsearch.Main'
 }
 
 /**
