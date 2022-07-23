@@ -1,4 +1,4 @@
-# Full-text search
+# Suffix Trees applied to Full Text Search
 
 ### Implementation of Ukkonen's Suffix Tree construction
 
